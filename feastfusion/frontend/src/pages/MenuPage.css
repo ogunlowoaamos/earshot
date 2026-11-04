@@ -1,0 +1,164 @@
+.menu-page {
+  padding-bottom: var(--sp-8);
+}
+
+.menu-page__head {
+  padding-block: var(--sp-7) var(--sp-6);
+  background: linear-gradient(180deg, var(--gold-veil), transparent);
+}
+
+.menu-page__head h1 {
+  font-size: var(--step-4);
+  margin-block: var(--sp-3) var(--sp-3);
+}
+
+/* ---------- toolbar ---------- */
+
+.menu-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding-bottom: var(--sp-5);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--sp-5);
+}
+
+.chips {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 0.55rem 1rem;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-strong);
+  background: var(--white);
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-600);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.chip:hover {
+  border-color: var(--gold-300);
+  color: var(--ink-900);
+}
+
+.chip.is-active {
+  background: var(--bg-inverse);
+  border-color: var(--bg-inverse);
+  color: var(--gold-100);
+}
+
+.menu-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-full);
+  background: var(--white);
+  color: var(--ink-400);
+  min-width: 240px;
+}
+
+.menu-search input {
+  border: none;
+  outline: none;
+  background: none;
+  width: 100%;
+  font-size: var(--step--1);
+  color: var(--ink-900);
+}
+
+.menu-count {
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  margin-bottom: var(--sp-4);
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: var(--sp-5);
+}
+
+.menu-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding-block: var(--sp-8);
+  max-width: 50ch;
+}
+
+.menu-empty h2 {
+  font-size: var(--step-2);
+}
+
+.menu-empty p {
+  color: var(--text-muted);
+}
+
+.menu-empty__hint {
+  font-size: var(--step--1);
+  color: var(--ink-400) !important;
+  font-family: ui-monospace, monospace;
+}
+
+@media (max-width: 700px) {
+  .menu-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    /* A column flex item keeps its max-content width by default, so this strip
+       grew to 709px and scrolled the whole page sideways. Pin it to the
+       viewport (full bleed comes from the negative margins) and let the strip
+       itself be the only thing that scrolls. */
+    align-self: stretch;
+    width: calc(100% + var(--sp-4) * 2);
+    max-width: calc(100% + var(--sp-4) * 2);
+    padding-bottom: var(--sp-2);
+    margin-inline: calc(var(--sp-4) * -1);
+    padding-inline: var(--sp-4);
+    scrollbar-width: none;
+  }
+
+  .chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip {
+    flex-shrink: 0;
+  }
+
+  .menu-search {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+  }
+
+  /* Fill the pill so a thumb tap anywhere in it lands on the input. */
+  .menu-search input {
+    align-self: stretch;
+    min-height: 32px;
+  }
+
+  .menu-grid {
+    grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+    gap: var(--sp-3);
+  }
+}

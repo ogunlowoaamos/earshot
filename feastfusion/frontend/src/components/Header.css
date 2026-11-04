@@ -1,0 +1,241 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: var(--header-bg);
+  backdrop-filter: blur(14px) saturate(1.4);
+  border-bottom: 1px solid transparent;
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.site-header.is-scrolled {
+  border-bottom-color: var(--border);
+  box-shadow: 0 1px 0 rgba(58, 40, 20, 0.04), 0 8px 24px rgba(58, 40, 20, 0.06);
+}
+
+.site-header__inner {
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-5);
+}
+
+/* ---------- Brand ---------- */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-shrink: 0;
+}
+
+.brand__mark {
+  width: 44px;
+  height: 44px;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.brand:hover .brand__mark {
+  transform: rotate(-6deg) scale(1.05);
+}
+
+.brand__word {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink-900);
+}
+
+/* gold-400 is only ~3.3:1 on cream: fine while the logo is large text on
+   desktop, but it shrinks below the large-text threshold on a phone, so use
+   the stronger gold that passes at any size. */
+.brand__word span {
+  color: var(--gold-500);
+}
+
+/* ---------- Nav ---------- */
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+}
+
+.site-nav__link {
+  position: relative;
+  font-size: var(--step-0);
+  font-weight: 500;
+  color: var(--ink-600);
+  padding-block: var(--sp-2);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.site-nav__link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--gold-300);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.site-nav__link:hover,
+.site-nav__link.is-active {
+  color: var(--ink-900);
+}
+
+.site-nav__link:hover::after,
+.site-nav__link.is-active::after {
+  transform: scaleX(1);
+}
+
+.site-nav__cta {
+  display: none;
+}
+
+/* ---------- Actions ---------- */
+
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.cart-btn,
+.theme-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-strong);
+  background: var(--white);
+  color: var(--ink-800);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.cart-btn:hover,
+.theme-btn:hover {
+  border-color: var(--gold-300);
+  background: color-mix(in srgb, var(--gold-300) 16%, var(--bg-elevated));
+}
+
+.cart-btn__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 5px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--action);
+  color: var(--on-action);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 2px solid var(--cream);
+}
+
+.burger {
+  display: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-strong);
+  background: var(--white);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.burger span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink-800);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 860px) {
+  .burger {
+    display: flex;
+  }
+
+  .site-header__actions {
+    gap: var(--sp-2);
+  }
+
+  .site-nav {
+    position: fixed;
+    inset: var(--header-h) 0 auto 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: var(--sp-4) var(--sp-5) var(--sp-6);
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-12px);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
+  }
+
+  .site-nav.is-open {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .site-nav__link {
+    padding-block: var(--sp-4);
+    font-size: var(--step-1);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .site-nav__link::after {
+    display: none;
+  }
+
+  /* Doubled selector: `.btn--sm` is emitted after this file, so an equal-specificity
+     rule here loses and the CTA renders 32px tall on a phone. */
+  .site-nav .site-nav__cta {
+    display: inline-flex;
+    margin-top: var(--sp-5);
+    width: 100%;
+    min-height: 48px;
+    padding-block: 0.9rem;
+    font-size: var(--step-0);
+  }
+}
+
+@media (max-width: 420px) {
+  .brand__word {
+    font-size: 1.1rem;
+  }
+
+  .brand__mark {
+    width: 36px;
+    height: 36px;
+  }
+}

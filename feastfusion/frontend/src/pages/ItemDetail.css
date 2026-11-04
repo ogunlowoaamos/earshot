@@ -1,0 +1,262 @@
+.detail {
+  padding-block: var(--sp-6) var(--sp-8);
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--step--1);
+  color: var(--ink-400);
+  margin-bottom: var(--sp-5);
+}
+
+.crumbs a {
+  /* A 21px tall link is a hard target for a thumb; keep the look, grow the box. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--sp-1);
+  margin-inline: calc(var(--sp-1) * -1);
+}
+
+.crumbs a:hover {
+  color: var(--gold-500);
+}
+
+.detail__grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: clamp(var(--sp-5), 5vw, var(--sp-8));
+  align-items: start;
+}
+
+.detail__media {
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  box-shadow: var(--shadow-lg);
+  background: var(--ink-100);
+  position: sticky;
+  top: calc(var(--header-h) + var(--sp-5));
+}
+
+.detail__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  align-items: flex-start;
+  padding-top: var(--sp-2);
+}
+
+.detail__tags {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.detail__info h1 {
+  font-size: var(--step-4);
+  line-height: 1.05;
+}
+
+.detail__price {
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  font-weight: 600;
+  color: var(--gold-500);
+}
+
+.detail__desc {
+  font-size: var(--step-1);
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 48ch;
+}
+
+.detail__qty {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-1);
+  border-top: 1px solid var(--border);
+  width: 100%;
+}
+
+.detail__qty > span {
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.qty--lg {
+  padding: 3px;
+}
+
+.qty--lg button {
+  width: 34px;
+  height: 34px;
+}
+
+.qty--lg span {
+  min-width: 28px;
+  font-size: var(--step-0);
+}
+
+.detail__actions {
+  display: flex;
+  gap: var(--sp-3);
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.detail__actions .btn {
+  flex: 1;
+  min-width: 160px;
+}
+
+.detail__total {
+  font-size: var(--step-0);
+  color: var(--text-muted);
+}
+
+.detail__total strong {
+  color: var(--ink-900);
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  margin-left: var(--sp-2);
+}
+
+.detail__facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border);
+}
+
+.detail__facts li {
+  position: relative;
+  padding-left: var(--sp-5);
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.detail__facts li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--success);
+  font-weight: 700;
+}
+
+.detail__more {
+  margin-top: var(--sp-8);
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--border);
+}
+
+.detail__more h2 {
+  font-size: var(--step-3);
+  margin-bottom: var(--sp-5);
+}
+
+.detail__more-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4);
+}
+
+.related {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--white);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+.related:hover {
+  border-color: var(--gold-300);
+  transform: translateY(-2px);
+}
+
+.related img {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.related div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.related strong {
+  font-size: var(--step--1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.related span {
+  font-size: var(--step--1);
+  color: var(--gold-500);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .detail__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail__media {
+    position: static;
+    aspect-ratio: 16 / 11;
+  }
+
+  .detail__more-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .detail__actions {
+    flex-direction: column;
+  }
+
+  .detail__actions .btn {
+    width: 100%;
+  }
+
+  /* 34px steppers are fiddly for a thumb. */
+  .qty--lg button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .detail__info h1 {
+    font-size: var(--step-3);
+  }
+}

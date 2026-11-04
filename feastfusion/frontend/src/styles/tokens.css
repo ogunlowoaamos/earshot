@@ -1,0 +1,201 @@
+/* FeastFusion design tokens
+   Direction: premium Nigerian kitchen. Espresso base, gold from the logo,
+   warm cream surfaces, chili-red for action. */
+
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --gold-100: #fbe9a8;
+  --gold-200: #efc44e;
+  --gold-300: #d9a227;
+  --gold-400: #b87a12;
+  --gold-500: #8a5a0c;
+  --gold-600: #5a3a08;
+
+  --chili-400: #e2543a;
+  --chili-500: #c93f26;
+  --chili-600: #a32f1a;
+
+  /* Neutrals — warm, never pure grey */
+  --ink-900: #14100c;
+  --ink-800: #1e1813;
+  --ink-700: #2a221b;
+  --ink-600: #3a3027;
+  --ink-500: #5c4f42;
+  --ink-400: #776a5b; /* 4.9:1 on cream — #8a7a68 was 3.85:1, below WCAG AA */
+  --ink-300: #b8a894;
+  --ink-200: #ddd0bd;
+  --ink-100: #f0e7d9;
+  --cream: #faf6f0;
+  --white: #fffdfa;
+
+  /* Semantic */
+  --bg: var(--cream);
+  --bg-elevated: var(--white);
+  --bg-inverse: var(--ink-900);
+  --text: var(--ink-900);
+  --text-muted: var(--ink-500);
+  --text-inverse: var(--cream);
+  --text-inverse-muted: #b8a894;
+  --on-action: #fffdfa;
+  --on-gold: #14100c;
+  --header-bg: rgba(250, 246, 240, 0.82);
+  --ghost-hover: rgba(58, 40, 20, 0.04);
+  --gold-veil: rgba(251, 233, 168, 0.34);
+  --tint-band: rgba(240, 231, 217, 0.42);
+  --fade-band: linear-gradient(180deg, transparent, rgba(240, 231, 217, 0.5) 40%, transparent);
+  --wash-gold: linear-gradient(160deg, var(--gold-100), var(--cream) 60%);
+  --wash-gold-soft: linear-gradient(160deg, var(--gold-100), var(--cream) 70%);
+  --border: #e6dccd;
+  --border-strong: #d3c4ae;
+  --accent: var(--gold-300);
+  --action: var(--chili-500);
+  --action-hover: var(--chili-600);
+  --success: #2f7d4f;
+  --warning: #b8791a;
+  --danger: #b3341f;
+
+  /* Type */
+  --font-display: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --step--1: clamp(0.8rem, 0.77rem + 0.15vw, 0.875rem);
+  --step-0: clamp(0.95rem, 0.9rem + 0.25vw, 1.0625rem);
+  --step-1: clamp(1.15rem, 1.05rem + 0.5vw, 1.375rem);
+  --step-2: clamp(1.4rem, 1.2rem + 1vw, 1.875rem);
+  --step-3: clamp(1.75rem, 1.4rem + 1.75vw, 2.5rem);
+  --step-4: clamp(2.2rem, 1.6rem + 3vw, 3.5rem);
+  --step-5: clamp(2.8rem, 1.8rem + 5vw, 5rem);
+
+  /* Space — 4px rhythm */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+  --sp-9: 6rem;
+  --sp-10: 8rem;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 12px;
+  --r-lg: 20px;
+  --r-xl: 32px;
+  --r-full: 999px;
+
+  /* Elevation — warm shadows, never grey */
+  --shadow-sm: 0 1px 2px rgba(58, 40, 20, 0.06), 0 1px 3px rgba(58, 40, 20, 0.08);
+  --shadow-md: 0 4px 12px rgba(58, 40, 20, 0.08), 0 2px 4px rgba(58, 40, 20, 0.06);
+  --shadow-lg: 0 12px 32px rgba(58, 40, 20, 0.12), 0 4px 8px rgba(58, 40, 20, 0.06);
+  --shadow-xl: 0 24px 64px rgba(58, 40, 20, 0.16);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur-base: 240ms;
+  --dur-slow: 420ms;
+
+  /* Layout */
+  --container: 1200px;
+  --container-narrow: 760px;
+  --header-h: 76px;
+}
+
+/* ============ DARK THEME ============
+   Only the token layer is overridden — no component needs a theme branch.
+   The neutral ramp keeps its meaning by inverting intensity: --ink-900 is
+   still "strongest text" and --cream/--white are still "page / raised
+   surface", they just resolve to dark values. Rules that paint an *inverse
+   panel* must use --bg-inverse / --text-inverse rather than raw ramp steps,
+   otherwise the panel would flip to a light block in dark mode. */
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Brand — lifted so accents keep their bite on a dark canvas */
+  --gold-100: #fbe9a8;
+  --gold-200: #f0c95c;
+  --gold-300: #e0ac33;
+  --gold-400: #c9972a;
+  --gold-500: #e3b455;
+  --gold-600: #5a3a08; /* stays dark: it is only ever text/border on gold */
+
+  --chili-400: #f0715a;
+  --chili-500: #e2543a;
+  --chili-600: #c93f26;
+
+  /* Neutrals — inverted intensity, same warm hue */
+  --ink-900: #f9f4ec;
+  --ink-800: #eae2d5;
+  --ink-700: #d8cdbc;
+  --ink-600: #c2b6a4;
+  --ink-500: #a99c8a;
+  --ink-400: #918474;
+  --ink-300: #6f6559;
+  --ink-200: #3a332b;
+  --ink-100: #262019;
+  --cream: #100e0b;
+  --white: #1a1611;
+
+  /* Semantic */
+  --bg: #100e0b;
+  --bg-elevated: #1a1611;
+  --bg-inverse: #070605;
+  --text: var(--ink-900);
+  --text-muted: var(--ink-500);
+  --text-inverse: #f9f4ec;
+  --text-inverse-muted: #a99c8a;
+  --ghost-hover: rgba(249, 244, 236, 0.07);
+  /* Light-colour tints must flip too, or they wash out into pale bands. */
+  --gold-veil: rgba(224, 172, 51, 0.11);
+  --tint-band: rgba(255, 253, 250, 0.05);
+  --fade-band: linear-gradient(180deg, transparent, rgba(255, 253, 250, 0.07) 40%, transparent);
+  --header-bg: rgba(16, 14, 11, 0.82);
+  /* Gold washes become a tint over the dark surface, never a bright slab. */
+  --wash-gold: linear-gradient(160deg, rgba(224, 172, 51, 0.2), rgba(16, 14, 11, 0) 68%);
+  --wash-gold-soft: linear-gradient(160deg, rgba(224, 172, 51, 0.15), rgba(16, 14, 11, 0) 72%);
+  --border: #322b23;
+  --border-strong: #443a2f;
+  --accent: var(--gold-300);
+  /* White on #e2543a is only 3.72:1 — darken the action, keep the white label. */
+  --action: #c93f26;
+  --action-hover: #b3341f;
+  --success: #6cc98c;
+  --warning: #e0ac33;
+  --danger: #f0715a;
+
+  /* Elevation — black, wide, soft. Warm shadows read as dirt on dark. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.68);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+  Theme swaps must land instantly. A colour transition that begins while the
+  tab is throttled can freeze part-way on Android and leave a stale header and
+  wordmark colour (black text on dark glass in light mode on a real device).
+  useTheme() adds this class for one frame while the tokens swap.
+*/
+html.theme-switching,
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+}

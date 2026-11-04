@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+target/
+*.rs.bk
+
+# local database: recreated from seed.rs on first run
+backend/data/*.db
+backend/data/*.db-shm
+backend/data/*.db-wal
+
+# local configuration and secrets
+.env
+.env.local
+
+# screenshots written by the phone-audit scripts in shots/
+shots/*.png
+
+# design reference screenshots
+screens/
+
+# runtime uploads (the API creates this directory at startup)
+backend/uploads/*
+
+# logs and OS noise
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,94 @@
+.site-footer {
+  background: var(--bg-inverse);
+  color: var(--text-inverse-muted);
+  padding-block: var(--sp-8) var(--sp-5);
+  margin-top: var(--sp-9);
+}
+
+.site-footer__grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: var(--sp-7);
+}
+
+.site-footer__brand img {
+  width: 56px;
+  height: 56px;
+  margin-bottom: var(--sp-4);
+}
+
+.site-footer__brand p {
+  font-size: var(--step--1);
+  line-height: 1.7;
+  color: var(--text-inverse-muted);
+  max-width: 34ch;
+}
+
+.site-footer__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.site-footer__col h4 {
+  font-family: var(--font-body);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-200);
+  margin-bottom: var(--sp-1);
+}
+
+.site-footer__col a,
+.site-footer__col span {
+  font-size: var(--step--1);
+  color: var(--text-inverse-muted);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.site-footer__col a:hover {
+  color: var(--gold-100);
+}
+
+.site-footer__base {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-5);
+  border-top: 1px solid rgba(250, 246, 240, 0.12);
+  font-size: var(--step--1);
+  color: var(--text-inverse-muted);
+}
+
+@media (max-width: 860px) {
+  .site-footer__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-6);
+  }
+
+  .site-footer__brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .site-footer__grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stacked footer links were only 21px tall - below the 24px minimum for a
+     tappable target. Give each one a real hit area. */
+  .site-footer__col a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .site-footer__base {
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+}
