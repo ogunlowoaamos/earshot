@@ -19,6 +19,7 @@ pub struct MenuRow {
     pub price_kobo: i64,
     pub image_url: String,
     pub tags: String,
+    pub ingredients: String,
     pub is_available: i64,
     pub is_featured: i64,
 }
@@ -33,6 +34,7 @@ pub struct MenuItem {
     pub price_kobo: i64,
     pub image_url: String,
     pub tags: Vec<String>,
+    pub ingredients: Vec<String>,
     pub is_available: bool,
     pub is_featured: bool,
 }
@@ -48,6 +50,7 @@ impl From<MenuRow> for MenuItem {
             price_kobo: r.price_kobo,
             image_url: r.image_url,
             tags: split_tags(&r.tags),
+            ingredients: split_lines(&r.ingredients),
             is_available: r.is_available != 0,
             is_featured: r.is_featured != 0,
         }
@@ -56,6 +59,16 @@ impl From<MenuRow> for MenuItem {
 
 pub fn split_tags(raw: &str) -> Vec<String> {
     raw.split(',')
+        .map(str::trim)
+        .filter(|t| !t.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
+/// Ingredients are stored one per line so the caterer can type them naturally
+/// in a textarea. Blank lines are dropped rather than shown as empty bullets.
+pub fn split_lines(raw: &str) -> Vec<String> {
+    raw.lines()
         .map(str::trim)
         .filter(|t| !t.is_empty())
         .map(str::to_string)
@@ -116,8 +129,82 @@ pub struct CateringRequest {
     pub location: String,
     pub budget_kobo: Option<i64>,
     pub details: Option<String>,
+    pub deposit_kobo: i64,
+    pub deposit_status: String,
+    pub proof_url: Option<String>,
     pub status: String,
     pub created_at: String,
+    pub state: String,
+    pub lga: String,
+    pub street_address: String,
+    pub dishes: String,
+    pub other_dishes: String,
+    pub contact_channel: String,
+    pub contact_handle: String,
+    pub job_kind: String,
+    pub deposit_reason: String,
+}
+
+/// One row of the caterer's price list: what a guest costs for this kind of job.
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct CateringRate {
+    pub id: i64,
+    pub event_type: String,
+    pub rate_kobo: i64,
+    pub note: String,
+    pub is_active: bool,
+    pub sort_order: i64,
+}
+
+/// How much a dish category adds to the per-guest rate.
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct DishRate {
+    pub id: i64,
+    pub category_slug: String,
+    pub uplift_kobo: i64,
+    pub note: String,
+}
+
+/// What a cook-only job costs for one dish of this category.
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct CookRate {
+    pub id: i64,
+    pub category_slug: String,
+    pub rate_kobo: i64,
+    pub note: String,
+}
+
+/// The whole price list, sent to the dashboard and used to quote customers.
+#[derive(Debug, Serialize)]
+pub struct CateringPricing {
+    pub rates: Vec<CateringRate>,
+    pub dish_rates: Vec<DishRate>,
+    pub cook_rates: Vec<CookRate>,
+}
+
+/// What the customer asked for, before any money is worked out.
+#[derive(Debug, Deserialize)]
+pub struct QuoteRequest {
+    pub job_kind: String,
+    pub event_type: String,
+    #[serde(default)]
+    pub guest_count: i64,
+    #[serde(default)]
+    pub dishes: Vec<String>,
+}
+
+/// The deposit figure plus a plain-language reason the customer can read.
+#[derive(Debug, Serialize)]
+pub struct Quote {
+    pub deposit_kobo: i64,
+    pub reason: String,
+    pub lines: Vec<QuoteLine>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct QuoteLine {
+    pub label: String,
+    pub amount_kobo: i64,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -178,6 +265,26 @@ pub struct NewCatering {
     pub budget_kobo: Option<i64>,
     #[serde(default)]
     pub details: Option<String>,
+    #[serde(default)]
+    pub state: String,
+    #[serde(default)]
+    pub lga: String,
+    #[serde(default)]
+    pub street_address: String,
+    #[serde(default)]
+    pub dishes: Vec<String>,
+    #[serde(default)]
+    pub other_dishes: String,
+    #[serde(default)]
+    pub contact_channel: String,
+    #[serde(default)]
+    pub contact_handle: String,
+    #[serde(default = "event_kind")]
+    pub job_kind: String,
+}
+
+fn event_kind() -> String {
+    "event".to_string()
 }
 
 #[derive(Debug, Deserialize)]
@@ -197,6 +304,8 @@ pub struct NewMenuItem {
     pub image_url: String,
     #[serde(default)]
     pub tags: Vec<String>,
+    #[serde(default)]
+    pub ingredients: Vec<String>,
     #[serde(default = "yes")]
     pub is_available: bool,
     #[serde(default)]
@@ -214,6 +323,7 @@ pub struct PatchMenuItem {
     pub price_kobo: Option<i64>,
     pub image_url: Option<String>,
     pub tags: Option<Vec<String>>,
+    pub ingredients: Option<Vec<String>>,
     pub is_available: Option<bool>,
     pub is_featured: Option<bool>,
 }

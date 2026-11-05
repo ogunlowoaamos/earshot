@@ -3,6 +3,7 @@ mod db;
 mod error;
 mod models;
 mod notify;
+mod pricing;
 mod routes;
 mod seed;
 
@@ -58,10 +59,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             post(routes::orders::upload_proof),
         )
         .route("/catering", post(routes::catering::create_catering))
+        .route("/catering/quote", post(routes::catering::quote))
         .route("/admin/login", post(routes::admin::login))
         .route("/admin/orders", get(routes::admin::list_orders))
         .route("/admin/orders/:id", patch(routes::admin::update_order))
         .route("/admin/catering", get(routes::admin::list_catering))
+        .route("/admin/pricing", get(routes::admin::get_pricing))
+        .route("/admin/pricing/:kind", post(routes::admin::save_rate))
         .route("/admin/menu", post(routes::admin::create_menu_item))
         .route(
             "/admin/menu/:id",

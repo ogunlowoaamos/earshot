@@ -73,11 +73,25 @@ pub fn catering_text(request: &CateringRequest) -> String {
         String::new(),
         format!("Name: {}", request.name),
         format!("Phone: {}", request.phone),
+        format!("Prefers: {} ({})", request.contact_channel, request.contact_handle),
+        format!("Job: {}", request.job_kind),
         format!("Event: {}", request.event_type),
         format!("Date: {}", request.event_date),
         format!("Guests: {}", request.guest_count),
         format!("Location: {}", request.location),
     ];
+
+    if !request.dishes.is_empty() {
+        lines.push(format!("Dishes: {}", request.dishes));
+    }
+    if !request.other_dishes.is_empty() {
+        lines.push(format!("Also wants: {}", request.other_dishes));
+    }
+
+    lines.push(format!("Deposit: {}", naira(request.deposit_kobo)));
+    if !request.deposit_reason.is_empty() {
+        lines.push(format!("Why: {}", request.deposit_reason));
+    }
 
     if let Some(budget) = request.budget_kobo {
         lines.push(format!("Budget: {}", naira(budget)));

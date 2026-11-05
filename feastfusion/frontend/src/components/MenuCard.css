@@ -110,12 +110,23 @@
   gap: var(--sp-3);
   margin-top: auto;
   padding-top: var(--sp-2);
+  /* Tags can be wider than the card on a two-column phone grid. Without this
+     the row refuses to wrap and pushes the Add button out of the card, where
+     `overflow: hidden` on the card clips it. */
+  flex-wrap: wrap;
 }
 
 .menu-card__tags {
   display: flex;
   gap: var(--sp-2);
   flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* The Add button is the point of the card, so it never shrinks or wraps. */
+.menu-card__foot .btn {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .tag {

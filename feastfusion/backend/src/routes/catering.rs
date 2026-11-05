@@ -1,18 +1,34 @@
 use axum::{extract::State, http::StatusCode, Json};
 
 use crate::{
-    db,
     error::{AppError, AppResult},
-    models::{CateringRequest, NewCatering},
-    notify,
+    models::{CateringRequest, NewCatering, Quote, QuoteRequest},
+    notify, pricing,
     routes::orders::new_reference,
     AppState,
 };
 
 const CATERING_COLUMNS: &str = "
     id, reference, customer_name, customer_phone, customer_email, event_date,
-    guest_count, event_type, location, budget_kobo, details, status, created_at
+    guest_count, event_type, location, budget_kobo, details, deposit_kobo,
+    deposit_status, proof_url, status, created_at, state, lga, street_address,
+    dishes, other_dishes, contact_channel, contact_handle, job_kind, deposit_reason
 ";
+
+/// Public: lets the form show the deposit before the customer submits.
+pub async fn quote(
+    State(state): State<AppState>,
+    Json(payload): Json<QuoteRequest>,
+) -> AppResult<Json<Quote>> {
+    let pricing = pricing::load_pricing(&state.pool).await?;
+    Ok(Json(pricing::quote(
+        &pricing,
+        payload.job_kind.trim(),
+        payload.event_type.trim(),
+        payload.guest_count,
+        &payload.dishes,
+    )))
+}
 
 pub async fn create_catering(
     State(state): State<AppState>,
@@ -23,6 +39,12 @@ pub async fn create_catering(
     let location = payload.location.trim();
     let event_type = payload.event_type.trim();
     let event_date = payload.event_date.trim();
+    let job_kind = payload.job_kind.trim();
+    let state_name = payload.state.trim();
+    let lga = payload.lga.trim();
+    let street = payload.street_address.trim();
+    let contact_channel = payload.contact_channel.trim();
+    let contact_handle = payload.contact_handle.trim();
 
     if name.len() < 2 {
         return Err(AppError::BadRequest("Please enter your full name.".into()));
@@ -32,20 +54,58 @@ pub async fn create_catering(
             "Please enter a phone number we can reach you on.".into(),
         ));
     }
+    if !matches!(job_kind, "event" | "cook_only" | "custom") {
+        return Err(AppError::BadRequest("Pick what kind of job this is.".into()));
+    }
     if event_type.is_empty() {
         return Err(AppError::BadRequest("What kind of event is it?".into()));
     }
     if event_date.is_empty() {
-        return Err(AppError::BadRequest("When is the event?".into()));
+        return Err(AppError::BadRequest("When do you need us?".into()));
     }
-    if payload.guest_count <= 0 {
+    if job_kind == "event" && payload.guest_count <= 0 {
         return Err(AppError::BadRequest("How many guests are you feeding?".into()));
     }
     if location.len() < 3 {
         return Err(AppError::BadRequest("Where is the event holding?".into()));
     }
+    if state_name.is_empty() {
+        return Err(AppError::BadRequest("Which state are you in?".into()));
+    }
+    if lga.is_empty() {
+        return Err(AppError::BadRequest("Which area or LGA is it?".into()));
+    }
+    if street.len() < 3 {
+        return Err(AppError::BadRequest(
+            "Add a street or landmark so we can find you.".into(),
+        ));
+    }
+    if payload.dishes.is_empty() && payload.other_dishes.trim().is_empty() {
+        return Err(AppError::BadRequest("Pick at least one dish.".into()));
+    }
+    if !matches!(
+        contact_channel,
+        "whatsapp" | "phone" | "telegram" | "snapchat"
+    ) {
+        return Err(AppError::BadRequest(
+            "Choose how you would like us to reach you.".into(),
+        ));
+    }
+    if contact_handle.len() < 3 {
+        return Err(AppError::BadRequest(
+            "Add the number or username for the channel you picked.".into(),
+        ));
+    }
 
-    let settings = db::load_settings(&state.pool).await;
+    let pricing = pricing::load_pricing(&state.pool).await?;
+    let quote = pricing::quote(
+        &pricing,
+        job_kind,
+        event_type,
+        payload.guest_count,
+        &payload.dishes,
+    );
+
     let reference = new_reference("CAT");
     let email = payload.email.trim().to_string();
     let details = payload
@@ -58,8 +118,9 @@ pub async fn create_catering(
         "INSERT INTO catering_requests
             (reference, customer_name, customer_phone, customer_email, event_type,
              event_date, guest_count, location, budget_kobo, details, deposit_kobo,
-             deposit_status, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending')",
+             deposit_status, status, state, lga, street_address, dishes,
+             other_dishes, contact_channel, contact_handle, job_kind, deposit_reason)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&reference)
     .bind(name)
@@ -71,7 +132,16 @@ pub async fn create_catering(
     .bind(location)
     .bind(payload.budget_kobo)
     .bind(&details)
-    .bind(settings.catering_deposit_kobo)
+    .bind(quote.deposit_kobo)
+    .bind(state_name)
+    .bind(lga)
+    .bind(street)
+    .bind(payload.dishes.join(", "))
+    .bind(payload.other_dishes.trim())
+    .bind(contact_channel)
+    .bind(contact_handle)
+    .bind(job_kind)
+    .bind(&quote.reason)
     .execute(&state.pool)
     .await?;
 

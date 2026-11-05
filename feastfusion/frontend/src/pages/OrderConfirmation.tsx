@@ -43,7 +43,7 @@ export function OrderConfirmation() {
   if (loading) {
     return (
       <div className="container order-page">
-        <div className="skeleton-card" style={{ height: 320, borderRadius: 24 }} />
+        <div className="skeleton-card" style={{ height: 320, borderRadius: 16 }} />
       </div>
     )
   }

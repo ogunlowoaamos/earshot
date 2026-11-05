@@ -32,14 +32,29 @@ pub async fn connect() -> Result<SqlitePool, Box<dyn std::error::Error>> {
     Ok(pool)
 }
 
+const MIGRATIONS: &[&str] = &[
+    include_str!("../migrations/0001_init.sql"),
+    include_str!("../migrations/0002_ingredients_and_deposit.sql"),
+];
+
 async fn migrate(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    let sql = include_str!("../migrations/0001_init.sql");
-    for chunk in sql.split(';') {
-        let statement = chunk.trim();
-        if statement.is_empty() {
-            continue;
+    for sql in MIGRATIONS {
+        for chunk in sql.split(';') {
+            let statement = chunk.trim();
+            if statement.is_empty() {
+                continue;
+            }
+            // Migrations are replayed on every boot, so statements that add a
+            // column or index must tolerate "already exists".
+            if let Err(err) = sqlx::query(statement).execute(pool).await {
+                let msg = err.to_string().to_lowercase();
+                let already_applied = msg.contains("duplicate column")
+                    || msg.contains("already exists");
+                if !already_applied {
+                    return Err(err.into());
+                }
+            }
         }
-        sqlx::query(statement).execute(pool).await?;
     }
     Ok(())
 }

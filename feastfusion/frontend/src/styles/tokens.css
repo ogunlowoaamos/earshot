@@ -80,12 +80,19 @@
   --sp-9: 6rem;
   --sp-10: 8rem;
 
-  /* Radius */
-  --r-sm: 6px;
-  --r-md: 12px;
-  --r-lg: 20px;
-  --r-xl: 32px;
+  /* Radius — one locked scale.
+     Controls (buttons, inputs, dropdowns, popovers) are 8px.
+     Surfaces (cards, panels, lists) are 16px.
+     Only pills, badges and avatars stay fully round. */
+  --r-sm: 8px;
+  --r-md: 16px;
+  --r-lg: 16px;
+  --r-xl: 16px;
   --r-full: 999px;
+
+  /* The dropdown arrow. Drawn here once so every select puts it in exactly
+     the same spot; the browser's own arrow moves around between platforms. */
+  --chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.6 6 6.4l5-4.8' fill='none' stroke='%233a3027' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
   /* Elevation — warm shadows, never grey */
   --shadow-sm: 0 1px 2px rgba(58, 40, 20, 0.06), 0 1px 3px rgba(58, 40, 20, 0.08);
@@ -168,6 +175,9 @@
   --success: #6cc98c;
   --warning: #e0ac33;
   --danger: #f0715a;
+
+  /* The dropdown arrow flips with the theme, otherwise it goes invisible. */
+  --chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.6 6 6.4l5-4.8' fill='none' stroke='%23c2b6a4' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
   /* Elevation — black, wide, soft. Warm shadows read as dirt on dark. */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);

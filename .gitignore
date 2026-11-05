@@ -20,6 +20,15 @@ out/
 # local secrets
 .env
 
+# FeastFusion local runtime scratch: dev server logs, headless-browser probes, review artifacts
+api.log
+api.err.log
+feastfusion/shots/
+feastfusion/backend/*.db
+feastfusion/backend/*.db-shm
+feastfusion/backend/*.db-wal
+.impeccable/
+
 # local evaluation data locations (see eval/README.md) and data
 eval/local_paths.json
 eval/data/

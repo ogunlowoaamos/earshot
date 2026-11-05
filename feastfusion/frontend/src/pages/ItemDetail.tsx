@@ -38,7 +38,7 @@ export function ItemDetail() {
   if (loading) {
     return (
       <div className="container detail-detail">
-        <div className="skeleton-card" style={{ height: 460, borderRadius: 24 }} />
+        <div className="skeleton-card" style={{ height: 460, borderRadius: 16 }} />
       </div>
     )
   }
@@ -81,6 +81,20 @@ export function ItemDetail() {
             <h1>{item.name}</h1>
             <p className="detail__price">{naira(item.price_kobo)}</p>
             <p className="detail__desc">{item.description}</p>
+
+            {item.ingredients.length > 0 && (
+              <section className="detail__ingredients" aria-labelledby="ingredients-heading">
+                <h2 id="ingredients-heading">What is in it</h2>
+                <ul>
+                  {item.ingredients.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+                <p className="detail__ingredients-note">
+                  Tell us about allergies when you check out and the kitchen will adjust.
+                </p>
+              </section>
+            )}
 
             <div className="detail__qty">
               <span>Quantity</span>

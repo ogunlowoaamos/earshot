@@ -1,225 +1,506 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, naira, type Settings } from '../lib/api'
-import { useEffect } from 'react'
+import { api, naira, type CateringRequest, type Quote } from '../lib/api'
+import { STATES, areasFor } from '../lib/states'
 import './Catering.css'
 
+/** The three kinds of job a caterer takes. The deposit maths differs for each. */
+const JOB_KINDS = [
+  {
+    value: 'event',
+    label: 'Full event catering',
+    blurb: 'We cook, serve and clear up at your venue.',
+  },
+  {
+    value: 'cook_only',
+    label: 'Cook only',
+    blurb: 'We cook the dishes and you handle serving.',
+  },
+  {
+    value: 'custom',
+    label: 'Something else',
+    blurb: 'Tell us what you need and we will price it by hand.',
+  },
+] as const
+
+/** Event types the caterer has set a per-guest rate for. */
+const EVENT_TYPES = [
+  { value: 'birthday', label: 'Birthday party' },
+  { value: 'naming', label: 'Naming ceremony' },
+  { value: 'wedding', label: 'Wedding' },
+  { value: 'corporate', label: 'Corporate event' },
+  { value: 'burial', label: 'Burial' },
+  { value: 'anniversary', label: 'Anniversary' },
+] as const
+
+/** Dish categories, matching the slugs the backend prices against. */
+const DISH_CATEGORIES = [
+  { slug: 'rice-grains', label: 'Rice and grains' },
+  { slug: 'soups-swallow', label: 'Soups and swallow' },
+  { slug: 'grills', label: 'Grills' },
+  { slug: 'small-chops', label: 'Small chops' },
+  { slug: 'breakfast', label: 'Breakfast' },
+  { slug: 'desserts', label: 'Desserts' },
+  { slug: 'drinks', label: 'Drinks' },
+] as const
+
+const CONTACT_CHANNELS = [
+  { value: 'whatsapp', label: 'WhatsApp', hint: 'Your WhatsApp number' },
+  { value: 'phone', label: 'Phone call', hint: 'The number to call' },
+  { value: 'telegram', label: 'Telegram', hint: 'Your Telegram username' },
+  { value: 'snapchat', label: 'Snapchat', hint: 'Your Snapchat username' },
+] as const
+
+type JobKind = (typeof JOB_KINDS)[number]['value']
+type ContactChannel = (typeof CONTACT_CHANNELS)[number]['value']
+
 export function Catering() {
-  const [settings, setSettings] = useState<Settings | null>(null)
-  const [sent, setSent] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [jobKind, setJobKind] = useState<JobKind>('event')
+  const [eventType, setEventType] = useState<string>('birthday')
+  const [guestCount, setGuestCount] = useState('50')
+  const [dishes, setDishes] = useState<string[]>(['rice-grains', 'grills'])
+  const [otherDishes, setOtherDishes] = useState('')
+
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [eventDate, setEventDate] = useState('')
+  const [stateName, setStateName] = useState('FCT Abuja')
+  const [lga, setLga] = useState('')
+  const [street, setStreet] = useState('')
+  const [contactChannel, setContactChannel] = useState<ContactChannel>('whatsapp')
+  const [contactHandle, setContactHandle] = useState('')
+  const [details, setDetails] = useState('')
+
+  const [quote, setQuote] = useState<Quote | null>(null)
+  const [quoting, setQuoting] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [done, setDone] = useState<CateringRequest | null>(null)
 
-  const [form, setForm] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    event_date: '',
-    guest_count: '',
-    event_type: 'Wedding',
-    location: '',
-    budget: '',
-    details: '',
-  })
+  const areas = useMemo(() => areasFor(stateName), [stateName])
 
+  // The deposit is worked out by the caterer's own rates, so we ask the server
+  // rather than guessing here. Debounced so typing a guest count does not fire
+  // a request on every keystroke.
+  const quoteSeq = useRef(0)
   useEffect(() => {
-    api.settings().then(setSettings).catch(() => undefined)
-  }, [])
+    const guests = Number(guestCount) || 0
+    const seq = ++quoteSeq.current
+    setQuoting(true)
 
-  function update(k: keyof typeof form, v: string) {
-    setForm((f) => ({ ...f, [k]: v }))
+    const timer = window.setTimeout(() => {
+      api
+        .quote({
+          job_kind: jobKind,
+          event_type: jobKind === 'cook_only' ? 'cook_only' : eventType,
+          guest_count: guests,
+          dishes,
+        })
+        .then((q) => {
+          if (seq === quoteSeq.current) setQuote(q)
+        })
+        .catch(() => {
+          if (seq === quoteSeq.current) setQuote(null)
+        })
+        .finally(() => {
+          if (seq === quoteSeq.current) setQuoting(false)
+        })
+    }, 350)
+
+    return () => window.clearTimeout(timer)
+  }, [jobKind, eventType, guestCount, dishes])
+
+  function toggleDish(slug: string) {
+    setDishes((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
+    )
+  }
+
+  function onStateChange(next: string) {
+    setStateName(next)
+    setLga('')
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
+    setError('')
     setSubmitting(true)
     try {
-      const res = await api.createCatering({
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        email: form.email.trim(),
-        event_date: form.event_date,
-        guest_count: Number(form.guest_count),
-        event_type: form.event_type,
-        location: form.location.trim(),
-        budget_kobo: form.budget ? Math.round(Number(form.budget) * 100) : null,
-        details: form.details.trim() || null,
+      const created = await api.createCatering({
+        name,
+        phone,
+        email,
+        event_date: eventDate,
+        guest_count: Number(guestCount) || 0,
+        event_type: jobKind === 'cook_only' ? 'cook_only' : eventType,
+        location: `${street}, ${lga}, ${stateName}`,
+        details: details || null,
+        state: stateName,
+        lga,
+        street_address: street,
+        dishes,
+        other_dishes: otherDishes,
+        contact_channel: contactChannel,
+        contact_handle: contactHandle,
+        job_kind: jobKind,
       })
-      setSent(res.reference)
+      setDone(created)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {
-      setError((err as Error).message)
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
     }
   }
+
+  if (done) {
+    return (
+      <div className="catering-page">
+        <div className="container">
+          <div className="catering-done">
+            <h2>We have your request</h2>
+            <p>
+              Your reference is <strong>{done.reference}</strong>. A caterer will call you on{' '}
+              {done.contact_channel === 'phone' ? 'the number you gave' : done.contact_channel} to
+              confirm the menu and the date.
+            </p>
+            <p>
+              Starting deposit: <strong>{naira(done.deposit_kobo)}</strong>
+            </p>
+            <p className="catering-form__note">{done.deposit_reason}</p>
+            <Link to="/catering/agreement" className="btn btn--primary">
+              Read the agreement
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const showGuests = jobKind === 'event'
+  const showEventType = jobKind !== 'cook_only'
 
   return (
     <div className="catering-page">
       <header className="catering-page__head">
         <div className="container catering-page__head-inner">
           <div>
-            <span className="eyebrow">Full-service catering</span>
-            <h1>Let us cook for your people.</h1>
+            <span className="eyebrow">Catering</span>
+            <h1>Let us cook for your people</h1>
             <p className="lede">
-              Weddings, naming ceremonies, birthdays, office lunches, burials, church events. Tell
-              us the date and headcount. We will send a menu and a quote within 24 hours.
+              Tell us the date, the crowd and the dishes. Your starting deposit is worked out from
+              the caterer's own rates, so you see the number before you commit.
             </p>
           </div>
-          <div className="catering-page__aside">
+
+          <aside className="catering-page__aside">
             <span className="catering-page__aside-label">Starting deposit</span>
-            <strong>{naira(settings?.catering_deposit_kobo ?? 10000000)}</strong>
-            <p>Secures your date. Non-refundable, and deducted from your final bill.</p>
-          </div>
+            <strong>{quoting ? 'Working it out' : quote ? naira(quote.deposit_kobo) : 'Ask us'}</strong>
+            <p>
+              {quote?.reason ??
+                'Pick your event and dishes and the deposit appears here with the reason behind it.'}
+            </p>
+          </aside>
         </div>
       </header>
 
       <div className="container catering-page__body">
         <div className="catering-page__steps">
-          {[
-            ['Tell us the details', 'Date, guests, location and the kind of food you want.'],
-            ['We send a menu + quote', 'Within 24 hours, with portion guidance per guest.'],
-            ['Pay the deposit', 'Your date is locked once the non-refundable deposit clears.'],
-            ['We cook and serve', 'On-site cooking or delivery in chafing trays, your choice.'],
-          ].map(([t, b], i) => (
-            <div key={t} className="catering-step">
-              <span>{String(i + 1).padStart(2, '0')}</span>
-              <div>
-                <h3>{t}</h3>
-                <p>{b}</p>
-              </div>
+          <div className="catering-step">
+            <span>1</span>
+            <div>
+              <h3>Tell us the job</h3>
+              <p>Event catering, cook only, or something we price by hand.</p>
             </div>
-          ))}
+          </div>
+          <div className="catering-step">
+            <span>2</span>
+            <div>
+              <h3>Pick the dishes</h3>
+              <p>Choose the categories you want. Add anything unusual in the box.</p>
+            </div>
+          </div>
+          <div className="catering-step">
+            <span>3</span>
+            <div>
+              <h3>Say where and when</h3>
+              <p>State, area and a landmark so the team can find the venue.</p>
+            </div>
+          </div>
+          <div className="catering-step">
+            <span>4</span>
+            <div>
+              <h3>Choose how we reach you</h3>
+              <p>WhatsApp, a phone call, Telegram or Snapchat. Whichever suits you.</p>
+            </div>
+          </div>
         </div>
 
-        {sent ? (
-          <div className="catering-done">
-            <div className="order-hero__icon" aria-hidden="true">
-              ✓
-            </div>
-            <h2>Request received</h2>
-            <p>
-              Your reference is <strong>{sent}</strong>. We'll reach out on WhatsApp and email
-              within 24 hours.
-            </p>
-          </div>
-        ) : (
-          <form className="catering-form" onSubmit={onSubmit}>
-            <h2>Request a quote</h2>
+        <form className="catering-form" onSubmit={onSubmit}>
+          <h2>Your request</h2>
 
-            <div className="panel__grid">
-              <div className="field">
-                <label htmlFor="c-name">Your name</label>
-                <input
-                  id="c-name"
-                  required
-                  value={form.name}
-                  onChange={(e) => update('name', e.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="c-phone">Phone</label>
-                <input
-                  id="c-phone"
-                  required
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => update('phone', e.target.value)}
-                />
-              </div>
-              <div className="field panel__full">
-                <label htmlFor="c-email">Email</label>
-                <input
-                  id="c-email"
-                  required
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => update('email', e.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="c-date">Event date</label>
-                <input
-                  id="c-date"
-                  required
-                  type="date"
-                  value={form.event_date}
-                  onChange={(e) => update('event_date', e.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="c-guests">Guests</label>
-                <input
-                  id="c-guests"
-                  required
-                  type="number"
-                  min={10}
-                  value={form.guest_count}
-                  onChange={(e) => update('guest_count', e.target.value)}
-                  placeholder="120"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="c-type">Event type</label>
-                <select
-                  id="c-type"
-                  value={form.event_type}
-                  onChange={(e) => update('event_type', e.target.value)}
+          <div className="field">
+            <label>What kind of job is it?</label>
+            <div className="choices choices--stack">
+              {JOB_KINDS.map((k) => (
+                <label
+                  key={k.value}
+                  className={`choice ${jobKind === k.value ? 'is-active' : ''}`}
                 >
-                  {['Wedding', 'Naming ceremony', 'Birthday', 'Corporate lunch', 'Church event', 'Burial', 'Other'].map(
-                    (t) => (
-                      <option key={t}>{t}</option>
-                    ),
-                  )}
+                  <input
+                    type="radio"
+                    name="job_kind"
+                    value={k.value}
+                    checked={jobKind === k.value}
+                    onChange={() => setJobKind(k.value)}
+                    className="sr-only"
+                  />
+                  <strong>{k.label}</strong>
+                  <span className="field__hint">{k.blurb}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="panel__grid">
+            {showEventType && (
+              <div className="field">
+                <label htmlFor="event_type">What is the occasion?</label>
+                <select
+                  id="event_type"
+                  value={eventType}
+                  onChange={(e) => setEventType(e.target.value)}
+                >
+                  {EVENT_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
                 </select>
               </div>
+            )}
+
+            {showGuests && (
               <div className="field">
-                <label htmlFor="c-budget">Budget (₦, optional)</label>
+                <label htmlFor="guests">How many guests?</label>
                 <input
-                  id="c-budget"
+                  id="guests"
                   type="number"
-                  min={0}
-                  value={form.budget}
-                  onChange={(e) => update('budget', e.target.value)}
-                  placeholder="500000"
+                  min={1}
+                  inputMode="numeric"
+                  value={guestCount}
+                  onChange={(e) => setGuestCount(e.target.value)}
                 />
+                <span className="field__hint">A rough number is fine for now.</span>
               </div>
-              <div className="field panel__full">
-                <label htmlFor="c-location">Event location</label>
-                <input
-                  id="c-location"
-                  required
-                  value={form.location}
-                  onChange={(e) => update('location', e.target.value)}
-                  placeholder="Venue name, area, city"
-                />
-              </div>
-              <div className="field panel__full">
-                <label htmlFor="c-details">What are you thinking?</label>
-                <textarea
-                  id="c-details"
-                  value={form.details}
-                  onChange={(e) => update('details', e.target.value)}
-                  placeholder="Jollof rice, fried rice, peppered chicken, small chops, zobo…"
-                />
-              </div>
+            )}
+
+            <div className="field">
+              <label htmlFor="event_date">When do you need us?</label>
+              <input
+                id="event_date"
+                type="date"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <span className="field__label" id="dishes-label">
+              Which dishes?
+            </span>
+            <ul className="dish-list" aria-labelledby="dishes-label">
+              {DISH_CATEGORIES.map((c) => {
+                const on = dishes.includes(c.slug);
+                return (
+                  <li key={c.slug}>
+                    <label className={`dish-row ${on ? 'is-active' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={() => toggleDish(c.slug)}
+                        className="sr-only"
+                      />
+                      <span className="dish-row__name">{c.label}</span>
+                      <span className="dish-row__switch" aria-hidden="true" />
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+            <span className="field__hint">Switch on as many as you need.</span>
+          </div>
+
+          <div className="field">
+            <label htmlFor="other_dishes">Anything else on the menu?</label>
+            <textarea
+              id="other_dishes"
+              rows={3}
+              placeholder="e.g. pounded yam, ofada sauce, a small chops platter"
+              value={otherDishes}
+              onChange={(e) => setOtherDishes(e.target.value)}
+            />
+            <span className="field__hint">
+              Optional. Write in anything that is not in the list above.
+            </span>
+          </div>
+
+          <div className="panel__grid">
+            <div className="field">
+              <label htmlFor="state">State</label>
+              <select id="state" value={stateName} onChange={(e) => onStateChange(e.target.value)}>
+                {STATES.map((s) => (
+                  <option key={s.state} value={s.state}>
+                    {s.state}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {error && <p className="form-error">{error}</p>}
+            <div className="field">
+              <label htmlFor="lga">Area or LGA</label>
+              <select id="lga" value={lga} onChange={(e) => setLga(e.target.value)} required>
+                <option value="">Choose an area</option>
+                {areas.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <button className="btn btn--primary btn--lg" type="submit" disabled={submitting}>
-              {submitting ? 'Sending…' : 'Send request'}
-            </button>
+            <div className="field panel__full">
+              <label htmlFor="street">Street or landmark</label>
+              <input
+                id="street"
+                type="text"
+                placeholder="e.g. 14 Aminu Kano Crescent, beside Sahad Stores"
+                value={street}
+                onChange={(e) => setStreet(e.target.value)}
+                required
+              />
+              <span className="field__hint">
+                A landmark helps the team find the venue on the day.
+              </span>
+            </div>
+          </div>
 
-            <p className="catering-form__note">
-              Deposits are non-refundable. Final headcount is due 5 days before the event.{' '}
-              <Link to="/catering/agreement" className="catering-form__link">
-                Read the full agreement
-              </Link>
-              .
-            </p>
-          </form>
-        )}
+          <div className="field">
+            <label>How should we reach you?</label>
+            <div className="choices">
+              {CONTACT_CHANNELS.map((c) => (
+                <label
+                  key={c.value}
+                  className={`choice ${contactChannel === c.value ? 'is-active' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="contact_channel"
+                    value={c.value}
+                    checked={contactChannel === c.value}
+                    onChange={() => setContactChannel(c.value)}
+                    className="sr-only"
+                  />
+                  <strong>{c.label}</strong>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="panel__grid">
+            <div className="field">
+              <label htmlFor="contact_handle">
+                {CONTACT_CHANNELS.find((c) => c.value === contactChannel)?.hint}
+              </label>
+              <input
+                id="contact_handle"
+                type="text"
+                value={contactHandle}
+                onChange={(e) => setContactHandle(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="name">Your name</label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="phone">Phone number</label>
+              <input
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <span className="field__hint">Optional, for the written quote.</span>
+            </div>
+
+            <div className="field panel__full">
+              <label htmlFor="details">Anything we should know?</label>
+              <textarea
+                id="details"
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                placeholder="Allergies, a colour theme, serving time, parking notes"
+              />
+            </div>
+          </div>
+
+          {quote && quote.lines.length > 0 && (
+            <div className="quote-breakdown">
+              <h3>How the deposit is worked out</h3>
+              <ul>
+                {quote.lines.map((line) => (
+                  <li key={line.label}>
+                    <span>{line.label}</span>
+                    <span>{naira(line.amount_kobo)}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="quote-breakdown__total">
+                <span>Starting deposit</span>
+                <strong>{naira(quote.deposit_kobo)}</strong>
+              </p>
+            </div>
+          )}
+
+          {error && <p className="form-error">{error}</p>}
+
+          <button type="submit" className="btn btn--primary btn--lg" disabled={submitting}>
+            {submitting ? 'Sending' : 'Send my request'}
+          </button>
+
+          <p className="catering-form__note">
+            The deposit is non-refundable once we hold your date. Read the{' '}
+            <Link to="/catering/agreement" className="catering-form__link">
+              catering agreement
+            </Link>{' '}
+            before you send.
+          </p>
+        </form>
       </div>
     </div>
   )

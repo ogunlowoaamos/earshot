@@ -17,6 +17,7 @@ export type MenuItem = {
   is_available: boolean
   is_featured: boolean
   tags: string[]
+  ingredients: string[]
 }
 
 export type CartLine = {
@@ -73,8 +74,60 @@ export type CateringRequest = {
   location: string
   budget_kobo: number | null
   details: string | null
+  deposit_kobo: number
+  deposit_status: string
+  proof_url: string | null
   status: string
   created_at: string
+  state: string
+  lga: string
+  street_address: string
+  dishes: string
+  other_dishes: string
+  contact_channel: string
+  contact_handle: string
+  job_kind: string
+  deposit_reason: string
+}
+
+export type CateringRate = {
+  id: number
+  event_type: string
+  rate_kobo: number
+  note: string
+  is_active: boolean
+  sort_order: number
+}
+
+export type DishRate = {
+  id: number
+  category_slug: string
+  uplift_kobo: number
+  note: string
+}
+
+export type CookRate = {
+  id: number
+  category_slug: string
+  rate_kobo: number
+  note: string
+}
+
+export type CateringPricing = {
+  rates: CateringRate[]
+  dish_rates: DishRate[]
+  cook_rates: CookRate[]
+}
+
+export type QuoteLine = {
+  label: string
+  amount_kobo: number
+}
+
+export type Quote = {
+  deposit_kobo: number
+  reason: string
+  lines: QuoteLine[]
 }
 
 export type DeliveryZone = {
@@ -139,6 +192,19 @@ export const api = {
 
   createCatering: (payload: Record<string, unknown>) =>
     request<CateringRequest>('/catering', { method: 'POST', body: JSON.stringify(payload) }),
+
+  quote: (payload: Record<string, unknown>) =>
+    request<Quote>('/catering/quote', { method: 'POST', body: JSON.stringify(payload) }),
+
+  adminPricing: (token: string) =>
+    request<CateringPricing>('/admin/pricing', { headers: { Authorization: `Bearer ${token}` } }),
+
+  adminSaveRate: (token: string, kind: string, payload: Record<string, unknown>) =>
+    request<CateringPricing>(`/admin/pricing/${kind}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    }),
 
   adminLogin: (username: string, password: string) =>
     request<{ token: string }>('/admin/login', {

@@ -270,6 +270,173 @@ const ITEMS: &[(&str, &str, i64, &str, &str, bool, &str)] = &[
     ),
 ];
 
+/// Ingredients per dish, keyed by dish name. Kept separate from `ITEMS` so the
+/// long lists do not drown the price table. One ingredient per line, exactly as
+/// the caterer would type it in the dashboard.
+const INGREDIENTS: &[(&str, &str)] = &[
+    (
+        "Smoky Party Jollof",
+        "Long-grain parboiled rice\nPlum tomatoes\nRed bell peppers\nScotch bonnet\nOnion\nTomato paste\nBay leaves\nCurry powder\nThyme\nChicken stock\nVegetable oil\nSalt",
+    ),
+    (
+        "Ofada Rice & Ayamase",
+        "Ofada rice\nGreen bell peppers\nScotch bonnet\nOnion\nLocust bean (iru)\nPalm oil\nAssorted meat\nBoiled egg\nStockfish\nSalt",
+    ),
+    (
+        "Coconut Fried Rice",
+        "Long-grain rice\nCoconut milk\nPrawns\nSweetcorn\nCarrot\nGreen beans\nSpring onion\nCurry powder\nThyme\nVegetable oil\nSalt",
+    ),
+    (
+        "Native Jollof (Iwuk Edesi)",
+        "Local rice\nPalm oil\nDried fish\nCrayfish\nScent leaf\nOnion\nScotch bonnet\nSmoked prawns\nSalt",
+    ),
+    (
+        "Egusi Soup",
+        "Ground melon seeds (egusi)\nAssorted meat\nStockfish\nBitter leaf\nPalm oil\nOnion\nScotch bonnet\nCrayfish\nSeasoning cubes\nSalt",
+    ),
+    (
+        "Ogbono Soup",
+        "Ground ogbono seeds\nBeef tripe\nDried fish\nPalm oil\nOnion\nCrayfish\nScent leaf\nSeasoning cubes\nSalt",
+    ),
+    (
+        "Efo Riro",
+        "Spinach\nLocust bean (iru)\nPalm oil\nAssorted meat\nSmoked fish\nOnion\nScotch bonnet\nCrayfish\nSalt",
+    ),
+    (
+        "Catfish Pepper Soup",
+        "Fresh catfish\nUziza leaves\nUtazi leaves\nGinger\nGarlic\nScent leaf\nPepper soup spice\nOnion\nSalt",
+    ),
+    (
+        "Pounded Yam",
+        "Yam\nWater\nSalt",
+    ),
+    (
+        "Eba (Garri)",
+        "Cassava garri\nHot water",
+    ),
+    (
+        "Charcoal Grilled Chicken",
+        "Half chicken\nGinger\nGarlic\nYaji spice\nPaprika\nOnion\nVegetable oil\nSalt",
+    ),
+    (
+        "Suya Skewers",
+        "Beef sirloin\nYaji spice\nGroundnut powder\nGinger\nGarlic\nOnion\nTomato\nVegetable oil\nSalt",
+    ),
+    (
+        "Peppered Goat Meat",
+        "Goat meat\nScotch bonnet\nOnion\nGreen bell pepper\nGinger\nGarlic\nVegetable oil\nSeasoning cubes\nSalt",
+    ),
+    (
+        "Grilled Tilapia",
+        "Whole tilapia\nGinger\nGarlic\nLemon\nYaji spice\nOnion\nVegetable oil\nSalt",
+    ),
+    (
+        "Small Chops Platter",
+        "Puff-puff dough\nSamosa pastry\nSpring roll pastry\nPeppered gizzard\nChin chin\nVegetable oil\nSalt",
+    ),
+    (
+        "Dodo (Fried Plantain)",
+        "Ripe plantain\nVegetable oil\nSalt",
+    ),
+    (
+        "Moi Moi",
+        "Peeled beans\nRed bell pepper\nOnion\nBoiled egg\nSmoked fish\nVegetable oil\nSalt",
+    ),
+    (
+        "Akara & Pap",
+        "Peeled beans\nOnion\nScotch bonnet\nVegetable oil\nFermented corn (pap)\nSugar\nSalt",
+    ),
+    (
+        "Meat Pie",
+        "Plain flour\nButter\nMinced beef\nPotato\nCarrot\nOnion\nEgg wash\nSalt",
+    ),
+    (
+        "Chin Chin",
+        "Plain flour\nSugar\nButter\nEgg\nNutmeg\nMilk\nVegetable oil\nSalt",
+    ),
+    (
+        "Coconut Candy",
+        "Fresh coconut\nSugar\nWater\nVanilla",
+    ),
+    (
+        "Zobo",
+        "Dried hibiscus petals\nGinger\nPineapple\nCloves\nSugar\nWater",
+    ),
+    (
+        "Chapman",
+        "Blackcurrant cordial\nOrange\nLemon\nCucumber\nAngostura bitters\nIce\nWater",
+    ),
+    (
+        "Fresh Ginger Juice",
+        "Pineapple\nFresh ginger\nLime\nWater",
+    ),
+];
+
+/// Starting per-guest rates. The caterer edits these in the dashboard, so these
+/// are only a sensible opening position, not a fixed price.
+/// event type, naira per guest, reason shown to the customer
+const EVENT_RATES: &[(&str, i64, &str)] = &[
+    (
+        "birthday",
+        1500,
+        "Birthdays need serving staff, a cake table and extra small chops, so the deposit is set per guest.",
+    ),
+    (
+        "naming",
+        1200,
+        "Naming ceremonies are usually shorter and lighter on staff, so the per-guest rate is lower.",
+    ),
+    (
+        "wedding",
+        4000,
+        "Weddings need a full service team, warmers and a tasting session, which is why the per-guest rate is highest.",
+    ),
+    (
+        "corporate",
+        2500,
+        "Corporate jobs need timed delivery, branded packaging and an invoice, so they carry a mid per-guest rate.",
+    ),
+    (
+        "burial",
+        1800,
+        "Burials are large and often outdoors, so we allow for extra warmers and transport.",
+    ),
+    (
+        "anniversary",
+        2000,
+        "Anniversaries sit between a birthday and a wedding in staffing, so the rate reflects that.",
+    ),
+    (
+        "cook_only",
+        0,
+        "A cook making dishes for you is priced per dish, not per guest.",
+    ),
+];
+
+/// How much a dish category adds to the per-guest rate.
+/// category slug, naira per guest
+const DISH_UPLIFTS: &[(&str, i64)] = &[
+    ("rice-grains", 0),
+    ("soups-swallow", 200),
+    ("grills", 500),
+    ("small-chops", 300),
+    ("breakfast", 100),
+    ("desserts", 150),
+    ("drinks", 100),
+];
+
+/// What a cook-only job costs for one dish of this category.
+/// category slug, naira per dish
+const COOK_RATES: &[(&str, i64)] = &[
+    ("rice-grains", 12000),
+    ("soups-swallow", 15000),
+    ("grills", 18000),
+    ("small-chops", 8000),
+    ("breakfast", 6000),
+    ("desserts", 7000),
+    ("drinks", 5000),
+];
+
 pub async fn run(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
     for (key, value) in [
         ("delivery_fee_kobo", "200000"),
@@ -323,8 +490,9 @@ pub async fn run(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
 
             sqlx::query(
                 "INSERT INTO menu_items
-                    (category_id, name, description, price_kobo, image_url, tags, is_available, is_featured)
-                 VALUES (?, ?, ?, ?, ?, ?, 1, ?)",
+                    (category_id, name, description, price_kobo, image_url, tags,
+                     ingredients, is_available, is_featured)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)",
             )
             .bind(category_id)
             .bind(name)
@@ -332,10 +500,63 @@ pub async fn run(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
             .bind(price_naira * 100)
             .bind(format!("{IMG}{photo}?auto=format&fit=crop&w=900&q=70"))
             .bind(tags)
+            .bind(
+                INGREDIENTS
+                    .iter()
+                    .find(|(dish, _)| dish == name)
+                    .map(|(_, list)| *list)
+                    .unwrap_or(""),
+            )
             .bind(if *featured { 1 } else { 0 })
             .execute(pool)
             .await?;
         }
+    }
+
+    // Ingredients were added after the first dishes were seeded, so fill in any
+    // dish that is still blank. This is what makes the feature appear on an
+    // existing database without wiping it.
+    for (dish, list) in INGREDIENTS {
+        sqlx::query("UPDATE menu_items SET ingredients = ? WHERE name = ? AND ingredients = ''")
+            .bind(list)
+            .bind(dish)
+            .execute(pool)
+            .await?;
+    }
+
+    for (index, (event_type, naira, note)) in EVENT_RATES.iter().enumerate() {
+        sqlx::query(
+            "INSERT OR IGNORE INTO catering_rates (event_type, rate_kobo, note, sort_order)
+             VALUES (?, ?, ?, ?)",
+        )
+        .bind(event_type)
+        .bind(naira * 100)
+        .bind(note)
+        .bind(index as i64)
+        .execute(pool)
+        .await?;
+    }
+
+    for (slug, naira) in DISH_UPLIFTS {
+        sqlx::query(
+            "INSERT OR IGNORE INTO catering_dish_rates (category_slug, uplift_kobo)
+             VALUES (?, ?)",
+        )
+        .bind(slug)
+        .bind(naira * 100)
+        .execute(pool)
+        .await?;
+    }
+
+    for (slug, naira) in COOK_RATES {
+        sqlx::query(
+            "INSERT OR IGNORE INTO catering_cook_rates (category_slug, rate_kobo)
+             VALUES (?, ?)",
+        )
+        .bind(slug)
+        .bind(naira * 100)
+        .execute(pool)
+        .await?;
     }
 
     let zone_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM delivery_zones")

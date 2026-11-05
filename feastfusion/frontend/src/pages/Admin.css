@@ -168,10 +168,10 @@
 }
 
 .admin-order__pays select {
-  padding: 0.4rem 0.6rem;
+  padding: 0.4rem 2.4rem 0.4rem 0.6rem;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
-  background: var(--white);
+  background-color: var(--white);
   font-size: var(--step--1);
 }
 
@@ -195,7 +195,7 @@
 
 .status-btn {
   padding: 0.4rem 0.8rem;
-  border-radius: var(--r-full);
+  border-radius: var(--r-sm);
   border: 1px solid var(--border-strong);
   background: var(--white);
   font-size: 0.72rem;
@@ -366,6 +366,82 @@
   }
 
   .admin-new .btn {
+    width: 100%;
+  }
+}
+
+/* ---------- deposit calculator ---------- */
+
+.pricing-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.pricing-panel__intro {
+  max-width: 62ch;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.pricing-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.pricing-group h2 {
+  font-size: var(--step-2);
+}
+
+.pricing-group__hint {
+  max-width: 62ch;
+  font-size: var(--step--1);
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.rate-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+}
+
+.rate-row__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.rate-row__now {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  color: var(--gold-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.rate-row__fields {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  gap: var(--sp-3);
+  align-items: end;
+}
+
+.rate-row__fields .btn {
+  min-height: 44px;
+}
+
+@media (max-width: 720px) {
+  .rate-row__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .rate-row__fields .btn {
     width: 100%;
   }
 }

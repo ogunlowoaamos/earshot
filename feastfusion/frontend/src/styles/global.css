@@ -134,7 +134,7 @@ textarea {
   justify-content: center;
   gap: var(--sp-2);
   padding: 0.85rem 1.6rem;
-  border-radius: var(--r-full);
+  border-radius: var(--r-sm);
   font-weight: 600;
   font-size: var(--step-0);
   line-height: 1;
@@ -235,7 +235,8 @@ textarea {
   gap: var(--sp-2);
 }
 
-.field label {
+.field label,
+.field__label {
   font-size: var(--step--1);
   font-weight: 600;
   color: var(--ink-600);
@@ -246,8 +247,8 @@ textarea {
 .field textarea {
   padding: 0.8rem 1rem;
   border: 1px solid var(--border-strong);
-  border-radius: var(--r-md);
-  background: var(--white);
+  border-radius: var(--r-sm);
+  background-color: var(--white);
   transition: border-color var(--dur-fast) var(--ease-out);
 }
 
@@ -262,6 +263,49 @@ textarea {
 .field textarea {
   resize: vertical;
   min-height: 96px;
+}
+
+/* Dropdowns: draw our own arrow so it sits in the same place on every
+   browser and every zoom level. Must stay after the rules above. */
+.field select,
+.admin-order__pays select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: var(--chevron-down);
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 12px 8px;
+  padding-right: 2.6rem;
+  cursor: pointer;
+}
+
+/* The open dropdown panel. 8px corners, matching everything else. */
+@supports (appearance: base-select) {
+  .field select,
+  .admin-order__pays select {
+    appearance: base-select;
+  }
+
+  .field select::picker-icon,
+  .admin-order__pays select::picker-icon {
+    display: none;
+  }
+
+  .field select::picker(select),
+  .admin-order__pays select::picker(select) {
+    margin-top: 6px;
+    padding: 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-sm);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .field select option,
+  .admin-order__pays select option {
+    padding: 0.5rem 0.65rem;
+    border-radius: 6px;
+  }
 }
 
 .field__hint {

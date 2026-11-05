@@ -9,8 +9,10 @@ use crate::{
     auth::{issue_token, require_admin, verify_password},
     error::{AppError, AppResult},
     models::{
-        CateringRequest, Login, MenuItem, NewMenuItem, Order, PatchMenuItem, PatchOrder,
+        CateringPricing, CateringRequest, Login, MenuItem, NewMenuItem, Order, PatchMenuItem,
+        PatchOrder,
     },
+    pricing,
     routes::{catering, menu, orders},
     AppState,
 };
@@ -135,8 +137,9 @@ pub async fn create_menu_item(
 
     let inserted = sqlx::query(
         "INSERT INTO menu_items
-            (category_id, name, description, price_kobo, image_url, tags, is_available, is_featured)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (category_id, name, description, price_kobo, image_url, tags, ingredients,
+             is_available, is_featured)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(category_id)
     .bind(name)
@@ -144,6 +147,7 @@ pub async fn create_menu_item(
     .bind(payload.price_kobo)
     .bind(payload.image_url.trim())
     .bind(payload.tags.join(", "))
+    .bind(payload.ingredients.join("\n"))
     .bind(if payload.is_available { 1 } else { 0 })
     .bind(if payload.is_featured { 1 } else { 0 })
     .execute(&state.pool)
@@ -170,6 +174,10 @@ pub async fn update_menu_item(
         .tags
         .map(|t| t.join(", "))
         .unwrap_or_else(|| existing.tags.join(", "));
+    let ingredients = patch
+        .ingredients
+        .map(|i| i.join("\n"))
+        .unwrap_or_else(|| existing.ingredients.join("\n"));
     let is_available = patch.is_available.unwrap_or(existing.is_available);
     let is_featured = patch.is_featured.unwrap_or(existing.is_featured);
 
@@ -180,7 +188,7 @@ pub async fn update_menu_item(
     sqlx::query(
         "UPDATE menu_items
          SET name = ?, description = ?, price_kobo = ?, image_url = ?, tags = ?,
-             is_available = ?, is_featured = ?
+             ingredients = ?, is_available = ?, is_featured = ?
          WHERE id = ?",
     )
     .bind(name.trim())
@@ -188,6 +196,7 @@ pub async fn update_menu_item(
     .bind(price_kobo)
     .bind(image_url.trim())
     .bind(tags)
+    .bind(ingredients)
     .bind(if is_available { 1 } else { 0 })
     .bind(if is_featured { 1 } else { 0 })
     .bind(id)
@@ -214,4 +223,98 @@ pub async fn delete_menu_item(
     }
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn get_pricing(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+) -> AppResult<Json<CateringPricing>> {
+    require_admin(&headers)?;
+    Ok(Json(pricing::load_pricing(&state.pool).await?))
+}
+
+/// Saves one row of the price list. The dashboard sends the whole row back, so
+/// a single endpoint covers event rates, dish uplifts and cook-only rates.
+pub async fn save_rate(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    Path(kind): Path<String>,
+    Json(body): Json<Value>,
+) -> AppResult<Json<CateringPricing>> {
+    require_admin(&headers)?;
+
+    let key = body
+        .get("key")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|k| !k.is_empty())
+        .ok_or_else(|| AppError::BadRequest("Which rate is this?".into()))?;
+
+    let amount = body
+        .get("amount_kobo")
+        .and_then(Value::as_i64)
+        .ok_or_else(|| AppError::BadRequest("Enter an amount.".into()))?;
+
+    if amount < 0 {
+        return Err(AppError::BadRequest("Amount cannot be negative.".into()));
+    }
+
+    let note = body
+        .get("note")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .trim()
+        .to_string();
+
+    match kind.as_str() {
+        "event" => {
+            sqlx::query(
+                "INSERT INTO catering_rates (event_type, rate_kobo, note)
+                 VALUES (?, ?, ?)
+                 ON CONFLICT(event_type) DO UPDATE SET
+                    rate_kobo = excluded.rate_kobo,
+                    note = excluded.note",
+            )
+            .bind(key)
+            .bind(amount)
+            .bind(&note)
+            .execute(&state.pool)
+            .await?;
+        }
+        "dish" => {
+            sqlx::query(
+                "INSERT INTO catering_dish_rates (category_slug, uplift_kobo, note)
+                 VALUES (?, ?, ?)
+                 ON CONFLICT(category_slug) DO UPDATE SET
+                    uplift_kobo = excluded.uplift_kobo,
+                    note = excluded.note",
+            )
+            .bind(key)
+            .bind(amount)
+            .bind(&note)
+            .execute(&state.pool)
+            .await?;
+        }
+        "cook" => {
+            sqlx::query(
+                "INSERT INTO catering_cook_rates (category_slug, rate_kobo, note)
+                 VALUES (?, ?, ?)
+                 ON CONFLICT(category_slug) DO UPDATE SET
+                    rate_kobo = excluded.rate_kobo,
+                    note = excluded.note",
+            )
+            .bind(key)
+            .bind(amount)
+            .bind(&note)
+            .execute(&state.pool)
+            .await?;
+        }
+        other => {
+            return Err(AppError::BadRequest(format!(
+                "Unknown rate kind: {other}"
+            )))
+        }
+    }
+
+    Ok(Json(pricing::load_pricing(&state.pool).await?))
 }

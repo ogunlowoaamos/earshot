@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { api, naira, type Category, type CateringRequest, type MenuItem, type Order } from '../lib/api'
+import { api, naira, type Category, type CateringPricing, type CateringRequest, type MenuItem, type Order } from '../lib/api'
 import './Admin.css'
 
-type Tab = 'orders' | 'menu' | 'catering'
+type Tab = 'orders' | 'menu' | 'catering' | 'pricing'
 
 const TOKEN_KEY = 'feastfusion.admin.token'
 
@@ -34,7 +34,7 @@ export function Admin() {
         </header>
 
         <nav className="admin-tabs" role="tablist">
-          {(['orders', 'menu', 'catering'] as Tab[]).map((t) => (
+          {(['orders', 'menu', 'catering', 'pricing'] as Tab[]).map((t) => (
             <button
               key={t}
               role="tab"
@@ -42,7 +42,13 @@ export function Admin() {
               className={`admin-tab ${tab === t ? 'is-active' : ''}`}
               onClick={() => setTab(t)}
             >
-              {t === 'orders' ? 'Orders' : t === 'menu' ? 'Menu items' : 'Catering requests'}
+              {t === 'orders'
+                ? 'Orders'
+                : t === 'menu'
+                  ? 'Menu items'
+                  : t === 'catering'
+                    ? 'Catering requests'
+                    : 'Deposit calculator'}
             </button>
           ))}
         </nav>
@@ -50,6 +56,7 @@ export function Admin() {
         {tab === 'orders' && <OrdersPanel token={token} />}
         {tab === 'menu' && <MenuPanel token={token} />}
         {tab === 'catering' && <CateringPanel token={token} />}
+        {tab === 'pricing' && <PricingPanel token={token} />}
       </div>
     </div>
   )
@@ -355,6 +362,7 @@ function NewItemForm({
     category_slug: categories[0]?.slug ?? '',
     image_url: '',
     tags: '',
+    ingredients: '',
   })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -380,6 +388,10 @@ function NewItemForm({
           .filter(Boolean),
         is_available: true,
         is_featured: false,
+        ingredients: form.ingredients
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean),
       })
       onCreated(item)
     } catch (err) {
@@ -436,6 +448,18 @@ function NewItemForm({
             value={form.description}
             onChange={(e) => set('description', e.target.value)}
           />
+        </div>
+        <div className="field panel__full">
+          <label>Ingredients (one per line)</label>
+          <textarea
+            value={form.ingredients}
+            onChange={(e) => set('ingredients', e.target.value)}
+            placeholder={'Long grain rice\nTomato and pepper base\nChicken stock'}
+          />
+          <span className="field__hint">
+            Customers see this when they open the dish. Leave it blank if you would rather not list
+            them.
+          </span>
         </div>
       </div>
       {error && <p className="form-error">{error}</p>}
@@ -502,6 +526,191 @@ function CateringPanel({ token }: { token: string }) {
           </div>
         </article>
       ))}
+    </div>
+  )
+}
+
+/* ---------------- deposit calculator ---------------- */
+
+const EVENT_LABELS: Record<string, string> = {
+  birthday: 'Birthday party',
+  naming: 'Naming ceremony',
+  wedding: 'Wedding',
+  corporate: 'Corporate event',
+  burial: 'Burial',
+  anniversary: 'Anniversary',
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  'rice-grains': 'Rice and grains',
+  'soups-swallow': 'Soups and swallow',
+  grills: 'Grills',
+  'small-chops': 'Small chops',
+  breakfast: 'Breakfast',
+  desserts: 'Desserts',
+  drinks: 'Drinks',
+}
+
+function PricingPanel({ token }: { token: string }) {
+  const [pricing, setPricing] = useState<CateringPricing | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState<string | null>(null)
+
+  function load() {
+    setLoading(true)
+    api
+      .adminPricing(token)
+      .then(setPricing)
+      .catch((e) => setError((e as Error).message))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(load, [token])
+
+  async function save(kind: string, key: string, nairaValue: string, note: string) {
+    const amount = Math.round(Number(nairaValue) * 100)
+    if (!Number.isFinite(amount) || amount < 0) {
+      setError('Enter a valid amount in naira.')
+      return
+    }
+    setSaving(`${kind}:${key}`)
+    setError(null)
+    try {
+      const next = await api.adminSaveRate(token, kind, {
+        key,
+        amount_kobo: amount,
+        note,
+      })
+      setPricing(next)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  if (loading) return <p className="admin-empty">Loading your rates</p>
+  if (!pricing) return <p className="admin-empty">{error ?? 'Could not load your rates.'}</p>
+
+  return (
+    <div className="pricing-panel">
+      <p className="pricing-panel__intro">
+        These numbers decide the starting deposit a customer sees. Change a rate and the form
+        updates straight away. The note is shown to the customer as the reason.
+      </p>
+
+      {error && <p className="form-error">{error}</p>}
+
+      <section className="pricing-group">
+        <h2>Per guest, by occasion</h2>
+        <p className="pricing-group__hint">
+          Used when you cater a full event. The deposit is this rate multiplied by the guest count.
+        </p>
+        {pricing.rates
+          .filter((r) => r.event_type !== 'cook_only')
+          .map((r) => (
+            <RateRow
+              key={r.event_type}
+              label={EVENT_LABELS[r.event_type] ?? r.event_type}
+              amountKobo={r.rate_kobo}
+              note={r.note}
+              busy={saving === `event:${r.event_type}`}
+              onSave={(amount, note) => save('event', r.event_type, amount, note)}
+            />
+          ))}
+      </section>
+
+      <section className="pricing-group">
+        <h2>Extra per guest, by dish type</h2>
+        <p className="pricing-group__hint">
+          Added on top of the occasion rate for each dish category the customer picks. Grills cost
+          more to serve than rice, so they carry a higher uplift.
+        </p>
+        {pricing.dish_rates.map((r) => (
+          <RateRow
+            key={r.category_slug}
+            label={CATEGORY_LABELS[r.category_slug] ?? r.category_slug}
+            amountKobo={r.uplift_kobo}
+            note={r.note}
+            busy={saving === `dish:${r.category_slug}`}
+            onSave={(amount, note) => save('dish', r.category_slug, amount, note)}
+          />
+        ))}
+      </section>
+
+      <section className="pricing-group">
+        <h2>Cook only, per dish</h2>
+        <p className="pricing-group__hint">
+          Used when the customer only wants you to cook. No guest count is involved, so the deposit
+          is the sum of these rates for the categories they pick.
+        </p>
+        {pricing.cook_rates.map((r) => (
+          <RateRow
+            key={r.category_slug}
+            label={CATEGORY_LABELS[r.category_slug] ?? r.category_slug}
+            amountKobo={r.rate_kobo}
+            note={r.note}
+            busy={saving === `cook:${r.category_slug}`}
+            onSave={(amount, note) => save('cook', r.category_slug, amount, note)}
+          />
+        ))}
+      </section>
+    </div>
+  )
+}
+
+function RateRow({
+  label,
+  amountKobo,
+  note,
+  busy,
+  onSave,
+}: {
+  label: string
+  amountKobo: number
+  note: string
+  busy: boolean
+  onSave: (amount: string, note: string) => void
+}) {
+  const [amount, setAmount] = useState(String(amountKobo / 100))
+  const [reason, setReason] = useState(note)
+
+  return (
+    <div className="rate-row">
+      <div className="rate-row__head">
+        <strong>{label}</strong>
+        <span className="rate-row__now">{naira(amountKobo)}</span>
+      </div>
+      <div className="rate-row__fields">
+        <div className="field">
+          <label>Amount (naira)</label>
+          <input
+            type="number"
+            min={0}
+            inputMode="numeric"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </div>
+        <div className="field rate-row__note">
+          <label>Why this rate</label>
+          <input
+            type="text"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Shown to the customer as the reason"
+          />
+        </div>
+        <button
+          type="button"
+          className="btn btn--primary btn--sm"
+          disabled={busy}
+          onClick={() => onSave(amount, reason)}
+        >
+          {busy ? 'Saving' : 'Save'}
+        </button>
+      </div>
     </div>
   )
 }
