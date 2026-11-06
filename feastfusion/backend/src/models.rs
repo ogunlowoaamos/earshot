@@ -9,6 +9,14 @@ pub struct Category {
     pub sort_order: i64,
 }
 
+/// The whole shelf for the dashboard: every category and every dish, including
+/// the ones switched off or still waiting for a price.
+#[derive(Debug, Serialize)]
+pub struct Catalogue {
+    pub categories: Vec<Category>,
+    pub items: Vec<MenuItem>,
+}
+
 #[derive(Debug, sqlx::FromRow)]
 pub struct MenuRow {
     pub id: i64,

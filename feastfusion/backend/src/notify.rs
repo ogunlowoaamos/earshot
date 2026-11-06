@@ -73,7 +73,10 @@ pub fn catering_text(request: &CateringRequest) -> String {
         String::new(),
         format!("Name: {}", request.name),
         format!("Phone: {}", request.phone),
-        format!("Prefers: {} ({})", request.contact_channel, request.contact_handle),
+        format!(
+            "Prefers: {} ({})",
+            request.contact_channel, request.contact_handle
+        ),
         format!("Job: {}", request.job_kind),
         format!("Event: {}", request.event_type),
         format!("Date: {}", request.event_date),
@@ -156,9 +159,7 @@ pub fn dispatch(subject: String, body: String) {
             }
         }
 
-        if let (Ok(api_key), Ok(to)) =
-            (std::env::var("RESEND_API_KEY"), std::env::var("MAIL_TO"))
-        {
+        if let (Ok(api_key), Ok(to)) = (std::env::var("RESEND_API_KEY"), std::env::var("MAIL_TO")) {
             let from = std::env::var("MAIL_FROM")
                 .unwrap_or_else(|_| "FeastFusion <onboarding@resend.dev>".to_string());
 

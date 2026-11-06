@@ -9,8 +9,8 @@ use crate::{
     auth::{issue_token, require_admin, verify_password},
     error::{AppError, AppResult},
     models::{
-        CateringPricing, CateringRequest, Login, MenuItem, NewMenuItem, Order, PatchMenuItem,
-        PatchOrder,
+        BulkAvailability, Catalogue, CateringPricing, CateringRequest, Login, MenuItem,
+        NewMenuItem, Order, PatchMenuItem, PatchOrder, SaveOptions,
     },
     pricing,
     routes::{catering, menu, orders},
@@ -110,6 +110,145 @@ pub async fn list_catering(
     Ok(Json(catering::fetch_all(&state.pool).await?))
 }
 
+pub async fn list_catalogue(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+) -> AppResult<Json<Catalogue>> {
+    require_admin(&headers)?;
+
+    let categories = sqlx::query_as::<_, crate::models::Category>(
+        "SELECT id, name, slug, description, sort_order FROM categories ORDER BY sort_order, name",
+    )
+    .fetch_all(&state.pool)
+    .await?;
+
+    let items = menu::fetch_catalogue(&state.pool).await?;
+
+    Ok(Json(Catalogue { categories, items }))
+}
+
+/// Replaces every choice group on one dish. Children are deleted by hand
+/// because SQLite only cascades when foreign keys are switched on.
+pub async fn save_options(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    Json(payload): Json<SaveOptions>,
+) -> AppResult<Json<MenuItem>> {
+    require_admin(&headers)?;
+    menu::fetch_item(&state.pool, id).await?;
+
+    let mut tx = state.pool.begin().await?;
+
+    sqlx::query(
+        "DELETE FROM item_options WHERE group_id IN
+            (SELECT id FROM item_option_groups WHERE menu_item_id = ?)",
+    )
+    .bind(id)
+    .execute(&mut *tx)
+    .await?;
+
+    sqlx::query("DELETE FROM item_option_groups WHERE menu_item_id = ?")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    for (group_index, group) in payload.groups.iter().enumerate() {
+        let name = group.name.trim();
+        if name.is_empty() {
+            continue;
+        }
+
+        let kind = if group.kind.trim() == "multi" {
+            "multi"
+        } else {
+            "single"
+        };
+
+        let group_id: i64 = sqlx::query_scalar(
+            "INSERT INTO item_option_groups
+                (menu_item_id, name, kind, help, is_required, sort_order)
+             VALUES (?, ?, ?, ?, ?, ?)
+             RETURNING id",
+        )
+        .bind(id)
+        .bind(name)
+        .bind(kind)
+        .bind(group.help.trim())
+        .bind(if group.is_required { 1 } else { 0 })
+        .bind(group_index as i64)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        for (option_index, option) in group.options.iter().enumerate() {
+            let label = option.label.trim();
+            if label.is_empty() {
+                continue;
+            }
+            if option.price_delta_kobo < 0 {
+                return Err(AppError::BadRequest(
+                    "A choice cannot cost less than zero.".into(),
+                ));
+            }
+
+            sqlx::query(
+                "INSERT INTO item_options
+                    (group_id, label, price_delta_kobo, is_default, is_available, sort_order)
+                 VALUES (?, ?, ?, ?, ?, ?)",
+            )
+            .bind(group_id)
+            .bind(label)
+            .bind(option.price_delta_kobo)
+            .bind(if option.is_default { 1 } else { 0 })
+            .bind(if option.is_available { 1 } else { 0 })
+            .bind(option_index as i64)
+            .execute(&mut *tx)
+            .await?;
+        }
+    }
+
+    tx.commit().await?;
+
+    Ok(Json(menu::fetch_item(&state.pool, id).await?))
+}
+
+/// Switches a whole category, or a shortlist of dishes, on or off at once.
+pub async fn set_availability(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    Json(payload): Json<BulkAvailability>,
+) -> AppResult<Json<Catalogue>> {
+    require_admin(&headers)?;
+
+    let flag = if payload.is_available { 1 } else { 0 };
+
+    if let Some(slug) = payload
+        .category_slug
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        sqlx::query(
+            "UPDATE menu_items SET is_available = ?
+             WHERE category_id = (SELECT id FROM categories WHERE slug = ?)",
+        )
+        .bind(flag)
+        .bind(slug)
+        .execute(&state.pool)
+        .await?;
+    }
+
+    for id in &payload.item_ids {
+        sqlx::query("UPDATE menu_items SET is_available = ? WHERE id = ?")
+            .bind(flag)
+            .bind(id)
+            .execute(&state.pool)
+            .await?;
+    }
+
+    list_catalogue(headers, State(state)).await
+}
+
 pub async fn create_menu_item(
     headers: HeaderMap,
     State(state): State<AppState>,
@@ -125,11 +264,10 @@ pub async fn create_menu_item(
         return Err(AppError::BadRequest("Set a price above zero.".into()));
     }
 
-    let category_id: Option<i64> =
-        sqlx::query_scalar("SELECT id FROM categories WHERE slug = ?")
-            .bind(payload.category_slug.trim())
-            .fetch_optional(&state.pool)
-            .await?;
+    let category_id: Option<i64> = sqlx::query_scalar("SELECT id FROM categories WHERE slug = ?")
+        .bind(payload.category_slug.trim())
+        .fetch_optional(&state.pool)
+        .await?;
 
     let Some(category_id) = category_id else {
         return Err(AppError::BadRequest("Pick a valid category.".into()));
@@ -185,12 +323,32 @@ pub async fn update_menu_item(
         return Err(AppError::BadRequest("Price cannot be negative.".into()));
     }
 
+    let category_id = match patch
+        .category_slug
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        Some(slug) => {
+            let found: Option<i64> = sqlx::query_scalar("SELECT id FROM categories WHERE slug = ?")
+                .bind(slug)
+                .fetch_optional(&state.pool)
+                .await?;
+            match found {
+                Some(id) => id,
+                None => return Err(AppError::BadRequest("Pick a valid category.".into())),
+            }
+        }
+        None => existing.category_id,
+    };
+
     sqlx::query(
         "UPDATE menu_items
-         SET name = ?, description = ?, price_kobo = ?, image_url = ?, tags = ?,
+         SET category_id = ?, name = ?, description = ?, price_kobo = ?, image_url = ?, tags = ?,
              ingredients = ?, is_available = ?, is_featured = ?
          WHERE id = ?",
     )
+    .bind(category_id)
     .bind(name.trim())
     .bind(description.trim())
     .bind(price_kobo)
@@ -309,11 +467,7 @@ pub async fn save_rate(
             .execute(&state.pool)
             .await?;
         }
-        other => {
-            return Err(AppError::BadRequest(format!(
-                "Unknown rate kind: {other}"
-            )))
-        }
+        other => return Err(AppError::BadRequest(format!("Unknown rate kind: {other}"))),
     }
 
     Ok(Json(pricing::load_pricing(&state.pool).await?))

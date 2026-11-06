@@ -185,7 +185,13 @@ const RICE: &[GroupSpec] = &[
     many(
         "Add-ons",
         "Pick as many as you want",
-        &["Extra protein", "Fried plantain", "Extra stew", "Extra egg", "Moi moi"],
+        &[
+            "Extra protein",
+            "Fried plantain",
+            "Extra stew",
+            "Extra egg",
+            "Moi moi",
+        ],
     ),
 ];
 
@@ -356,14 +362,7 @@ const CAKE: &[GroupSpec] = &[
         "Size",
         "Pick the cake size",
         true,
-        &[
-            "6 inch",
-            "8 inch",
-            "10 inch",
-            "12 inch",
-            "2 tier",
-            "3 tier",
-        ],
+        &["6 inch", "8 inch", "10 inch", "12 inch", "2 tier", "3 tier"],
     ),
     one(
         "Icing",
@@ -477,12 +476,7 @@ const BURGER: &[GroupSpec] = &[
 ];
 
 const WRAP: &[GroupSpec] = &[
-    one(
-        "Size",
-        "Pick the size",
-        true,
-        &["Regular", "Large"],
-    ),
+    one("Size", "Pick the size", true, &["Regular", "Large"]),
     one(
         "Protein",
         "What goes inside",
@@ -523,17 +517,17 @@ const SANDWICH: &[GroupSpec] = &[
     many(
         "Extras",
         "Pick as many as you want",
-        &["Extra sausage", "Extra cheese", "Extra egg", "Extra vegetables"],
+        &[
+            "Extra sausage",
+            "Extra cheese",
+            "Extra egg",
+            "Extra vegetables",
+        ],
     ),
 ];
 
 const FRIES: &[GroupSpec] = &[
-    one(
-        "Size",
-        "Pick the size",
-        true,
-        &["Small", "Medium", "Large"],
-    ),
+    one("Size", "Pick the size", true, &["Small", "Medium", "Large"]),
     one(
         "Type",
         "How they are served",
@@ -659,6 +653,27 @@ impl Shape {
 pub const DISHES: &[(&str, &str, Shape, &str, &str)] = &[
     /* ---------------- rice dishes ---------------- */
     (
+        "Smoky Party Jollof",
+        "rice-grains",
+        Shape::Rice,
+        "Long grain rice cooked down in a smoky tomato and pepper base.",
+        "party, classic",
+    ),
+    (
+        "Ofada Rice & Ayamase",
+        "rice-grains",
+        Shape::Rice,
+        "Unpolished local rice served with a green pepper designer stew.",
+        "local, spicy",
+    ),
+    (
+        "Coconut Fried Rice",
+        "rice-grains",
+        Shape::Rice,
+        "Fragrant rice toasted with coconut milk, sweetcorn, carrot and prawns.",
+        "mild",
+    ),
+    (
         "Fried Rice",
         "rice-grains",
         Shape::Rice,
@@ -673,7 +688,7 @@ pub const DISHES: &[(&str, &str, Shape, &str, &str)] = &[
         "classic",
     ),
     (
-        "Palm Oil Rice",
+        "Native Jollof (Iwuk Edesi)",
         "rice-grains",
         Shape::Rice,
         "One pot rice cooked in palm oil with crayfish and dried fish.",
@@ -729,6 +744,34 @@ pub const DISHES: &[(&str, &str, Shape, &str, &str)] = &[
         "local",
     ),
     /* ---------------- soups and stews ---------------- */
+    (
+        "Egusi Soup",
+        "soups-swallow",
+        Shape::Soup,
+        "Melon seed soup cooked with palm oil, spinach and assorted meat.",
+        "classic",
+    ),
+    (
+        "Ogbono Soup",
+        "soups-swallow",
+        Shape::Soup,
+        "Draw soup from ground ogbono seeds with beef and dried fish.",
+        "draw",
+    ),
+    (
+        "Efo Riro",
+        "soups-swallow",
+        Shape::Soup,
+        "Rich Yoruba spinach stew with pepper, locust bean and assorted meat.",
+        "yoruba, spicy",
+    ),
+    (
+        "Catfish Pepper Soup",
+        "soups-swallow",
+        Shape::Soup,
+        "Light peppery broth with fresh catfish and scent leaf.",
+        "light, spicy",
+    ),
     (
         "Okra Soup",
         "soups-swallow",
@@ -891,6 +934,20 @@ pub const DISHES: &[(&str, &str, Shape, &str, &str)] = &[
         "yoruba",
     ),
     /* ---------------- swallows ---------------- */
+    (
+        "Pounded Yam",
+        "swallows",
+        Shape::Swallow,
+        "Smooth, stretchy pounded yam, the classic soup partner.",
+        "classic",
+    ),
+    (
+        "Eba (Garri)",
+        "swallows",
+        Shape::Swallow,
+        "Garri turned in hot water, firm and slightly tangy.",
+        "classic, quick",
+    ),
     (
         "Amala",
         "swallows",
@@ -1073,4 +1130,1341 @@ pub const DISHES: &[(&str, &str, Shape, &str, &str)] = &[
         "Cassava swallow with broccoli blended in.",
         "modern",
     ),
+    /* ---------------- grills ---------------- */
+    (
+        "Suya Skewers",
+        "grills",
+        Shape::Grill,
+        "Beef skewers rubbed with yaji spice and grilled over charcoal.",
+        "street, spicy",
+    ),
+    (
+        "Asun",
+        "grills",
+        Shape::Tub,
+        "Smoked goat meat tossed in a hot pepper and onion mix.",
+        "spicy",
+    ),
+    (
+        "Peppered Goat Meat",
+        "grills",
+        Shape::Tub,
+        "Goat meat boiled soft then fried and tossed in pepper sauce.",
+        "spicy",
+    ),
+    (
+        "Grilled Tilapia",
+        "grills",
+        Shape::Grill,
+        "Whole tilapia or croaker grilled with pepper and onion.",
+        "seafood",
+    ),
+    (
+        "Charcoal Grilled Chicken",
+        "grills",
+        Shape::Grill,
+        "Chicken marinated overnight and grilled until the skin crisps.",
+        "party",
+    ),
+    (
+        "Bole",
+        "grills",
+        Shape::Counted,
+        "Roasted plantain served with groundnut and pepper sauce.",
+        "street",
+    ),
+    (
+        "Peppered Snail",
+        "grills",
+        Shape::Counted,
+        "Snail grilled then tossed in a thick pepper sauce.",
+        "spicy",
+    ),
+    (
+        "Peppered Turkey",
+        "grills",
+        Shape::Tub,
+        "Turkey roasted and finished in a hot pepper stew.",
+        "party",
+    ),
+    (
+        "BBQ Rack of Ribs",
+        "grills",
+        Shape::Grill,
+        "Pork ribs glazed and grilled until sticky.",
+        "western",
+    ),
+    (
+        "Mixed Grill Platter",
+        "grills",
+        Shape::Plate,
+        "Chicken, beef, fish and gizzard on one sharing platter.",
+        "party, sharing",
+    ),
+    /* ---------------- small chops ---------------- */
+    (
+        "Dodo (Fried Plantain)",
+        "small-chops",
+        Shape::Tub,
+        "Sweet ripe plantain fried until the edges caramelise.",
+        "side, sweet",
+    ),
+    (
+        "Samosa",
+        "small-chops",
+        Shape::Counted,
+        "Crisp pastry triangles filled with spiced mince and peas.",
+        "party",
+    ),
+    (
+        "Spring Rolls",
+        "small-chops",
+        Shape::Counted,
+        "Thin rolls packed with cabbage and carrot, fried golden.",
+        "party",
+    ),
+    (
+        "Gizdodo",
+        "small-chops",
+        Shape::Tub,
+        "Fried gizzard and ripe plantain in a pepper sauce.",
+        "spicy, party",
+    ),
+    (
+        "Peppered Gizzard",
+        "small-chops",
+        Shape::Tub,
+        "Gizzard fried then tossed in a thick pepper sauce.",
+        "spicy",
+    ),
+    (
+        "Mini Meat Pie",
+        "small-chops",
+        Shape::Pastry,
+        "Bite sized meat pies with a soft buttery crust.",
+        "party",
+    ),
+    (
+        "Mini Sausage Roll",
+        "small-chops",
+        Shape::SausageRoll,
+        "Small sausage rolls, the party tray favourite.",
+        "party",
+    ),
+    (
+        "Mini Fish Roll",
+        "small-chops",
+        Shape::Pastry,
+        "Small rolls filled with seasoned shredded fish.",
+        "party",
+    ),
+    (
+        "Peppered Chicken",
+        "small-chops",
+        Shape::Counted,
+        "Chicken pieces fried and coated in pepper sauce.",
+        "spicy",
+    ),
+    (
+        "Kebab Sticks",
+        "small-chops",
+        Shape::Counted,
+        "Skewers of beef and onion, grilled to order.",
+        "street",
+    ),
+    (
+        "Battered Fish",
+        "small-chops",
+        Shape::Counted,
+        "Fish fillets in a light batter, fried until crisp.",
+        "seafood",
+    ),
+    (
+        "Moneybag",
+        "small-chops",
+        Shape::Counted,
+        "Pastry pouches tied at the top and filled with mince.",
+        "party",
+    ),
+    (
+        "Corndog",
+        "small-chops",
+        Shape::Counted,
+        "Sausage on a stick in a soft fried batter.",
+        "street",
+    ),
+    (
+        "Plantain Mosa",
+        "small-chops",
+        Shape::Counted,
+        "Ripe plantain fritters, sweet and soft inside.",
+        "street",
+    ),
+    (
+        "Small Chops Platter",
+        "small-chops",
+        Shape::Plate,
+        "Samosa, spring roll, sausage roll, puff puff and gizdodo together.",
+        "party, sharing",
+    ),
+    /* ---------------- protein dishes ---------------- */
+    (
+        "Ponmo",
+        "proteins",
+        Shape::Tub,
+        "Cow skin, cooked soft so it drinks up the stew.",
+        "local",
+    ),
+    (
+        "Bokoto",
+        "proteins",
+        Shape::Tub,
+        "Cow leg, rich and gelatinous, best in pepper soup.",
+        "local",
+    ),
+    (
+        "Shaki",
+        "proteins",
+        Shape::Tub,
+        "Cow tripe, cleaned and cooked until tender.",
+        "local",
+    ),
+    (
+        "Roundabout",
+        "proteins",
+        Shape::Tub,
+        "Cow small intestine, a fixture of assorted meat plates.",
+        "local",
+    ),
+    (
+        "Abodi",
+        "proteins",
+        Shape::Tub,
+        "Cow rectum, an offal delicacy for the seasoned eater.",
+        "local",
+    ),
+    (
+        "Ifun",
+        "proteins",
+        Shape::Tub,
+        "Cow intestine, cooked down and seasoned.",
+        "local",
+    ),
+    (
+        "Cow Tail",
+        "proteins",
+        Shape::Tub,
+        "Cow tail, slow cooked until the meat falls off.",
+        "local",
+    ),
+    (
+        "Assorted Meat",
+        "proteins",
+        Shape::Tub,
+        "A mix of ponmo, shaki, bokoto and liver in one pack.",
+        "local",
+    ),
+    (
+        "Isi Ewu",
+        "proteins",
+        Shape::Plate,
+        "Goat head in a palm oil and utazi leaf sauce.",
+        "delicacy, spicy",
+    ),
+    (
+        "Nkwobi",
+        "proteins",
+        Shape::Plate,
+        "Cow foot in a thick palm oil sauce with utazi and onion.",
+        "delicacy, spicy",
+    ),
+    (
+        "Rabbit Meat",
+        "proteins",
+        Shape::Tub,
+        "Lean rabbit, peppered or stewed.",
+        "lean",
+    ),
+    (
+        "Akara",
+        "proteins",
+        Shape::Counted,
+        "Fried bean cakes, crisp outside and fluffy inside.",
+        "breakfast",
+    ),
+    (
+        "Wara",
+        "proteins",
+        Shape::Tub,
+        "Local cheese, soft and mild, eaten with pap or on its own.",
+        "dairy",
+    ),
+    (
+        "Tofu",
+        "proteins",
+        Shape::Tub,
+        "Soybean curd, ready for stew or a stir fry.",
+        "vegetarian",
+    ),
+    (
+        "Cooked Egg",
+        "proteins",
+        Shape::Counted,
+        "Boiled or fried egg, ready to add to any plate.",
+        "add-on",
+    ),
+    /* ---------------- sauces and dips ---------------- */
+    (
+        "Obe Ata",
+        "sauces",
+        Shape::Tub,
+        "The base tomato and pepper stew every Nigerian kitchen starts with.",
+        "classic",
+    ),
+    (
+        "Ata Dindin",
+        "sauces",
+        Shape::Tub,
+        "Concentrated fried pepper sauce, deep red and hot.",
+        "spicy",
+    ),
+    (
+        "Ayamase",
+        "sauces",
+        Shape::Tub,
+        "Green pepper and palm oil stew, the ofada rice partner.",
+        "spicy",
+    ),
+    (
+        "Garden Egg Sauce",
+        "sauces",
+        Shape::Tub,
+        "Stew built on African eggplant, mild and silky.",
+        "mild",
+    ),
+    (
+        "Egg Sauce",
+        "sauces",
+        Shape::Tub,
+        "Scrambled egg in a light tomato sauce for bread or yam.",
+        "breakfast",
+    ),
+    (
+        "Agoyin Sauce",
+        "sauces",
+        Shape::Tub,
+        "Palm oil pepper sauce cooked down with beans water.",
+        "street, spicy",
+    ),
+    (
+        "Buka Stew",
+        "sauces",
+        Shape::Tub,
+        "Hearty local eatery stew with assorted meat.",
+        "local",
+    ),
+    (
+        "Ncha na Ugba Sauce",
+        "sauces",
+        Shape::Tub,
+        "Potash and oil bean seed sauce, sharp and rich.",
+        "eastern",
+    ),
+    (
+        "Corned Beef Sauce",
+        "sauces",
+        Shape::Tub,
+        "Tomato stew with flaked corned beef stirred through.",
+        "quick",
+    ),
+    (
+        "Pepper Sauce Dip",
+        "sauces",
+        Shape::Tub,
+        "A small fiery dip for grilled meat and fish.",
+        "spicy, side",
+    ),
+    /* ---------------- fast food ---------------- */
+    (
+        "Pizza",
+        "fast-food",
+        Shape::Pizza,
+        "Hand stretched base, rich tomato sauce and a full cheese pull.",
+        "western",
+    ),
+    (
+        "Burger",
+        "fast-food",
+        Shape::Burger,
+        "Beef patty in a soft bun with lettuce, cheese and house sauce.",
+        "western",
+    ),
+    (
+        "Shawarma",
+        "fast-food",
+        Shape::Wrap,
+        "Shaved meat rolled in flatbread with cabbage and garlic sauce.",
+        "street",
+    ),
+    (
+        "Hot Dog",
+        "fast-food",
+        Shape::HotDog,
+        "Sausage in a soft roll with ketchup and mustard.",
+        "street",
+    ),
+    (
+        "Sandwich",
+        "fast-food",
+        Shape::Sandwich,
+        "Layered bread with chicken, egg or corned beef.",
+        "quick",
+    ),
+    (
+        "Chicken Wrap",
+        "fast-food",
+        Shape::Wrap,
+        "Grilled chicken, vegetables and sauce rolled in a soft wrap.",
+        "quick",
+    ),
+    (
+        "French Fries",
+        "fast-food",
+        Shape::Fries,
+        "Chips fried to order, salted while hot.",
+        "side",
+    ),
+    (
+        "Chicken Nuggets",
+        "fast-food",
+        Shape::Nuggets,
+        "Breaded chicken pieces with a dipping sauce.",
+        "western",
+    ),
+    (
+        "Fried Chicken",
+        "fast-food",
+        Shape::Counted,
+        "Chicken pieces in a seasoned crumb, fried until golden.",
+        "western",
+    ),
+    (
+        "Chicken Wings",
+        "fast-food",
+        Shape::Counted,
+        "Wings glazed and grilled, or fried and peppered.",
+        "party",
+    ),
+    (
+        "Onion Rings",
+        "fast-food",
+        Shape::Counted,
+        "Onion rings in a light batter, crisp and sweet.",
+        "side",
+    ),
+    (
+        "Mozzarella Sticks",
+        "fast-food",
+        Shape::Counted,
+        "Breaded cheese sticks that pull apart hot.",
+        "side",
+    ),
+    (
+        "Nachos",
+        "fast-food",
+        Shape::Plate,
+        "Corn chips with cheese sauce and a tomato salsa.",
+        "sharing",
+    ),
+    (
+        "Tacos",
+        "fast-food",
+        Shape::Counted,
+        "Folded shells with spiced mince, lettuce and salsa.",
+        "western",
+    ),
+    (
+        "Burrito",
+        "fast-food",
+        Shape::Wrap,
+        "A full wrap of rice, beans, meat and salsa.",
+        "filling",
+    ),
+    (
+        "Quesadilla",
+        "fast-food",
+        Shape::Sandwich,
+        "Griddled tortilla folded around melted cheese and chicken.",
+        "western",
+    ),
+    (
+        "Sub",
+        "fast-food",
+        Shape::Sandwich,
+        "A long roll filled with meat, cheese and salad.",
+        "western",
+    ),
+    (
+        "Sliders",
+        "fast-food",
+        Shape::Counted,
+        "Small burgers, easy to pass around at a party.",
+        "party",
+    ),
+    (
+        "Rice Bowl",
+        "fast-food",
+        Shape::Plate,
+        "Rice with a protein and vegetables in one bowl.",
+        "quick",
+    ),
+    /* ---------------- pastries ---------------- */
+    (
+        "Meat Pie",
+        "pastries",
+        Shape::Pastry,
+        "Shortcrust pie packed with mince, potato and carrot.",
+        "classic",
+    ),
+    (
+        "Chicken Pie",
+        "pastries",
+        Shape::Pastry,
+        "Pie filled with shredded chicken and potato.",
+        "classic",
+    ),
+    (
+        "Sausage Roll",
+        "pastries",
+        Shape::SausageRoll,
+        "Seasoned sausage wrapped in soft pastry and baked.",
+        "classic",
+    ),
+    (
+        "Fish Roll",
+        "pastries",
+        Shape::Pastry,
+        "Soft roll filled with seasoned fish.",
+        "classic",
+    ),
+    (
+        "Egg Roll",
+        "pastries",
+        Shape::Counted,
+        "Whole boiled egg wrapped in dough and fried.",
+        "classic",
+    ),
+    (
+        "Scotch Egg",
+        "pastries",
+        Shape::Counted,
+        "Boiled egg wrapped in sausage meat and crumbed.",
+        "classic",
+    ),
+    (
+        "Empanada",
+        "pastries",
+        Shape::Pastry,
+        "Turned over pastry with a savoury mince filling.",
+        "western",
+    ),
+    (
+        "Savoury Croissant",
+        "pastries",
+        Shape::Counted,
+        "Flaky croissant with a savoury filling.",
+        "western",
+    ),
+    /* ---------------- breakfast ---------------- */
+    (
+        "Akara & Pap",
+        "breakfast",
+        Shape::Plate,
+        "Warm pap with fresh fried akara.",
+        "breakfast",
+    ),
+    (
+        "Bread and Egg Sauce",
+        "breakfast",
+        Shape::Plate,
+        "Sliced bread with a soft scrambled egg sauce.",
+        "breakfast",
+    ),
+    (
+        "Yam and Egg",
+        "breakfast",
+        Shape::Plate,
+        "Boiled yam with fried egg and onion.",
+        "breakfast",
+    ),
+    (
+        "Tea and Bread",
+        "breakfast",
+        Shape::Plain,
+        "Hot tea with buttered bread.",
+        "breakfast",
+    ),
+    (
+        "Ogi and Moi Moi",
+        "breakfast",
+        Shape::Plate,
+        "Fermented corn pudding with steamed bean pudding.",
+        "breakfast",
+    ),
+    /* ---------------- puddings and porridges ---------------- */
+    (
+        "Pap",
+        "puddings",
+        Shape::Tub,
+        "Fermented corn pudding, served warm or chilled.",
+        "breakfast",
+    ),
+    (
+        "Agidi",
+        "puddings",
+        Shape::Tub,
+        "Firm corn starch pudding, sliced and eaten with soup.",
+        "local",
+    ),
+    (
+        "Moi Moi",
+        "puddings",
+        Shape::Counted,
+        "Steamed bean pudding with pepper and egg.",
+        "protein",
+    ),
+    (
+        "Okpa",
+        "puddings",
+        Shape::Counted,
+        "Steamed bambara bean pudding from the east.",
+        "eastern",
+    ),
+    (
+        "Ekuru",
+        "puddings",
+        Shape::Counted,
+        "Plain steamed bean pudding, mild and soft.",
+        "mild",
+    ),
+    (
+        "Fonio Porridge",
+        "puddings",
+        Shape::Tub,
+        "Creamy acha grain porridge, light and nutty.",
+        "healthy",
+    ),
+    (
+        "Rice Pudding",
+        "puddings",
+        Shape::Tub,
+        "Rice simmered in milk until creamy.",
+        "dessert",
+    ),
+    (
+        "Tapioca Pudding",
+        "puddings",
+        Shape::Tub,
+        "Cassava starch pearls cooked soft with coconut.",
+        "dessert",
+    ),
+    (
+        "Egbo",
+        "puddings",
+        Shape::Tub,
+        "Corn porridge cooked with beans water and pepper.",
+        "local",
+    ),
+    (
+        "Yam Pottage",
+        "puddings",
+        Shape::Plate,
+        "Asaro, yam simmered down with palm oil and pepper.",
+        "local",
+    ),
+    (
+        "Plantain Pottage",
+        "puddings",
+        Shape::Plate,
+        "Ripe plantain cooked down into a soft sweet porridge.",
+        "local",
+    ),
+    (
+        "Ukwa Porridge",
+        "puddings",
+        Shape::Tub,
+        "African breadfruit porridge with potash and palm oil.",
+        "eastern",
+    ),
+    /* ---------------- salads ---------------- */
+    (
+        "Abacha",
+        "salads",
+        Shape::Salad,
+        "Shredded cassava in palm oil with ugba, fish and spice.",
+        "eastern, spicy",
+    ),
+    (
+        "Ugba Salad",
+        "salads",
+        Shape::Salad,
+        "Fermented oil bean seeds with vegetables and palm oil.",
+        "eastern",
+    ),
+    (
+        "Fruit Salad",
+        "salads",
+        Shape::Salad,
+        "Seasonal fruit cut fresh and served chilled.",
+        "fresh",
+    ),
+    (
+        "Nigerian Vegetable Salad",
+        "salads",
+        Shape::Salad,
+        "Cabbage, carrot, sweetcorn, baked beans and salad cream.",
+        "party",
+    ),
+    (
+        "Coleslaw",
+        "salads",
+        Shape::Salad,
+        "Shredded cabbage and carrot in a creamy dressing.",
+        "side",
+    ),
+    (
+        "Beetroot Coleslaw",
+        "salads",
+        Shape::Salad,
+        "Coleslaw with shredded beetroot stirred through.",
+        "side",
+    ),
+    (
+        "Garden Egg Salad",
+        "salads",
+        Shape::Salad,
+        "African eggplant with onion, tomato and pepper.",
+        "local",
+    ),
+    (
+        "Moringa Local Salad",
+        "salads",
+        Shape::Salad,
+        "Steamed moringa leaves with tomato and kuli kuli dressing.",
+        "northern, healthy",
+    ),
+    (
+        "Okazi Salad",
+        "salads",
+        Shape::Salad,
+        "Shredded okazi leaves with stockfish and a spicy dressing.",
+        "eastern",
+    ),
+    (
+        "Green Pawpaw Salad",
+        "salads",
+        Shape::Salad,
+        "Unripe pawpaw shredded slaw style.",
+        "fresh",
+    ),
+    (
+        "Olive Salad",
+        "salads",
+        Shape::Salad,
+        "Olives with vegetables in a tangy dressing.",
+        "side",
+    ),
+    (
+        "Chicken Salad",
+        "salads",
+        Shape::Salad,
+        "Diced chicken over crisp vegetables.",
+        "protein",
+    ),
+    (
+        "Shrimp Salad",
+        "salads",
+        Shape::Salad,
+        "Shrimp with vegetables and a light dressing.",
+        "seafood",
+    ),
+    (
+        "Tuna Salad",
+        "salads",
+        Shape::Salad,
+        "Flaked tuna mixed through a vegetable base.",
+        "protein",
+    ),
+    (
+        "Corned Beef Salad",
+        "salads",
+        Shape::Salad,
+        "Corned beef with cabbage, carrot and salad cream.",
+        "protein",
+    ),
+    (
+        "Egg Salad",
+        "salads",
+        Shape::Salad,
+        "Chopped boiled egg in a creamy dressing.",
+        "protein",
+    ),
+    (
+        "Pasta Salad",
+        "salads",
+        Shape::Salad,
+        "Cold macaroni with vegetables and creamy dressing.",
+        "party",
+    ),
+    (
+        "Potato Salad",
+        "salads",
+        Shape::Salad,
+        "Boiled potato with egg, mayonnaise and vegetables.",
+        "party",
+    ),
+    (
+        "Rice Salad",
+        "salads",
+        Shape::Salad,
+        "Cooked rice with vegetables, protein and dressing.",
+        "filling",
+    ),
+    (
+        "Sweet Corn Salad",
+        "salads",
+        Shape::Salad,
+        "Sweetcorn with vegetables in a light dressing.",
+        "fresh",
+    ),
+    (
+        "Mixed Beans Salad",
+        "salads",
+        Shape::Salad,
+        "Cooked beans with onion and a simple dressing.",
+        "protein",
+    ),
+    (
+        "Tapioca and Coconut Salad",
+        "salads",
+        Shape::Salad,
+        "Tapioca pearls with coconut, often with smoked fish.",
+        "local",
+    ),
+    (
+        "Papaya Salad",
+        "salads",
+        Shape::Salad,
+        "Ripe pawpaw in a soft fruit salad.",
+        "fresh",
+    ),
+    (
+        "Herbed Mango Salad",
+        "salads",
+        Shape::Salad,
+        "Mango with a scent leaf sauce.",
+        "fresh",
+    ),
+    (
+        "Tarragon Orange Salad",
+        "salads",
+        Shape::Salad,
+        "Orange segments with tarragon and a light syrup.",
+        "fresh",
+    ),
+    /* ---------------- sides and extras ---------------- */
+    (
+        "Fried Plantain",
+        "sides",
+        Shape::Tub,
+        "Dodo, ripe plantain fried until the edges caramelise.",
+        "side",
+    ),
+    (
+        "Classic Salad Cream Blend",
+        "sides",
+        Shape::Tub,
+        "Salad cream, mayonnaise and ketchup whisked together.",
+        "dressing",
+    ),
+    (
+        "Evaporated Milk Dressing",
+        "sides",
+        Shape::Tub,
+        "Mayonnaise, ketchup, chilli and evaporated milk.",
+        "dressing",
+    ),
+    (
+        "Mayonnaise",
+        "sides",
+        Shape::Tub,
+        "Thick mayonnaise, ready for the salad bowl.",
+        "dressing",
+    ),
+    (
+        "Salad Cream",
+        "sides",
+        Shape::Tub,
+        "Tangy salad cream, the vinegar forward classic.",
+        "dressing",
+    ),
+    (
+        "Ketchup",
+        "sides",
+        Shape::Tub,
+        "Tomato ketchup for chips and pastries.",
+        "dressing",
+    ),
+    (
+        "Sweet Chilli Dip",
+        "sides",
+        Shape::Tub,
+        "Sweet and hot chilli dip for anything fried.",
+        "dressing",
+    ),
+    (
+        "Extra Sausage",
+        "sides",
+        Shape::Counted,
+        "Loose sausages to add to any order.",
+        "add-on",
+    ),
+    /* ---------------- desserts and sweets ---------------- */
+    (
+        "Puff Puff",
+        "desserts",
+        Shape::Counted,
+        "Fried dough balls, light and sweet.",
+        "party",
+    ),
+    (
+        "Chin Chin",
+        "desserts",
+        Shape::Tub,
+        "Crunchy fried dough cubes, the party bag classic.",
+        "party",
+    ),
+    (
+        "Pancakes",
+        "desserts",
+        Shape::Pancake,
+        "Thin pancakes with a soft centre, sweet or savoury.",
+        "breakfast",
+    ),
+    (
+        "Banana Pancake",
+        "desserts",
+        Shape::Pancake,
+        "Mashed ripe banana folded into the batter.",
+        "sweet",
+    ),
+    (
+        "Plantain Pancake",
+        "desserts",
+        Shape::Pancake,
+        "Ripe plantain blended into a sweet pancake batter.",
+        "sweet",
+    ),
+    (
+        "Savoury Oatcake",
+        "desserts",
+        Shape::Pancake,
+        "Ground oats with carrot, peas and sausage.",
+        "savoury",
+    ),
+    (
+        "Shuku Shuku",
+        "desserts",
+        Shape::Counted,
+        "Coconut balls rolled and fried.",
+        "sweet",
+    ),
+    (
+        "Coconut Candy",
+        "desserts",
+        Shape::Tub,
+        "Caramelised coconut cut into soft sweets.",
+        "sweet",
+    ),
+    (
+        "Baba Dudu",
+        "desserts",
+        Shape::Tub,
+        "Dark coconut candy, deep caramel colour.",
+        "sweet",
+    ),
+    (
+        "Gurudi",
+        "desserts",
+        Shape::Tub,
+        "Coconut and cassava starch cookie.",
+        "sweet",
+    ),
+    (
+        "Kuli Kuli",
+        "desserts",
+        Shape::Counted,
+        "Crunchy groundnut snack, best with warm pap.",
+        "northern",
+    ),
+    (
+        "Donkwa",
+        "desserts",
+        Shape::Tub,
+        "Groundnut and cornmeal sweet from the north.",
+        "northern",
+    ),
+    (
+        "Kokoro",
+        "desserts",
+        Shape::Counted,
+        "Crunchy maize flour sticks.",
+        "northern",
+    ),
+    (
+        "Alkaki",
+        "desserts",
+        Shape::Counted,
+        "Doughnut like sweets soaked in honey syrup.",
+        "northern",
+    ),
+    (
+        "Balewa",
+        "desserts",
+        Shape::Tub,
+        "Hard sugar candy, slow to finish.",
+        "sweet",
+    ),
+    /* ---------------- cakes ---------------- */
+    (
+        "Buttercream Celebration Cake",
+        "cakes",
+        Shape::Cake,
+        "A celebration cake finished in smooth buttercream.",
+        "celebration",
+    ),
+    (
+        "Fondant Celebration Cake",
+        "cakes",
+        Shape::Cake,
+        "A celebration cake covered and shaped in fondant.",
+        "celebration",
+    ),
+    (
+        "Wedding Tiered Cake",
+        "cakes",
+        Shape::Cake,
+        "A tiered wedding cake, iced and finished to order.",
+        "wedding",
+    ),
+    (
+        "Birthday Cake",
+        "cakes",
+        Shape::Cake,
+        "A birthday cake with a name and candles on top.",
+        "birthday",
+    ),
+    (
+        "Cupcake Tray",
+        "cakes",
+        Shape::Counted,
+        "A tray of small cakes, iced and ready to pass around.",
+        "party",
+    ),
+    (
+        "Chocolate Fudge Cake",
+        "cakes",
+        Shape::Cake,
+        "Deep cocoa sponge with a fudge finish.",
+        "chocolate",
+    ),
+    (
+        "Red Velvet Cake",
+        "cakes",
+        Shape::Cake,
+        "Red velvet sponge with cream cheese icing.",
+        "celebration",
+    ),
+    (
+        "Fruit Cake",
+        "cakes",
+        Shape::Cake,
+        "Dark fruit cake, soaked and slow baked.",
+        "classic",
+    ),
+    (
+        "Marble Cake",
+        "cakes",
+        Shape::Cake,
+        "Vanilla and chocolate sponge baked in one loaf.",
+        "classic",
+    ),
+    (
+        "Coconut Cake",
+        "cakes",
+        Shape::Cake,
+        "Coconut sponge with a soft coconut icing.",
+        "coconut",
+    ),
+    (
+        "Lemon Drizzle Cake",
+        "cakes",
+        Shape::Cake,
+        "Lemon sponge with a sharp syrup drizzle.",
+        "citrus",
+    ),
+    /* ---------------- drinks ---------------- */
+    (
+        "Fresh Ginger Juice",
+        "drinks",
+        Shape::Drink,
+        "Blended ginger, pineapple and lime, served cold.",
+        "spicy, fresh",
+    ),
+    (
+        "Zobo",
+        "drinks",
+        Shape::Drink,
+        "Hibiscus drink brewed with ginger and pineapple.",
+        "classic",
+    ),
+    (
+        "Kunu",
+        "drinks",
+        Shape::Drink,
+        "Fermented cereal drink, lightly sweet.",
+        "northern",
+    ),
+    (
+        "Kunun Aya",
+        "drinks",
+        Shape::Drink,
+        "Tigernut milk, creamy and cold.",
+        "northern, dairy free",
+    ),
+    (
+        "Kunun Gyada",
+        "drinks",
+        Shape::Drink,
+        "Groundnut and rice drink, thick and filling.",
+        "northern",
+    ),
+    (
+        "Fura da Nono",
+        "drinks",
+        Shape::Drink,
+        "Millet dough balls in fermented milk.",
+        "northern",
+    ),
+    (
+        "Palm Wine",
+        "drinks",
+        Shape::Drink,
+        "Fresh tapped palm sap, served chilled.",
+        "local",
+    ),
+    (
+        "Burukutu",
+        "drinks",
+        Shape::Drink,
+        "Fermented sorghum drink with a sour finish.",
+        "northern",
+    ),
+    (
+        "Pito",
+        "drinks",
+        Shape::Drink,
+        "Fermented millet and sorghum drink.",
+        "northern",
+    ),
+    (
+        "Ogogoro",
+        "drinks",
+        Shape::Drink,
+        "Local palm spirit, served by the shot or bottle.",
+        "local, spirit",
+    ),
+    (
+        "Chapman",
+        "drinks",
+        Shape::Drink,
+        "A red non alcoholic cocktail with citrus and bitters.",
+        "classic",
+    ),
+    (
+        "Malt Drink",
+        "drinks",
+        Shape::Drink,
+        "Chilled non alcoholic malt, the party standard.",
+        "classic",
+    ),
+    (
+        "Adoyo",
+        "drinks",
+        Shape::Drink,
+        "Pineapple blended with pap into a smooth drink.",
+        "fresh",
+    ),
+    (
+        "Omi Wara",
+        "drinks",
+        Shape::Drink,
+        "Cheese whey drink, light and slightly sour.",
+        "local",
+    ),
+    (
+        "Groundnut Milk",
+        "drinks",
+        Shape::Drink,
+        "Plant based groundnut milk, smooth and nutty.",
+        "dairy free",
+    ),
+    (
+        "Soya Milk",
+        "drinks",
+        Shape::Drink,
+        "Fresh soybean milk, lightly sweetened.",
+        "dairy free",
+    ),
 ];
+
+/// Loads the catalogue into the database.
+///
+/// Safe to run on every start. Categories are upserted by slug. A dish is only
+/// inserted when its name is not already there, so a caterer's price, photo and
+/// switch survive a restart. Dishes that predate the catalogue keep their price
+/// and availability and are simply moved to their proper category.
+pub async fn seed_catalogue(pool: &SqlitePool) -> Result<(), sqlx::Error> {
+    for (name, slug, description, sort_order) in CATEGORIES {
+        sqlx::query(
+            "INSERT INTO categories (name, slug, description, sort_order)
+             VALUES (?, ?, ?, ?)
+             ON CONFLICT(slug) DO UPDATE SET
+                name = excluded.name,
+                description = excluded.description,
+                sort_order = excluded.sort_order",
+        )
+        .bind(*name)
+        .bind(*slug)
+        .bind(*description)
+        .bind(*sort_order)
+        .execute(pool)
+        .await?;
+    }
+
+    for (index, (name, category_slug, shape, description, tags)) in DISHES.iter().enumerate() {
+        let mut tx = pool.begin().await?;
+
+        let category_id: Option<i64> =
+            sqlx::query_scalar("SELECT id FROM categories WHERE slug = ?")
+                .bind(*category_slug)
+                .fetch_optional(&mut *tx)
+                .await?;
+
+        let Some(category_id) = category_id else {
+            tx.rollback().await?;
+            continue;
+        };
+
+        let existing: Option<i64> = sqlx::query_scalar("SELECT id FROM menu_items WHERE name = ?")
+            .bind(*name)
+            .fetch_optional(&mut *tx)
+            .await?;
+
+        let item_id = match existing {
+            Some(id) => {
+                sqlx::query("UPDATE menu_items SET category_id = ?, sort_order = ? WHERE id = ?")
+                    .bind(category_id)
+                    .bind(index as i64)
+                    .bind(id)
+                    .execute(&mut *tx)
+                    .await?;
+                id
+            }
+            None => {
+                // Switched off and unpriced on purpose. The shop never shows it
+                // until the caterer turns it on and sets a price.
+                sqlx::query_scalar(
+                    "INSERT INTO menu_items
+                        (category_id, name, description, price_kobo, image_url, tags,
+                         is_available, is_featured, sort_order)
+                     VALUES (?, ?, ?, 0, ?, ?, 0, 0, ?)
+                     RETURNING id",
+                )
+                .bind(category_id)
+                .bind(*name)
+                .bind(*description)
+                .bind(format!(
+                    "https://picsum.photos/seed/ff-{}/800/600",
+                    slugify(name)
+                ))
+                .bind(*tags)
+                .bind(index as i64)
+                .fetch_one(&mut *tx)
+                .await?
+            }
+        };
+
+        // Choices are only filled in when the dish has none, so a caterer who
+        // edits them never has the edit overwritten on the next start.
+        let group_count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM item_option_groups WHERE menu_item_id = ?")
+                .bind(item_id)
+                .fetch_one(&mut *tx)
+                .await?;
+
+        if group_count == 0 {
+            for (group_index, group) in shape.groups().iter().enumerate() {
+                let group_id: i64 = sqlx::query_scalar(
+                    "INSERT INTO item_option_groups
+                        (menu_item_id, name, kind, help, is_required, sort_order)
+                     VALUES (?, ?, ?, ?, ?, ?)
+                     RETURNING id",
+                )
+                .bind(item_id)
+                .bind(group.name)
+                .bind(group.kind)
+                .bind(group.help)
+                .bind(if group.required { 1 } else { 0 })
+                .bind(group_index as i64)
+                .fetch_one(&mut *tx)
+                .await?;
+
+                for (option_index, label) in group.options.iter().enumerate() {
+                    sqlx::query(
+                        "INSERT INTO item_options
+                            (group_id, label, price_delta_kobo, is_default, is_available, sort_order)
+                         VALUES (?, ?, 0, 0, 1, ?)",
+                    )
+                    .bind(group_id)
+                    .bind(*label)
+                    .bind(option_index as i64)
+                    .execute(&mut *tx)
+                    .await?;
+                }
+            }
+        }
+
+        tx.commit().await?;
+    }
+
+    Ok(())
+}
+
+/// A stable photo seed, so a dish keeps the same placeholder picture.
+fn slugify(name: &str) -> String {
+    let mut out = String::with_capacity(name.len());
+    let mut last_dash = true;
+
+    for ch in name.chars() {
+        if ch.is_ascii_alphanumeric() {
+            out.push(ch.to_ascii_lowercase());
+            last_dash = false;
+        } else if !last_dash {
+            out.push('-');
+            last_dash = true;
+        }
+    }
+
+    out.trim_end_matches('-').to_string()
+}

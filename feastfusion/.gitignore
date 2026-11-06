@@ -26,5 +26,6 @@ backend/uploads/*
 
 # logs and OS noise
 *.log
+*.err
 .DS_Store
 Thumbs.db

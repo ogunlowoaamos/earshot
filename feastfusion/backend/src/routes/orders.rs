@@ -36,6 +36,85 @@ pub(crate) fn split_options(text: &str) -> Vec<String> {
         .collect()
 }
 
+/// Checks the choices a customer picked against what the caterer actually
+/// offers, and returns the extra cost plus the labels for the receipt.
+async fn price_options(
+    conn: &mut sqlx::SqliteConnection,
+    item_id: i64,
+    item_name: &str,
+    picked: &[i64],
+) -> AppResult<(i64, String)> {
+    let groups = sqlx::query_as::<_, (i64, String, String, bool)>(
+        "SELECT id, name, kind, is_required FROM item_option_groups
+         WHERE menu_item_id = ? ORDER BY sort_order, id",
+    )
+    .bind(item_id)
+    .fetch_all(&mut *conn)
+    .await?;
+
+    let mut chosen: Vec<i64> = picked.to_vec();
+    chosen.sort_unstable();
+    chosen.dedup();
+
+    if groups.is_empty() {
+        if chosen.is_empty() {
+            return Ok((0, String::new()));
+        }
+        return Err(AppError::BadRequest(format!(
+            "{item_name} does not come with choices to pick."
+        )));
+    }
+
+    let mut extra_kobo = 0i64;
+    let mut labels: Vec<String> = Vec::new();
+    let mut used: Vec<i64> = Vec::new();
+
+    for (group_id, group_name, kind, is_required) in &groups {
+        let options = sqlx::query_as::<_, (i64, String, i64, bool)>(
+            "SELECT id, label, price_delta_kobo, is_available FROM item_options
+             WHERE group_id = ? ORDER BY sort_order, id",
+        )
+        .bind(group_id)
+        .fetch_all(&mut *conn)
+        .await?;
+
+        let mut in_group = 0;
+        for (option_id, label, price_delta_kobo, is_available) in options {
+            if !chosen.contains(&option_id) {
+                continue;
+            }
+            if !is_available {
+                return Err(AppError::BadRequest(format!(
+                    "{label} is not available right now."
+                )));
+            }
+            in_group += 1;
+            used.push(option_id);
+            extra_kobo += price_delta_kobo;
+            labels.push(label);
+        }
+
+        if kind.as_str() == "single" && in_group > 1 {
+            return Err(AppError::BadRequest(format!(
+                "Pick only one {group_name} for {item_name}."
+            )));
+        }
+        if *is_required && in_group == 0 {
+            return Err(AppError::BadRequest(format!(
+                "Choose a {group_name} for {item_name}."
+            )));
+        }
+    }
+
+    if used.len() != chosen.len() {
+        return Err(AppError::BadRequest(format!(
+            "One of the choices for {item_name} is no longer offered."
+        )));
+    }
+
+    Ok((extra_kobo, labels.join(OPTION_SEP)))
+}
+
 pub(crate) async fn lines_for(pool: &SqlitePool, order_id: i64) -> AppResult<Vec<OrderLine>> {
     let rows = sqlx::query_as::<_, (String, i64, i64, String, String)>(
         "SELECT name, quantity, unit_price_kobo, options_text, note FROM order_items \
@@ -47,13 +126,15 @@ pub(crate) async fn lines_for(pool: &SqlitePool, order_id: i64) -> AppResult<Vec
 
     Ok(rows
         .into_iter()
-        .map(|(name, qty, unit_price_kobo, options_text, note)| OrderLine {
-            name,
-            qty,
-            unit_price_kobo,
-            options: split_options(&options_text),
-            note,
-        })
+        .map(
+            |(name, qty, unit_price_kobo, options_text, note)| OrderLine {
+                name,
+                qty,
+                unit_price_kobo,
+                options: split_options(&options_text),
+                note,
+            },
+        )
         .collect())
 }
 
@@ -63,7 +144,9 @@ pub(crate) async fn fetch_by_reference(pool: &SqlitePool, reference: &str) -> Ap
         .bind(reference)
         .fetch_optional(pool)
         .await?
-        .ok_or_else(|| AppError::NotFound("We couldn't find an order with that reference.".into()))?;
+        .ok_or_else(|| {
+            AppError::NotFound("We couldn't find an order with that reference.".into())
+        })?;
 
     let items = lines_for(pool, row.id).await?;
     Ok(Order { row, items })
@@ -141,12 +224,11 @@ pub async fn create_order(
                 "Choose the state we are delivering to.".into(),
             ));
         };
-        let active: Option<i64> = sqlx::query_scalar(
-            "SELECT 1 FROM delivery_zones WHERE state = ? AND is_active = 1",
-        )
-        .bind(state_name)
-        .fetch_optional(&state.pool)
-        .await?;
+        let active: Option<i64> =
+            sqlx::query_scalar("SELECT 1 FROM delivery_zones WHERE state = ? AND is_active = 1")
+                .bind(state_name)
+                .fetch_optional(&state.pool)
+                .await?;
         if active.is_none() {
             return Err(AppError::BadRequest(
                 "We do not deliver to that state yet. Pick one of the live states.".into(),
@@ -159,7 +241,7 @@ pub async fn create_order(
 
     let mut tx = state.pool.begin().await?;
     let mut subtotal_kobo: i64 = 0;
-    let mut lines: Vec<(i64, String, i64, i64)> = Vec::new();
+    let mut lines: Vec<(i64, String, i64, i64, String, String)> = Vec::new();
 
     for line in &payload.items {
         if line.qty <= 0 || line.qty > 99 {
@@ -185,8 +267,25 @@ pub async fn create_order(
             )));
         }
 
-        subtotal_kobo += price_kobo * line.qty;
-        lines.push((id, item_name, price_kobo, line.qty));
+        if price_kobo <= 0 {
+            return Err(AppError::BadRequest(format!(
+                "{item_name} is not priced yet, so we cannot take the order."
+            )));
+        }
+
+        let (extra_kobo, options_text) =
+            price_options(&mut tx, id, &item_name, &line.option_ids).await?;
+
+        let unit_price_kobo = price_kobo + extra_kobo;
+        let note = line
+            .note
+            .as_deref()
+            .map(str::trim)
+            .unwrap_or_default()
+            .to_string();
+
+        subtotal_kobo += unit_price_kobo * line.qty;
+        lines.push((id, item_name, unit_price_kobo, line.qty, options_text, note));
     }
 
     let total_kobo = subtotal_kobo + delivery_fee_kobo;
@@ -227,16 +326,19 @@ pub async fn create_order(
 
     let order_id = inserted.last_insert_rowid();
 
-    for (menu_item_id, item_name, unit_price_kobo, qty) in &lines {
+    for (menu_item_id, item_name, unit_price_kobo, qty, options_text, note) in &lines {
         sqlx::query(
-            "INSERT INTO order_items (order_id, menu_item_id, name, unit_price_kobo, quantity)
-             VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO order_items
+                (order_id, menu_item_id, name, unit_price_kobo, quantity, options_text, note)
+             VALUES (?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(order_id)
         .bind(menu_item_id)
         .bind(item_name)
         .bind(unit_price_kobo)
         .bind(qty)
+        .bind(options_text)
+        .bind(note)
         .execute(&mut *tx)
         .await?;
     }

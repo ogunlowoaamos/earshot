@@ -55,7 +55,9 @@ pub async fn create_catering(
         ));
     }
     if !matches!(job_kind, "event" | "cook_only" | "custom") {
-        return Err(AppError::BadRequest("Pick what kind of job this is.".into()));
+        return Err(AppError::BadRequest(
+            "Pick what kind of job this is.".into(),
+        ));
     }
     if event_type.is_empty() {
         return Err(AppError::BadRequest("What kind of event is it?".into()));
@@ -64,7 +66,9 @@ pub async fn create_catering(
         return Err(AppError::BadRequest("When do you need us?".into()));
     }
     if job_kind == "event" && payload.guest_count <= 0 {
-        return Err(AppError::BadRequest("How many guests are you feeding?".into()));
+        return Err(AppError::BadRequest(
+            "How many guests are you feeding?".into(),
+        ));
     }
     if location.len() < 3 {
         return Err(AppError::BadRequest("Where is the event holding?".into()));
@@ -156,10 +160,7 @@ pub async fn create_catering(
     Ok((StatusCode::CREATED, Json(request)))
 }
 
-pub(crate) async fn fetch_by_id(
-    pool: &sqlx::SqlitePool,
-    id: i64,
-) -> AppResult<CateringRequest> {
+pub(crate) async fn fetch_by_id(pool: &sqlx::SqlitePool, id: i64) -> AppResult<CateringRequest> {
     let sql = format!("SELECT {CATERING_COLUMNS} FROM catering_requests WHERE id = ?");
     sqlx::query_as::<_, CateringRequest>(&sql)
         .bind(id)

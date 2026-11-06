@@ -46,8 +46,18 @@ const CATEGORIES: &[(&str, &str, &str, i64)] = &[
         "Slow mornings, warm from the oven.",
         5,
     ),
-    ("Desserts", "desserts", "Chin chin, cakes and cold sweet things.", 6),
-    ("Drinks", "drinks", "Chilled zobo, chapman and fresh juice.", 7),
+    (
+        "Desserts",
+        "desserts",
+        "Chin chin, cakes and cold sweet things.",
+        6,
+    ),
+    (
+        "Drinks",
+        "drinks",
+        "Chilled zobo, chapman and fresh juice.",
+        7,
+    ),
 ];
 
 /// name, category slug, price in naira, description, tags, featured, unsplash id
@@ -599,6 +609,8 @@ pub async fn run(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
 
         tracing::info!("seeded admin account '{username}'");
     }
+
+    crate::catalogue::seed_catalogue(pool).await?;
 
     Ok(())
 }

@@ -35,6 +35,7 @@ pub async fn connect() -> Result<SqlitePool, Box<dyn std::error::Error>> {
 const MIGRATIONS: &[&str] = &[
     include_str!("../migrations/0001_init.sql"),
     include_str!("../migrations/0002_ingredients_and_deposit.sql"),
+    include_str!("../migrations/0003_catalogue_and_options.sql"),
 ];
 
 async fn migrate(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
@@ -48,8 +49,8 @@ async fn migrate(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
             // column or index must tolerate "already exists".
             if let Err(err) = sqlx::query(statement).execute(pool).await {
                 let msg = err.to_string().to_lowercase();
-                let already_applied = msg.contains("duplicate column")
-                    || msg.contains("already exists");
+                let already_applied =
+                    msg.contains("duplicate column") || msg.contains("already exists");
                 if !already_applied {
                     return Err(err.into());
                 }
@@ -82,7 +83,8 @@ pub async fn load_settings(pool: &SqlitePool) -> Settings {
         catering_deposit_kobo: setting_int(pool, "catering_deposit_kobo", 10_000_000).await,
         whatsapp_number: setting_value(pool, "whatsapp_number", "2348012345678").await,
         bank_name: setting_value(pool, "bank_name", "Guaranty Trust Bank").await,
-        bank_account_name: setting_value(pool, "bank_account_name", "FeastFusion Kitchen Ltd").await,
+        bank_account_name: setting_value(pool, "bank_account_name", "FeastFusion Kitchen Ltd")
+            .await,
         bank_account_number: setting_value(pool, "bank_account_number", "0123456789").await,
     }
 }

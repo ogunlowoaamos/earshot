@@ -1,4 +1,5 @@
 mod auth;
+mod catalogue;
 mod db;
 mod error;
 mod models;
@@ -10,7 +11,7 @@ mod seed;
 use std::path::PathBuf;
 
 use axum::{
-    routing::{get, patch, post},
+    routing::{get, patch, post, put},
     Router,
 };
 use sqlx::SqlitePool;
@@ -39,7 +40,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pool = db::connect().await?;
 
-    let uploads = PathBuf::from(std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "uploads".to_string()));
+    let uploads =
+        PathBuf::from(std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "uploads".to_string()));
     tokio::fs::create_dir_all(&uploads).await?;
 
     let state = AppState {
@@ -67,6 +69,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/admin/pricing", get(routes::admin::get_pricing))
         .route("/admin/pricing/:kind", post(routes::admin::save_rate))
         .route("/admin/menu", post(routes::admin::create_menu_item))
+        .route("/admin/catalogue", get(routes::admin::list_catalogue))
+        .route("/admin/availability", post(routes::admin::set_availability))
+        .route("/admin/menu/:id/options", put(routes::admin::save_options))
         .route(
             "/admin/menu/:id",
             patch(routes::admin::update_menu_item).delete(routes::admin::delete_menu_item),

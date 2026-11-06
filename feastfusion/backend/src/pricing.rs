@@ -17,7 +17,7 @@ use sqlx::SqlitePool;
 
 use crate::{
     error::AppResult,
-    models::{CookRate, CateringPricing, CateringRate, DishRate, Quote, QuoteLine},
+    models::{CateringPricing, CateringRate, CookRate, DishRate, Quote, QuoteLine},
 };
 
 /// Used when the caterer has not set a rate for the chosen event type yet.
@@ -112,7 +112,11 @@ fn quote_event(
             }
             uplift_per_guest += dish.uplift_kobo;
             lines.push(QuoteLine {
-                label: format!("{} adds {} per guest", pretty_slug(slug), naira(dish.uplift_kobo)),
+                label: format!(
+                    "{} adds {} per guest",
+                    pretty_slug(slug),
+                    naira(dish.uplift_kobo)
+                ),
                 amount_kobo: guests * dish.uplift_kobo,
             });
         }
