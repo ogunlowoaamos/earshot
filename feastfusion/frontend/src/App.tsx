@@ -1,4 +1,4 @@
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
@@ -10,16 +10,29 @@ import { Checkout } from './pages/Checkout'
 import { OrderConfirmation } from './pages/OrderConfirmation'
 import { Catering } from './pages/Catering'
 import { CateringAgreement } from './pages/CateringAgreement'
-import { About } from './pages/About'
 import { TrackOrder } from './pages/TrackOrder'
 import { Admin } from './pages/Admin'
 import { NotFound } from './pages/NotFound'
 
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
-  }, [pathname])
+    const jump = () => {
+      if (hash) {
+        const target = document.querySelector(hash)
+        if (target) {
+          target.scrollIntoView({ behavior: 'instant' as ScrollBehavior })
+          return true
+        }
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+      return false
+    }
+    if (jump()) return
+    // A cross-page hash link can land before the target section has mounted.
+    const timer = window.setTimeout(jump, 80)
+    return () => window.clearTimeout(timer)
+  }, [pathname, hash])
   return null
 }
 
@@ -37,7 +50,7 @@ export default function App() {
           <Route path="/order/:reference" element={<OrderConfirmation />} />
           <Route path="/catering" element={<Catering />} />
           <Route path="/catering/agreement" element={<CateringAgreement />} />
-          <Route path="/about" element={<About />} />
+          <Route path="/about" element={<Navigate to="/#kitchen" replace />} />
           <Route path="/track" element={<TrackOrder />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />

@@ -109,9 +109,57 @@ These were built, run, and checked on a real phone and on desktop:
 5. **Deposit maths** in `pricing.rs`, driven by per category rates the caterer can edit.
 6. **The catalogue.** 237 dishes across 16 categories, each with priced choices, all
    hidden until the caterer switches them on. Admin screen verified in a real browser.
+7. **The landing page.** Rebuilt so the first screen fits without scrolling, the menu
+   moved out to its own page, and the old "Our Kitchen" page folded into the landing
+   page. Details below.
 
 Commit `b1e9aa5` is the last verified good state before the catalogue work. If anything
 goes wrong with the catalogue, that is the safe place to return to.
+
+### The landing page
+
+The landing page is now the only home page. It has nine blocks, in this order:
+
+1. **Hero.** Headline, one short line of supporting text, and two buttons. It fits
+   inside the first screen at every size from a small phone up to a wide desktop, so
+   the buttons are always reachable without scrolling.
+2. **Numbers band.** Three figures, moved out of the hero so the hero stays short.
+3. **Three ways to eat.** Delivered, pickup, catering.
+4. **The kitchen wall.** A moving wall of food photos and short cooking clips. Three
+   columns, the middle one drifting the other way, and it pauses when you hover. This
+   replaced the old row of menu cards, so the landing page shows food rather than a
+   menu. The menu lives at `/menu`.
+5. **Delivery map.** The Abuja zones map, loaded only when it scrolls into view.
+6. **Catering band.** The dark full width block that leads to the catering form.
+7. **Our kitchen.** The old About page, folded in here. Photo on one side, the story
+   and four short values on the other. It carries the `#kitchen` anchor.
+8. **Testimonials.** Three short quotes.
+9. **Closing call to action.**
+
+**What changed and why**
+
+- **The type scale was too big.** The largest heading size was 80px, which pushed the
+  hero to about 980px tall and hid the buttons below the fold on a laptop. The scale in
+  `tokens.css` now tops out at 56px. This is a global change, so every page benefits.
+- **The hero copy was cut** from 27 words to 17, and the three statistics moved into
+  their own band underneath.
+- **`/about` no longer exists.** It redirects to `/#kitchen`. The header link and the
+  footer link both point there. `About.tsx` was deleted.
+- **The header link is a plain link, not a router link**, for hash targets, so it does
+  not get marked as the current page.
+- **`ScrollToTop` was rewritten.** It used `requestAnimationFrame`, which never fires in
+  a background browser tab, so the jump to `#kitchen` silently did nothing. It now does
+  the scroll immediately and retries once after 80ms in case the section has not
+  mounted yet.
+- **Eyebrows were cut from six to three.** The small uppercase labels above section
+  headings are limited to one per three sections. The hero, the catering band and Our
+  Kitchen keep theirs; the other three were removed.
+
+**How it was checked.** A browser was driven directly and the page was reloaded at each
+of eleven screen sizes, from 360x740 up to 1920x1080. At every size the hero buttons sat
+above the fold and there was no sideways scrolling. The kitchen wall was measured with
+motion switched on: 558px tall window, three columns, tiles scrolling inside it, and a
+static grid of all fifteen photos for anyone who has asked their device to reduce motion.
 
 ---
 
@@ -359,6 +407,8 @@ Steps 1 to 7 are done. What remains is the customer side.
 6. ~~Admin catalogue panel~~ in `frontend/src/pages/Admin.tsx`. Search, category filter,
    price box, on/off switch, bulk on/off per category, options editor, delete.
 7. ~~`api.ts` types~~ for options and the catalogue.
+8. ~~Landing page rebuild~~. Hero fits every screen, menu moved to `/menu`, kitchen wall
+   added, About folded in, `/about` retired, type scale reduced.
 
 ### Still to do
 
@@ -419,6 +469,24 @@ give it a rate in admin pricing if it should affect the deposit.
 
 **Change the deposit.** Admin, pricing. Rates are per event type and per dish category.
 
+**Change the kitchen wall photos or clips.** In `pages/Landing.tsx`, the `WALL_COLUMNS`
+list holds the tiles. Each entry is either `photo('<unsplash id>')` or `clip('<video
+url>')`. Add, remove or reorder freely; the columns rebalance themselves. Keep the count
+per column equal or the loop will jump.
+
+**Change how fast the wall scrolls.** In `pages/Landing.css`, the `wall-rise` and
+`wall-fall` animations. The `64s` is the time for one full pass. A smaller number is
+faster.
+
+**Change the wall height.** Same file, `.wall__cols`. It is currently
+`clamp(420px, 62vh, 620px)`, meaning it grows with the screen but never goes below 420px
+or above 620px.
+
+**Change the biggest heading size.** `styles/tokens.css`, the `--step-5` line. It is
+`clamp(2.3rem, 1.7rem + 3vw, 3.5rem)`, which means 37px on a small phone and 56px on a
+desktop. Raising the last number makes every large heading on the site bigger, so check
+the hero still fits afterwards.
+
 ---
 
 ## 11. Traps worth knowing
@@ -432,3 +500,18 @@ give it a rate in admin pricing if it should affect the deposit.
 - **PowerShell has no heredoc.** Pipe a here string instead, and use
   `git commit -F <file>` for multi line commit messages.
 - **Push to `mine`, not `origin`.** `origin` rejects this account.
+- **The automation browser lies about motion.** It reports that the visitor has asked
+  for reduced motion, so every animated section silently shows its still fallback. The
+  kitchen wall looked like a broken 3000px stack for several rounds of testing because
+  of this. Any screenshot or measurement of an animated section must first tell the
+  browser to pretend motion is welcome. `shots/shot-section.js` now does this.
+- **The automation browser also lies about zoom.** One profile had a permanent 75% zoom,
+  so every measurement came back a third too large. Use a fresh profile with
+  `--force-device-scale-factor=1` and check that the reported pixel ratio is exactly 1
+  before trusting any number.
+- **Sizes based on screen width are frozen at page load.** If you resize the browser
+  after the page has loaded, headings keep the size they were given at load. Reload the
+  page after every resize, or the numbers are wrong.
+- **`requestAnimationFrame` never fires in a background tab.** Anything that waits for
+  the next frame will silently do nothing. Use `setTimeout` in test scripts, and prefer
+  doing the work immediately in app code.

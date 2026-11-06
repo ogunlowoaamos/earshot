@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, naira, type MenuItem } from '../lib/api'
-import { MenuCard } from '../components/MenuCard'
+import { api, naira } from '../lib/api'
 import { Reveal } from '../components/Reveal'
 import logo from '../assets/logo.svg'
 import './Landing.css'
@@ -27,21 +26,112 @@ const marquee = [
   'Chin Chin',
 ]
 
+/* ---------------- Kitchen wall ----------------
+   A moving wall of food photos and cooking clips. The menu itself lives at
+   /menu, so this section is purely visual: it shows the food, it does not
+   list or price it. */
+
+type WallTile =
+  | { kind: 'photo'; src: string; alt: string }
+  | { kind: 'video'; src: string; poster: string; alt: string }
+
+const photo = (id: string, alt: string): WallTile => ({
+  kind: 'photo',
+  src: `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=600&q=70`,
+  alt,
+})
+
+const clip = (src: string, posterId: string, alt: string): WallTile => ({
+  kind: 'video',
+  src,
+  poster: `https://images.unsplash.com/photo-${posterId}?auto=format&fit=crop&w=600&q=70`,
+  alt,
+})
+
+const WALL_COLUMNS: WallTile[][] = [
+  [
+    photo('1631515243349-e0cb75fb8d3a', 'A pot of smoky party jollof rice'),
+    clip(
+      'https://upload.wikimedia.org/wikipedia/commons/7/78/Hot_Rice_and_fried_Dodo_with_a_plate_of_fish_stew_and_boiled_egg.webm',
+      '1604329760661-e71dc83f8f26',
+      'Rice, fried plantain, fish stew and a boiled egg being plated',
+    ),
+    photo('1544025162-d76694265947', 'Suya skewers dusted with yaji spice'),
+    photo('1601050690597-df0568f70950', 'A platter of small chops'),
+    photo('1544145945-f90425340c7e', 'A glass of chilled zobo'),
+  ],
+  [
+    photo('1547592180-85f173990554', 'A bowl of egusi soup'),
+    photo('1519708227418-c8fd9a32b7a2', 'Charcoal grilled chicken'),
+    clip(
+      'https://upload.wikimedia.org/wikipedia/commons/9/9a/Cooking_Squilla_mantis_with_tomato_sauce.webm',
+      '1476718406336-bb5a9690ee2a',
+      'Seafood simmering in a fresh tomato sauce',
+    ),
+    photo('1509440159596-0249088772ff', 'A smooth mound of pounded yam'),
+    photo('1555507036-ab1f4038808a', 'Golden meat pies cooling on a tray'),
+  ],
+  [
+    photo('1504674900247-0877df9cc836', 'Peppered goat meat in a dark bowl'),
+    photo('1606491956689-2ea866880c84', 'Coconut fried rice'),
+    photo('1467003909585-2f8a72700288', 'A whole grilled tilapia'),
+    clip(
+      'https://upload.wikimedia.org/wikipedia/commons/2/26/Cooking_Pilaf.webm',
+      '1512058564366-18510be2db19',
+      'Rice being stirred through in a wide pan',
+    ),
+    photo('1516684732162-798a0062be99', 'A bowl of crunchy chin chin'),
+  ],
+]
+
+// On a metered connection we show the still frame instead of the clip.
+const SAVE_DATA =
+  typeof navigator !== 'undefined' &&
+  (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true
+
+function WallTileView({ tile, dup }: { tile: WallTile; dup?: boolean }) {
+  const className = `wall__tile${dup ? ' wall__tile--dup' : ''}`
+  const hidden = dup ? { 'aria-hidden': true as const } : {}
+
+  if (tile.kind === 'video' && !dup && !SAVE_DATA) {
+    return (
+      <figure className={className} {...hidden}>
+        <video
+          src={tile.src}
+          poster={tile.poster}
+          muted
+          loop
+          playsInline
+          autoPlay
+          preload="none"
+          aria-label={tile.alt}
+        />
+      </figure>
+    )
+  }
+
+  return (
+    <figure className={className} {...hidden}>
+      <img
+        src={tile.kind === 'video' ? tile.poster : tile.src}
+        alt={dup ? '' : tile.alt}
+        loading="lazy"
+      />
+    </figure>
+  )
+}
+
 export function Landing() {
-  const [featured, setFeatured] = useState<MenuItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [menuCount, setMenuCount] = useState(0)
 
   useEffect(() => {
     let alive = true
     api
       .menu()
       .then((items) => {
-        if (!alive) return
-        const picked = items.filter((i) => i.is_featured).slice(0, 6)
-        setFeatured(picked.length ? picked : items.slice(0, 6))
+        if (alive) setMenuCount(items.length)
       })
       .catch(() => undefined)
-      .finally(() => alive && setLoading(false))
     return () => {
       alive = false
     }
@@ -61,9 +151,8 @@ export function Landing() {
             </h1>
 
             <p className="lede hero__lede">
-              Party jollof, slow-braised soups, peppered grills and warm desserts, cooked fresh
-              every morning in small batches. Delivered hot across Abuja and nearby states, or
-              ready for pickup.
+              Party jollof, slow-braised soups, peppered grills and warm desserts. Cooked fresh
+              each morning, delivered hot across Abuja.
             </p>
 
             <div className="hero__actions">
@@ -83,21 +172,6 @@ export function Landing() {
                 Cater an event
               </Link>
             </div>
-
-            <dl className="hero__stats">
-              <div>
-                <dt>Avg. delivery</dt>
-                <dd>45 min</dd>
-              </div>
-              <div>
-                <dt>Dishes on menu</dt>
-                <dd>40+</dd>
-              </div>
-              <div>
-                <dt>Events catered</dt>
-                <dd>300+</dd>
-              </div>
-            </dl>
           </div>
 
           <div className="hero__media">
@@ -118,6 +192,26 @@ export function Landing() {
         </div>
       </section>
 
+      {/* ---------------- Proof strip ---------------- */}
+      <section className="stats-band">
+        <div className="container stats-band__inner">
+          <dl className="stats-band__list">
+            <div>
+              <dt>Avg. delivery</dt>
+              <dd>45 min</dd>
+            </div>
+            <div>
+              <dt>Dishes on menu</dt>
+              <dd>{menuCount > 0 ? menuCount : '24'}</dd>
+            </div>
+            <div>
+              <dt>Events catered</dt>
+              <dd>300+</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
       {/* ---------------- Marquee ---------------- */}
       <div className="marquee" aria-hidden="true">
         <div className="marquee__track">
@@ -135,7 +229,6 @@ export function Landing() {
         <div className="container">
           <Reveal>
             <div className="ways__head">
-              <span className="eyebrow">Three ways to eat</span>
               <h2 className="ways__title">
                 Pick whatever fits your day. We handle the fire.
               </h2>
@@ -179,40 +272,18 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ---------------- Featured ---------------- */}
-      <section className="section featured">
-        <div className="container">
-          <Reveal>
-            <div className="featured__head">
-              <div>
-                <span className="eyebrow">From the kitchen</span>
-                <h2 className="featured__title">What people keep re-ordering</h2>
+      {/* ---------------- Kitchen wall ---------------- */}
+      <section className="wall" aria-label="Food and cooking at FeastFusion">
+        <div className="wall__cols">
+          {WALL_COLUMNS.map((col, ci) => (
+            <div key={ci} className={`wall__col${ci % 2 === 1 ? ' wall__col--down' : ''}`}>
+              <div className="wall__track">
+                {[...col, ...col].map((tile, i) => (
+                  <WallTileView key={i} tile={tile} dup={i >= col.length} />
+                ))}
               </div>
-              <Link to="/menu" className="btn btn--ghost">
-                See all 40+ dishes
-              </Link>
             </div>
-          </Reveal>
-
-          {loading ? (
-            <div className="featured__grid">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="skeleton-card" />
-              ))}
-            </div>
-          ) : featured.length === 0 ? (
-            <p className="featured__empty">
-              Our menu is being updated. Please check back shortly.
-            </p>
-          ) : (
-            <div className="featured__grid">
-              {featured.map((item, i) => (
-                <Reveal key={item.id} delay={i * 60}>
-                  <MenuCard item={item} />
-                </Reveal>
-              ))}
-            </div>
-          )}
+          ))}
         </div>
       </section>
 
@@ -222,7 +293,6 @@ export function Landing() {
           <Reveal>
             <div className="coverage__head">
               <div>
-                <span className="eyebrow">Where we deliver</span>
                 <h2 className="coverage__title">
                   Cooked in Abuja. Reaching further every month.
                 </h2>
@@ -275,46 +345,50 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ---------------- Promise ---------------- */}
-      <section className="section promise">
-        <div className="container promise__inner">
-          <div className="promise__sticky">
-            <span className="eyebrow">The FeastFusion promise</span>
-            <h2>No shortcuts you can taste.</h2>
-            <p className="lede">
-              We cook the way a good kitchen should: fresh stock, real pepper, and enough time for
-              the flavours to come together.
-            </p>
+      {/* ---------------- Our kitchen ---------------- */}
+      <section className="section story" id="kitchen">
+        <div className="container">
+          <div className="story__inner">
+            <Reveal className="story__media">
+              <img
+                src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=900&q=80"
+                alt="A cook working in a busy kitchen"
+              />
+            </Reveal>
+
+            <Reveal className="story__copy" delay={80}>
+              <span className="eyebrow">Our kitchen</span>
+              <h2>One pot, one family, a lot of pepper.</h2>
+              <p>
+                FeastFusion started as a Sunday ritual. One auntie, one very large pot of jollof,
+                and a queue of neighbours. We simply built a website around it.
+              </p>
+              <p>
+                Every base still starts from scratch. Tomatoes are blended and fried down until the
+                raw taste disappears. Stock simmers for hours. Pepper is measured by feel, not by
+                spoon.
+              </p>
+              <p>
+                We cook in small batches each morning, so what reaches you has not been sitting
+                under a heat lamp since yesterday. If something runs out, it runs out. We would
+                rather sell out than serve you a shadow of the real thing.
+              </p>
+            </Reveal>
           </div>
 
-          <ol className="promise__list">
+          <div className="story__values">
             {[
-              [
-                'Cooked the same day',
-                'Nothing sits overnight. Your order starts cooking after you place it.',
-              ],
-              [
-                'Real ingredients, no powders',
-                'Fresh tomatoes, scotch bonnet, locust beans and palm oil. No seasoning shortcuts.',
-              ],
-              [
-                'Portions that actually feed you',
-                'Generous servings built for sharing, or for one very happy person.',
-              ],
-              [
-                'You always know where your order is',
-                'Track it from the kitchen to your door with a reference number.',
-              ],
+              ['Small batches', 'We cook to the number of orders, not to a forecast.'],
+              ['Real fire', 'Grills over open flame. Smoke is a flavour, not an accident.'],
+              ['Honest portions', 'If you order for two, two people eat well.'],
+              ['You can follow it', 'Track your order from the kitchen to your door.'],
             ].map(([title, body], i) => (
-              <Reveal as="li" key={title} delay={i * 70} className="promise__item">
-                <span className="promise__index">{String(i + 1).padStart(2, '0')}</span>
-                <div>
-                  <h3>{title}</h3>
-                  <p>{body}</p>
-                </div>
+              <Reveal key={title} delay={i * 70}>
+                <h3>{title}</h3>
+                <p>{body}</p>
               </Reveal>
             ))}
-          </ol>
+          </div>
         </div>
       </section>
 
@@ -322,7 +396,6 @@ export function Landing() {
       <section className="section voices">
         <div className="container">
           <Reveal>
-            <span className="eyebrow">Word of mouth</span>
             <h2 className="voices__title">Abuja has opinions. Here they are.</h2>
           </Reveal>
 

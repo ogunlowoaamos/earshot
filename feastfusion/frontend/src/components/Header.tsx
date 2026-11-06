@@ -8,7 +8,7 @@ import './Header.css'
 const links = [
   { to: '/menu', label: 'Menu' },
   { to: '/catering', label: 'Catering' },
-  { to: '/about', label: 'Our Kitchen' },
+  { to: '/#kitchen', label: 'Our Kitchen' },
 ]
 
 export function Header() {
@@ -27,7 +27,7 @@ export function Header() {
 
   useEffect(() => {
     setMenuOpen(false)
-  }, [location.pathname])
+  }, [location.pathname, location.hash])
 
   return (
     <header className={`site-header ${scrolled ? 'is-scrolled' : ''}`}>
@@ -40,15 +40,21 @@ export function Header() {
         </Link>
 
         <nav className={`site-nav ${menuOpen ? 'is-open' : ''}`} aria-label="Main">
-          {links.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              className={({ isActive }) => `site-nav__link ${isActive ? 'is-active' : ''}`}
-            >
-              {l.label}
-            </NavLink>
-          ))}
+          {links.map((l) =>
+            l.to.includes('#') ? (
+              <Link key={l.to} to={l.to} className="site-nav__link">
+                {l.label}
+              </Link>
+            ) : (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                className={({ isActive }) => `site-nav__link ${isActive ? 'is-active' : ''}`}
+              >
+                {l.label}
+              </NavLink>
+            ),
+          )}
           <Link to="/menu" className="btn btn--primary btn--sm site-nav__cta">
             Order now
           </Link>
