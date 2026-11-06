@@ -124,17 +124,19 @@ The landing page is now the only home page. It has nine blocks, in this order:
    inside the first screen at every size from a small phone up to a wide desktop, so
    the buttons are always reachable without scrolling.
 2. **Numbers band.** Three figures, moved out of the hero so the hero stays short.
-3. **Three ways to eat.** Delivered, pickup, catering.
-4. **The kitchen wall.** A moving wall of food photos and short cooking clips. Three
+3. **Dish ribbon.** A dark strip of dish names scrolling sideways. It sits directly
+   under the numbers band.
+4. **Three ways to eat.** Delivered, pickup, catering.
+5. **The kitchen wall.** A moving wall of food photos and short cooking clips. Three
    columns, the middle one drifting the other way, and it pauses when you hover. This
    replaced the old row of menu cards, so the landing page shows food rather than a
    menu. The menu lives at `/menu`.
-5. **Delivery map.** The Abuja zones map, loaded only when it scrolls into view.
-6. **Catering band.** The dark full width block that leads to the catering form.
-7. **Our kitchen.** The old About page, folded in here. Photo on one side, the story
+6. **Delivery map.** The Abuja zones map, loaded only when it scrolls into view.
+7. **Catering band.** The dark full width block that leads to the catering form.
+8. **Our kitchen.** The old About page, folded in here. Photo on one side, the story
    and four short values on the other. It carries the `#kitchen` anchor.
-8. **Testimonials.** Three short quotes.
-9. **Closing call to action.**
+9. **Testimonials.** Three short quotes.
+10. **Closing call to action.**
 
 **What changed and why**
 
@@ -154,12 +156,24 @@ The landing page is now the only home page. It has nine blocks, in this order:
 - **Eyebrows were cut from six to three.** The small uppercase labels above section
   headings are limited to one per three sections. The hero, the catering band and Our
   Kitchen keep theirs; the other three were removed.
+- **The first screen now holds the hero, the numbers band and the dish ribbon.** The
+  hero used to be 706px tall on a 1366x768 laptop, which pushed both strips off the
+  bottom of the screen. The hero padding, the gaps between the hero pieces, the height
+  of the hero photo and the padding inside both strips were all trimmed, and the
+  headline now shrinks a little on narrow laptops so it stops wrapping to a fourth
+  line. The hero is 466px at that size now, and the ribbon finishes at 707px, so
+  everything is visible without scrolling.
 
 **How it was checked.** A browser was driven directly and the page was reloaded at each
 of eleven screen sizes, from 360x740 up to 1920x1080. At every size the hero buttons sat
-above the fold and there was no sideways scrolling. The kitchen wall was measured with
-motion switched on: 558px tall window, three columns, tiles scrolling inside it, and a
-static grid of all fifteen photos for anyone who has asked their device to reduce motion.
+above the fold and there was no sideways scrolling. The bottom edge of the dish ribbon
+was measured at each desktop size and it lands inside the screen every time: 796px of
+1080, 717 of 900, 707 of 768, 704 of 800, and 674 of 768 on a 1024px laptop. On a phone
+the hero photo drops below the text, so the two strips sit one scroll down; that is
+deliberate, because squeezing a photo and two strips into a phone screen would leave no
+room for the food. The kitchen wall was measured with motion switched on: 558px tall
+window, three columns, tiles scrolling inside it, and a static grid of all fifteen
+photos for anyone who has asked their device to reduce motion.
 
 ---
 
@@ -485,7 +499,17 @@ or above 620px.
 **Change the biggest heading size.** `styles/tokens.css`, the `--step-5` line. It is
 `clamp(2.3rem, 1.7rem + 3vw, 3.5rem)`, which means 37px on a small phone and 56px on a
 desktop. Raising the last number makes every large heading on the site bigger, so check
-the hero still fits afterwards.
+the hero still fits afterwards. The hero headline has its own slightly smaller version
+of the same formula in `Landing.css` (`.hero__title`) so it does not wrap to a fourth
+line on a 1024px laptop. If you change one, change the other.
+
+**Make the first screen taller or shorter.** Three numbers control it, all in
+`Landing.css`. `.hero` `padding-block` sets the space above and below the hero content.
+`.hero__media` `min-height` and `.hero__frame--main` `max-height` set how tall the hero
+photo is allowed to be; they are both `clamp(300px, 44vh, 480px)`, so the photo grows
+with the screen. `.stats-band__inner` and `.marquee` `padding-block` set the thickness
+of the two strips. If you make the hero photo taller, the dish ribbon will drop below
+the fold on a 768px-tall laptop, so re-measure after any change.
 
 ---
 

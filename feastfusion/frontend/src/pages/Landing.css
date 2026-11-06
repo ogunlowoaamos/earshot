@@ -2,7 +2,9 @@
 
 .hero {
   position: relative;
-  padding-block: clamp(var(--sp-7), 6vw, var(--sp-9)) var(--sp-8);
+  /* Tight enough that the hero, the stats band and the marquee all land
+     inside the first screen on a 768px-tall laptop. */
+  padding-block: clamp(var(--sp-5), 3.5vw, var(--sp-7)) var(--sp-6);
   overflow: hidden;
 }
 
@@ -30,11 +32,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-5);
+  gap: var(--sp-4);
 }
 
 .hero__title {
-  font-size: var(--step-5);
+  /* Slightly smaller than --step-5 at the narrow end so the headline does not
+     wrap to a fourth line on a 1024px laptop. */
+  font-size: clamp(2.1rem, 1.35rem + 2.7vw, 3.5rem);
   line-height: 1;
   letter-spacing: -0.035em;
   max-width: 15ch;
@@ -47,14 +51,13 @@
 }
 
 .hero__lede {
-  max-width: 46ch;
+  max-width: 52ch;
 }
 
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-3);
-  margin-top: var(--sp-2);
 }
 
 /* ============ PROOF STRIP ============ */
@@ -65,7 +68,7 @@
 }
 
 .stats-band__inner {
-  padding-block: var(--sp-5);
+  padding-block: var(--sp-4);
 }
 
 .stats-band__list {
@@ -108,7 +111,7 @@
   position: relative;
   display: grid;
   place-items: end;
-  min-height: 460px;
+  min-height: clamp(300px, 44vh, 480px);
 }
 
 .hero__frame {
@@ -127,7 +130,7 @@
 .hero__frame--main {
   width: 100%;
   aspect-ratio: 4 / 5;
-  max-height: 560px;
+  max-height: clamp(300px, 44vh, 480px);
 }
 
 .hero__frame--small {
@@ -188,7 +191,7 @@
   overflow: hidden;
   background: var(--bg-inverse);
   border-block: 1px solid rgba(250, 246, 240, 0.08);
-  padding-block: var(--sp-4);
+  padding-block: var(--sp-3);
 }
 
 .marquee__track {
@@ -414,14 +417,12 @@
     display: none;
   }
 
+  /* Keep the same window height as the moving version. Without the animation
+     the columns would otherwise stack to their full height and turn a 560px
+     band into a 3000px tower of photos. */
   .wall__cols {
-    height: auto;
     -webkit-mask-image: none;
     mask-image: none;
-  }
-
-  .wall__col {
-    overflow: visible;
   }
 }
 
