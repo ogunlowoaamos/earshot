@@ -107,24 +107,25 @@ These were built, run, and checked on a real phone and on desktop:
 4. **Catering form.** Event details, dish selection with toggles, ingredients,
    and a working deposit calculator.
 5. **Deposit maths** in `pricing.rs`, driven by per category rates the caterer can edit.
+6. **The catalogue.** 237 dishes across 16 categories, each with priced choices, all
+   hidden until the caterer switches them on. Admin screen verified in a real browser.
 
-Commit `b1e9aa5` is the last verified good state. If anything goes wrong, that is the
-safe place to return to.
+Commit `b1e9aa5` is the last verified good state before the catalogue work. If anything
+goes wrong with the catalogue, that is the safe place to return to.
 
 ---
 
-## 5. What is half built right now: the catalogue
+## 5. The catalogue: what was built
 
-This is the work in progress. Read this section before touching anything.
+Read this section before touching anything catalogue related.
 
-**Build state:** the backend compiles as of this handoff (`cargo check` passes in about
-3 minutes). It produces 9 warnings, all of them "never used" on the new option types,
-which is expected because none of that plumbing is wired up yet. The warnings disappear
-as step 4 onwards in section 8 gets done.
+**Build state:** the backend compiles and runs. The database is seeded with the full
+catalogue and the seeder is safe to re-run: it will not duplicate dishes or overwrite
+prices the caterer has already set.
 
 ### The goal
 
-The caterer wants roughly 220 Nigerian dishes loaded into the admin area, covering
+The caterer wants 237 Nigerian dishes loaded into the admin area, covering
 swallows, soups, rice, puddings, salads, desserts, drinks, grills, small chops,
 proteins, sauces, fast food, pastries, sides, breakfast and cakes.
 
@@ -143,40 +144,99 @@ add-on carries its own price rather than sharing one.
 
 | Piece | File | State |
 |---|---|---|
-| Database tables for options | `migrations/0003_catalogue_and_options.sql` | Done |
-| Some dish data | `src/catalogue.rs` | Partial, see below |
+| Database tables for options | `migrations/0003_catalogue_and_options.sql` | Done, applied |
+| All 237 dishes, 16 categories | `src/catalogue.rs` | Done |
 | Option templates | `src/catalogue.rs` | Done, 21 templates |
+| Seeder (safe to re-run) | `src/catalogue.rs` `seed_catalogue()` | Done |
 | Response shapes for options | `src/models.rs` | Done |
+| Availability gate on the shop | `src/routes/menu.rs` | Done |
+| Admin catalogue endpoint | `src/routes/admin.rs` | Done |
 | Reading options back on an order | `src/routes/orders.rs` | Done |
+| Admin catalogue screen | `frontend/src/pages/Admin.tsx` | Done |
 
-`catalogue.rs` currently holds:
+`catalogue.rs` holds:
 
 - **16 categories** with their display order.
 - **21 option templates** (`Shape`), each a fixed set of choice groups.
-- **Dish data for 3 of the 16 categories**: rice dishes (10), soups and stews (23),
-  swallows (26). That is 59 dishes written.
+- **237 dishes** spread across all 16 categories.
 
-Still missing from `catalogue.rs`:
+### What the database actually contains
 
-- The other 13 categories of dishes (roughly 160 more).
-- The function that actually writes them into the database (`seed_catalogue`).
+Verified by reading the database directly:
+
+| Measure | Count |
+|---|---|
+| Categories | 16 |
+| Dishes | 237 |
+| Dishes switched on and priced | 24 |
+| Dishes hidden and unpriced | 213 |
+| Option groups | 501 |
+| Individual choices | 2197 |
+| Duplicate dish names | 0 |
+
+The 24 live dishes are the original menu. Everything else waits for the caterer.
+
+`Tea and Bread` is the only dish with no option groups. That is deliberate, because
+there is nothing to choose.
 
 ### What is not started
 
-- **Menu endpoint has no availability gate.** `routes/menu.rs` still returns every
-  dish to the customer. This is the single most important piece of the caterer's
-  rule and it is not written yet.
-- **No option handling at checkout.** `routes/orders.rs` accepts a dish but ignores
-  `option_ids`, does not validate them, and does not add their prices.
-- **No admin endpoint** for turning dishes on and off in bulk, or for editing options.
-- **No frontend at all** for any of this. Nothing about the catalogue is visible in
-  the browser yet.
+- **Customer side of options.** The shop still shows a dish as a single price. It
+  does not yet let a customer pick a size or an add-on, and the cart does not carry
+  those choices.
+- **Checkout does not price options.** `routes/orders.rs` stores the chosen option
+  text but the server-side price check for options still needs confirming.
+- **Catering form still lists 7 categories.** `Catering.tsx` has a hardcoded list of
+  7 slugs; it should offer all 16.
 
-### So nothing shows on screen
+### What you can see today
 
-That is expected. All of the above is backend data and plumbing. Until the menu
-endpoint gates on availability and the admin panel exists, the site looks exactly
-as it did at `b1e9aa5`. Do not be surprised.
+The admin area has a **Catalogue** tab. It lists all 237 dishes grouped by category,
+with a search box, a category filter, a price box per dish, an on/off switch, an
+options editor and a delete button. Only dishes that are switched on **and** priced
+appear in the shop.
+
+### The admin Catalogue screen
+
+Open `/admin`, sign in, and click **Catalogue**. From top to bottom:
+
+- **Header bar.** Shows how many dishes are switched on, how many still need a price,
+  and a **+ Add dish** button.
+- **Search box.** Type part of a dish name and the list narrows as you type.
+- **Category filter.** A dropdown that shows one category at a time, or all of them.
+- **One section per category.** Each has the category name, a count of how many of its
+  dishes are on, and a **Turn all on / Turn all off** button for the whole section.
+- **One row per dish.** A small photo, the dish name, a badge, the number of choices it
+  offers, a price box, an on/off switch, an **Options** button and a delete button.
+- **The badge** reads **Needs a price** in a warning colour until a price is typed, then
+  turns into the naira amount in a calm colour. That badge is the caterer's to-do list.
+- **The price box** saves when you click away or press Enter. No save button to forget.
+- **The Options button** opens the editor for that dish: each group of choices, each
+  choice with its own price, and a Save button.
+
+### How it was checked
+
+Every one of these was tested in a real browser, not assumed:
+
+| Check | Result |
+|---|---|
+| All 16 category sections render with the right names and counts | Pass |
+| 237 dish rows listed | Pass |
+| Search "jollof" narrows to 2 dishes | Pass |
+| Category filter "cakes" shows 11 cakes | Pass |
+| Typing a price saves it and the badge flips to naira | Pass, confirmed in the database |
+| The on/off switch round trips and the counters update | Pass |
+| The options editor opens with groups, choices and Save | Pass |
+| No sideways scrolling at desktop 1440 wide | Pass |
+| No sideways scrolling at phone 390 wide | Pass |
+
+The test scripts live in `feastfusion/shots/` and can be re-run after any change:
+`admin-catalogue.js`, `cat-test.js`, `cat-price.js` and `cat-shots.js`. They need the
+admin token in `feastfusion/shots/.token`. That whole folder is gitignored on purpose,
+because it holds a live login token and scratch screenshots, so it exists only on the
+machine that made it. Recreate the scripts if you work from a fresh clone.
+
+
 
 ---
 
@@ -212,8 +272,8 @@ keep their exact slugs.** The other nine are new and safe to add.
 ### Option templates
 
 Rather than write choices per dish, dishes borrow a template. A dish that uses the
-`Shape::Swallow` template gets portion, extras and note choices. This keeps 220
-dishes from becoming 220 blocks of copy.
+`Shape::Swallow` template gets portion, extras and note choices. This keeps 237
+dishes from becoming 237 blocks of copy.
 
 The templates cover the caterer's order checklist: pizza sizes from 6 inch to 18 inch,
 burger single, double and triple, quantity counts, sausage counts, hot dog combos,
@@ -281,30 +341,44 @@ These were learned the hard way. Breaking one causes a bug that is hard to see.
 
 ## 8. How to resume
 
-Do these in order. Each step keeps the app working.
+Steps 1 to 7 are done. What remains is the customer side.
 
-1. **Finish the dish list** in `src/catalogue.rs`. Add the remaining 13 categories to
-   the `DISHES` array. Descriptions are written to read like menu copy, so keep them short.
-2. **Write `seed_catalogue`** in the same file. It should upsert categories, insert only
-   dishes whose names are new, set `is_available = 0` and `price_kobo = 0`, move existing
-   dishes to their correct category, and create option groups only when a dish has none
-   (so the caterer's later edits are never overwritten on restart).
-3. **Call it** from `seed.rs` `run()`, and add `mod catalogue;` to `main.rs`.
-4. **Gate the menu** in `routes/menu.rs`. `list_menu` returns only available and priced
-   dishes, with their available options attached. `list_categories` returns only
-   categories that still hold at least one visible dish, so the shop never shows an empty shelf.
-5. **Handle options at checkout** in `routes/orders.rs`. Check each chosen option belongs
-   to that dish and is available, refuse if a required group has no choice, add the option
-   prices on the server, and store the readable summary plus the customer note.
-6. **Add admin endpoints** in `routes/admin.rs`: list everything for the admin, replace a
-   dish's options, and switch availability for a whole category at once.
-7. **Then the frontend.** `api.ts` types, then the admin catalogue panel (search, filter,
-   on/off switch, price box, "Needs a price" badge), then the item detail page with its
-   choice groups and live total, then the cart and checkout carrying the chosen options.
-8. **Verify** with `cargo check` and `npm run build`, then on the real phone.
+### Done
 
-The order matters. Gating availability before the admin exists would hide the whole
-menu, because every new dish starts switched off.
+1. ~~Finish the dish list~~ in `src/catalogue.rs`. All 16 categories, 237 dishes.
+2. ~~Write `seed_catalogue`~~ in the same file. It upserts categories, inserts only
+   dishes whose names are new, sets `is_available = 0` and `price_kobo = 0`, moves
+   existing dishes to their correct category, and creates option groups only when a
+   dish has none, so the caterer's later edits are never overwritten on restart.
+3. ~~Call it~~ from `seed.rs` `run()`, with `mod catalogue;` in `main.rs`.
+4. ~~Gate the menu~~ in `routes/menu.rs`. `list_menu` returns only available and priced
+   dishes with their available options attached. `list_categories` returns only
+   categories that still hold at least one visible dish.
+5. ~~Add admin endpoints~~ in `routes/admin.rs`: list everything for the admin, replace
+   a dish's options, and switch availability.
+6. ~~Admin catalogue panel~~ in `frontend/src/pages/Admin.tsx`. Search, category filter,
+   price box, on/off switch, bulk on/off per category, options editor, delete.
+7. ~~`api.ts` types~~ for options and the catalogue.
+
+### Still to do
+
+1. **Confirm option pricing at checkout** in `routes/orders.rs`. Check each chosen
+   option belongs to that dish and is available, refuse if a required group has no
+   choice, add the option prices on the server, and store the readable summary plus
+   the customer note. The storage half is written; the price check needs confirming.
+2. **Item detail page.** Choice groups with a live total, so the customer sees the
+   price change as they pick a size or an add-on.
+3. **Cart keyed by dish plus chosen options.** Two of the same dish with different
+   sizes are two lines, not one.
+4. **Menu card shows "from" the cheapest price**, not a single flat price.
+5. **Checkout sends the chosen options and the note.**
+6. **Catering form** in `Catering.tsx` still has a hardcoded list of 7 category slugs
+   at line 36. Extend it to all 16.
+7. **Verify** with `cargo check` and `npm run build`, then on the real phone.
+
+The order matters. Gating availability before the admin existed would have hidden the
+whole menu, because every new dish starts switched off. That is why the admin came first.
+
 
 ---
 

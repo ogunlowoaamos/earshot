@@ -20,6 +20,50 @@ export type MenuItem = {
   ingredients: string[]
 }
 
+export type DishOption = {
+  id: number
+  label: string
+  price_delta_kobo: number
+  is_default: boolean
+  is_available: boolean
+  sort_order: number
+}
+
+export type OptionGroup = {
+  id: number
+  name: string
+  kind: 'single' | 'multi'
+  help: string
+  is_required: boolean
+  sort_order: number
+  options: DishOption[]
+}
+
+export type CatalogueItem = MenuItem & {
+  sort_order: number
+  option_groups: OptionGroup[]
+}
+
+export type Catalogue = {
+  categories: Category[]
+  items: CatalogueItem[]
+}
+
+export type OptionIn = {
+  label: string
+  price_delta_kobo: number
+  is_default: boolean
+  is_available: boolean
+}
+
+export type OptionGroupIn = {
+  name: string
+  kind: 'single' | 'multi'
+  help: string
+  is_required: boolean
+  options: OptionIn[]
+}
+
 export type CartLine = {
   item: MenuItem
   qty: number
@@ -245,6 +289,28 @@ export const api = {
     request<void>(`/admin/menu/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  adminCatalogue: (token: string) =>
+    request<Catalogue>('/admin/catalogue', {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  adminSaveOptions: (token: string, id: number, groups: OptionGroupIn[]) =>
+    request<Catalogue>(`/admin/menu/${id}/options`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ groups }),
+    }),
+
+  adminSetAvailability: (
+    token: string,
+    payload: { item_ids?: number[]; category_slug?: string; is_available: boolean },
+  ) =>
+    request<Catalogue>('/admin/availability', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
     }),
 }
 

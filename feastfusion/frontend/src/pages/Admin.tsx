@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react'
-import { api, naira, type Category, type CateringPricing, type CateringRequest, type MenuItem, type Order } from '../lib/api'
+import {
+  api,
+  naira,
+  type Catalogue,
+  type CatalogueItem,
+  type Category,
+  type CateringPricing,
+  type CateringRequest,
+  type MenuItem,
+  type OptionGroupIn,
+  type OptionIn,
+  type Order,
+} from '../lib/api'
 import './Admin.css'
 
 type Tab = 'orders' | 'menu' | 'catering' | 'pricing'
@@ -45,7 +57,7 @@ export function Admin() {
               {t === 'orders'
                 ? 'Orders'
                 : t === 'menu'
-                  ? 'Menu items'
+                  ? 'Catalogue'
                   : t === 'catering'
                     ? 'Catering requests'
                     : 'Deposit calculator'}
@@ -242,62 +254,97 @@ function OrdersPanel({ token }: { token: string }) {
   )
 }
 
-/* ---------------- menu ---------------- */
+/* ---------------- catalogue ---------------- */
 
 function MenuPanel({ token }: { token: string }) {
-  const [items, setItems] = useState<MenuItem[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  const [data, setData] = useState<Catalogue | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [query, setQuery] = useState('')
+  const [cat, setCat] = useState('all')
+  const [openId, setOpenId] = useState<number | null>(null)
 
   function load() {
     setLoading(true)
     api
-      .menu()
-      .then(setItems)
+      .adminCatalogue(token)
+      .then(setData)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [])
+  useEffect(load, [token])
 
-  useEffect(() => {
-    api
-      .categories()
-      .then(setCategories)
-      .catch(() => {
-        /* the form falls back to the first category it receives */
-      })
-  }, [])
+  const items = data?.items ?? []
+  const categories = data?.categories ?? []
 
-  async function toggle(item: MenuItem) {
+  const needle = query.trim().toLowerCase()
+  const shown = items.filter((it) => {
+    if (cat !== 'all' && it.category_slug !== cat) return false
+    return !needle || it.name.toLowerCase().includes(needle)
+  })
+
+  const live = items.filter((it) => it.is_available && it.price_kobo > 0).length
+  const unpriced = items.filter((it) => it.price_kobo === 0).length
+
+  function patchItem(updated: MenuItem) {
+    setData((d) =>
+      d
+        ? {
+            ...d,
+            items: d.items.map((i) => (i.id === updated.id ? { ...i, ...updated } : i)),
+          }
+        : d,
+    )
+  }
+
+  async function setPrice(item: CatalogueItem, kobo: number) {
     try {
-      const updated = await api.adminUpdateItem(token, item.id, {
-        is_available: !item.is_available,
-      })
-      setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)))
+      patchItem(await api.adminUpdateItem(token, item.id, { price_kobo: kobo }))
     } catch (e) {
       setError((e as Error).message)
     }
   }
 
-  async function remove(item: MenuItem) {
+  async function toggle(item: CatalogueItem) {
+    try {
+      patchItem(await api.adminUpdateItem(token, item.id, { is_available: !item.is_available }))
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  async function bulk(slug: string, is_available: boolean) {
+    try {
+      setData(await api.adminSetAvailability(token, { category_slug: slug, is_available }))
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  async function remove(item: CatalogueItem) {
     if (!confirm(`Delete "${item.name}"?`)) return
     try {
       await api.adminDeleteItem(token, item.id)
-      setItems((prev) => prev.filter((i) => i.id !== item.id))
+      setData((d) => (d ? { ...d, items: d.items.filter((i) => i.id !== item.id) } : d))
     } catch (e) {
       setError((e as Error).message)
     }
   }
+
+  const groups = categories
+    .map((c) => ({ cat: c, rows: shown.filter((it) => it.category_slug === c.slug) }))
+    .filter((g) => g.rows.length > 0)
 
   return (
     <div className="admin-menu">
       <div className="admin-orders__bar">
-        <span>{items.length} items</span>
+        <span>
+          {items.length} dishes · {live} live · {unpriced} need a price
+        </span>
         <button className="btn btn--primary btn--sm" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? 'Close' : '+ Add item'}
+          {showForm ? 'Close' : '+ Add dish'}
         </button>
       </div>
 
@@ -308,42 +355,320 @@ function MenuPanel({ token }: { token: string }) {
           token={token}
           categories={categories}
           onCreated={(item) => {
-            setItems((prev) => [...prev, item])
+            setData((d) =>
+              d
+                ? {
+                    ...d,
+                    items: [...d.items, { ...item, sort_order: 0, option_groups: [] }],
+                  }
+                : d,
+            )
             setShowForm(false)
           }}
         />
       )}
 
-      {loading ? (
-        <p className="admin-loading">Loading menu…</p>
-      ) : (
-        <div className="admin-menu__list">
-          {items.map((it) => (
-            <div key={it.id} className="admin-menu__row">
-              <img src={it.image_url} alt="" />
-              <div className="admin-menu__info">
-                <strong>{it.name}</strong>
-                <span>
-                  {it.category_slug} · {naira(it.price_kobo)}
-                </span>
-              </div>
-              <div className="admin-menu__actions">
-                <button
-                  className={`status-btn ${it.is_available ? 'is-active' : ''}`}
-                  onClick={() => toggle(it)}
-                >
-                  {it.is_available ? 'available' : 'hidden'}
-                </button>
-                <button className="admin-menu__del" onClick={() => remove(it)}>
-                  Delete
-                </button>
-              </div>
-            </div>
+      <div className="cat-bar">
+        <input
+          className="cat-search"
+          type="search"
+          placeholder="Search dishes"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <select
+          value={cat}
+          aria-label="Filter by category"
+          onChange={(e) => setCat(e.target.value)}
+        >
+          <option value="all">All categories</option>
+          {categories.map((c) => (
+            <option key={c.slug} value={c.slug}>
+              {c.name}
+            </option>
           ))}
-        </div>
+        </select>
+      </div>
+
+      {loading ? (
+        <p className="admin-loading">Loading catalogue…</p>
+      ) : groups.length === 0 ? (
+        <p className="cat-empty">No dishes match that search.</p>
+      ) : (
+        groups.map(({ cat: c, rows }) => {
+          const on = rows.filter((r) => r.is_available).length
+          return (
+            <section key={c.slug} className="cat-group">
+              <div className="cat-group__head">
+                <div>
+                  <h3>{c.name}</h3>
+                  <span>
+                    {rows.length} dishes · {on} switched on
+                  </span>
+                </div>
+                <div className="cat-group__bulk">
+                  <button className="status-btn" onClick={() => bulk(c.slug, true)}>
+                    Turn all on
+                  </button>
+                  <button className="status-btn" onClick={() => bulk(c.slug, false)}>
+                    Turn all off
+                  </button>
+                </div>
+              </div>
+
+              {rows.map((it) => (
+                <div key={it.id} className="cat-row">
+                  <div className="cat-row__main">
+                    <img src={it.image_url} alt="" />
+                    <div className="cat-row__info">
+                      <strong>{it.name}</strong>
+                      <div className="cat-row__meta">
+                        {it.price_kobo === 0 ? (
+                          <span className="cat-badge">Needs a price</span>
+                        ) : (
+                          <span className="cat-badge cat-badge--ok">{naira(it.price_kobo)}</span>
+                        )}
+                        <span>
+                          {it.option_groups.length} option
+                          {it.option_groups.length === 1 ? '' : 's'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="cat-row__actions">
+                      <PriceInput value={it.price_kobo} onCommit={(k) => setPrice(it, k)} />
+                      <button
+                        className={`status-btn ${it.is_available ? 'is-active' : ''}`}
+                        onClick={() => toggle(it)}
+                      >
+                        {it.is_available ? 'on' : 'off'}
+                      </button>
+                      <button
+                        className="status-btn"
+                        onClick={() => setOpenId((v) => (v === it.id ? null : it.id))}
+                      >
+                        {openId === it.id ? 'Close' : 'Options'}
+                      </button>
+                      <button className="admin-menu__del" onClick={() => remove(it)}>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  {openId === it.id && (
+                    <OptionsEditor item={it} token={token} onSaved={setData} />
+                  )}
+                </div>
+              ))}
+            </section>
+          )
+        })
       )}
     </div>
   )
+}
+
+function PriceInput({ value, onCommit }: { value: number; onCommit: (kobo: number) => void }) {
+  const [text, setText] = useState(value ? String(value / 100) : '')
+
+  useEffect(() => {
+    setText(value ? String(value / 100) : '')
+  }, [value])
+
+  function commit() {
+    const n = Number(text.replace(/[^0-9.]/g, ''))
+    const kobo = Number.isFinite(n) ? Math.round(n * 100) : 0
+    if (kobo !== value) onCommit(kobo)
+  }
+
+  return (
+    <label className="cat-price">
+      <span>₦</span>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={text}
+        placeholder="0"
+        aria-label="Price in naira"
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur()
+        }}
+      />
+    </label>
+  )
+}
+
+function OptionsEditor({
+  item,
+  token,
+  onSaved,
+}: {
+  item: CatalogueItem
+  token: string
+  onSaved: (next: Catalogue) => void
+}) {
+  const [groups, setGroups] = useState<OptionGroupIn[]>(() => toDraft(item))
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    setGroups(toDraft(item))
+    setSaved(false)
+  }, [item])
+
+  function patchGroup(gi: number, patch: Partial<OptionGroupIn>) {
+    setGroups((gs) => gs.map((g, i) => (i === gi ? { ...g, ...patch } : g)))
+    setSaved(false)
+  }
+
+  function patchOption(gi: number, oi: number, patch: Partial<OptionIn>) {
+    setGroups((gs) =>
+      gs.map((g, i) =>
+        i === gi
+          ? { ...g, options: g.options.map((o, j) => (j === oi ? { ...o, ...patch } : o)) }
+          : g,
+      ),
+    )
+    setSaved(false)
+  }
+
+  function addGroup() {
+    setGroups((gs) => [
+      ...gs,
+      { name: 'New group', kind: 'single', help: '', is_required: false, options: [] },
+    ])
+    setSaved(false)
+  }
+
+  function removeGroup(gi: number) {
+    setGroups((gs) => gs.filter((_, i) => i !== gi))
+    setSaved(false)
+  }
+
+  function addOption(gi: number) {
+    setGroups((gs) =>
+      gs.map((g, i) =>
+        i === gi
+          ? {
+              ...g,
+              options: [
+                ...g.options,
+                { label: 'New choice', price_delta_kobo: 0, is_default: false, is_available: true },
+              ],
+            }
+          : g,
+      ),
+    )
+    setSaved(false)
+  }
+
+  function removeOption(gi: number, oi: number) {
+    setGroups((gs) =>
+      gs.map((g, i) => (i === gi ? { ...g, options: g.options.filter((_, j) => j !== oi) } : g)),
+    )
+    setSaved(false)
+  }
+
+  async function save() {
+    setBusy(true)
+    setError(null)
+    try {
+      onSaved(await api.adminSaveOptions(token, item.id, groups))
+      setSaved(true)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="cat-opts">
+      {groups.map((g, gi) => (
+        <div key={gi} className="cat-opt-group">
+          <div className="cat-opt-group__head">
+            <input
+              type="text"
+              value={g.name}
+              aria-label="Group name"
+              onChange={(e) => patchGroup(gi, { name: e.target.value })}
+            />
+            <select
+              value={g.kind}
+              aria-label="Pick one or many"
+              onChange={(e) => patchGroup(gi, { kind: e.target.value as 'single' | 'multi' })}
+            >
+              <option value="single">Pick one</option>
+              <option value="multi">Pick many</option>
+            </select>
+            <label className="cat-check">
+              <input
+                type="checkbox"
+                checked={g.is_required}
+                onChange={(e) => patchGroup(gi, { is_required: e.target.checked })}
+              />
+              Required
+            </label>
+            <button className="admin-menu__del" onClick={() => removeGroup(gi)}>
+              Remove group
+            </button>
+          </div>
+
+          {g.options.map((o, oi) => (
+            <div key={oi} className="cat-opt-row">
+              <input
+                type="text"
+                value={o.label}
+                aria-label="Choice label"
+                onChange={(e) => patchOption(gi, oi, { label: e.target.value })}
+              />
+              <PriceInput
+                value={o.price_delta_kobo}
+                onCommit={(k) => patchOption(gi, oi, { price_delta_kobo: k })}
+              />
+              <button className="admin-menu__del" onClick={() => removeOption(gi, oi)}>
+                Remove
+              </button>
+            </div>
+          ))}
+
+          <div className="cat-opt-foot">
+            <button className="status-btn" onClick={() => addOption(gi)}>
+              + Add choice
+            </button>
+          </div>
+        </div>
+      ))}
+
+      {error && <p className="form-error">{error}</p>}
+
+      <div className="cat-opt-foot">
+        <button className="status-btn" onClick={addGroup}>
+          + Add group
+        </button>
+        <button className="btn btn--primary btn--sm" onClick={save} disabled={busy}>
+          {busy ? 'Saving…' : saved ? 'Saved' : 'Save options'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function toDraft(item: CatalogueItem): OptionGroupIn[] {
+  return item.option_groups.map((g) => ({
+    name: g.name,
+    kind: g.kind,
+    help: g.help,
+    is_required: g.is_required,
+    options: g.options.map((o) => ({
+      label: o.label,
+      price_delta_kobo: o.price_delta_kobo,
+      is_default: o.is_default,
+      is_available: o.is_available,
+    })),
+  }))
 }
 
 function NewItemForm({
