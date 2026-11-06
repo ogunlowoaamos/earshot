@@ -26,7 +26,6 @@ export function Footer() {
           <div className="site-footer__col">
             <h4>Services</h4>
             <Link to="/catering">Event catering</Link>
-            <Link to="/#kitchen">Our kitchen</Link>
             <Link to="/track">Track an order</Link>
             <Link to="/admin">Staff login</Link>
           </div>

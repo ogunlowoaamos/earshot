@@ -118,7 +118,7 @@ goes wrong with the catalogue, that is the safe place to return to.
 
 ### The landing page
 
-The landing page is now the only home page. It has nine blocks, in this order:
+The landing page is now the only home page. It has ten blocks, in this order:
 
 1. **Hero.** Headline, one short line of supporting text, and two buttons. It fits
    inside the first screen at every size from a small phone up to a wide desktop, so
@@ -145,10 +145,11 @@ The landing page is now the only home page. It has nine blocks, in this order:
   `tokens.css` now tops out at 56px. This is a global change, so every page benefits.
 - **The hero copy was cut** from 27 words to 17, and the three statistics moved into
   their own band underneath.
-- **`/about` no longer exists.** It redirects to `/#kitchen`. The header link and the
-  footer link both point there. `About.tsx` was deleted.
-- **The header link is a plain link, not a router link**, for hash targets, so it does
-  not get marked as the current page.
+- **`/about` no longer exists.** It redirects to `/#kitchen`. `About.tsx` was deleted.
+- **There is no "Our Kitchen" link anywhere.** The header and the footer used to carry
+  one, which made the kitchen story look like a separate page. Both were removed, so the
+  site is Menu, Catering and the landing page. The story is still on the landing page and
+  still carries the `#kitchen` anchor, which is what the `/about` redirect lands on.
 - **`ScrollToTop` was rewritten.** It used `requestAnimationFrame`, which never fires in
   a background browser tab, so the jump to `#kitchen` silently did nothing. It now does
   the scroll immediately and retries once after 80ms in case the section has not
