@@ -25,9 +25,21 @@ pub(crate) fn new_reference(prefix: &str) -> String {
     format!("{prefix}-{tail}")
 }
 
+/// Options are stored on one line so a printed receipt stays readable, and read
+/// back as a list so the app can show them as chips.
+pub(crate) const OPTION_SEP: &str = " | ";
+
+pub(crate) fn split_options(text: &str) -> Vec<String> {
+    text.split(OPTION_SEP)
+        .map(|part| part.trim().to_string())
+        .filter(|part| !part.is_empty())
+        .collect()
+}
+
 pub(crate) async fn lines_for(pool: &SqlitePool, order_id: i64) -> AppResult<Vec<OrderLine>> {
-    let rows = sqlx::query_as::<_, (String, i64, i64)>(
-        "SELECT name, quantity, unit_price_kobo FROM order_items WHERE order_id = ? ORDER BY id",
+    let rows = sqlx::query_as::<_, (String, i64, i64, String, String)>(
+        "SELECT name, quantity, unit_price_kobo, options_text, note FROM order_items \
+         WHERE order_id = ? ORDER BY id",
     )
     .bind(order_id)
     .fetch_all(pool)
@@ -35,10 +47,12 @@ pub(crate) async fn lines_for(pool: &SqlitePool, order_id: i64) -> AppResult<Vec
 
     Ok(rows
         .into_iter()
-        .map(|(name, qty, unit_price_kobo)| OrderLine {
+        .map(|(name, qty, unit_price_kobo, options_text, note)| OrderLine {
             name,
             qty,
             unit_price_kobo,
+            options: split_options(&options_text),
+            note,
         })
         .collect())
 }

@@ -24,6 +24,37 @@ pub struct MenuRow {
     pub is_featured: i64,
 }
 
+/// One priced choice a customer can pick, for example "12 inch" or "Extra sausage".
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct DishOption {
+    pub id: i64,
+    pub label: String,
+    pub price_delta_kobo: i64,
+    pub is_default: bool,
+    pub is_available: bool,
+}
+
+/// A group of choices, for example "Size" or "Add-ons".
+#[derive(Debug, Serialize)]
+pub struct OptionGroup {
+    pub id: i64,
+    pub name: String,
+    /// "single" means pick exactly one, "multi" means pick any number.
+    pub kind: String,
+    pub help: String,
+    pub is_required: bool,
+    pub options: Vec<DishOption>,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+pub struct OptionGroupRow {
+    pub id: i64,
+    pub name: String,
+    pub kind: String,
+    pub help: String,
+    pub is_required: bool,
+}
+
 #[derive(Debug, Serialize)]
 pub struct MenuItem {
     pub id: i64,
@@ -37,6 +68,7 @@ pub struct MenuItem {
     pub ingredients: Vec<String>,
     pub is_available: bool,
     pub is_featured: bool,
+    pub option_groups: Vec<OptionGroup>,
 }
 
 impl From<MenuRow> for MenuItem {
@@ -53,7 +85,17 @@ impl From<MenuRow> for MenuItem {
             ingredients: split_lines(&r.ingredients),
             is_available: r.is_available != 0,
             is_featured: r.is_featured != 0,
+            option_groups: Vec::new(),
         }
+    }
+}
+
+impl MenuItem {
+    /// A dish with no choices reads as a plain price. Only dishes the caterer
+    /// has priced can be ordered, so an unpriced dish has no options either.
+    pub fn with_options(mut self, groups: Vec<OptionGroup>) -> Self {
+        self.option_groups = groups;
+        self
     }
 }
 
@@ -80,6 +122,9 @@ pub struct OrderLine {
     pub name: String,
     pub qty: i64,
     pub unit_price_kobo: i64,
+    /// The choices the customer made, written out for the kitchen.
+    pub options: Vec<String>,
+    pub note: String,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -232,6 +277,12 @@ pub struct Settings {
 pub struct OrderLineIn {
     pub menu_item_id: i64,
     pub qty: i64,
+    /// Ids of the choices picked on the dish page. Priced by the server.
+    #[serde(default)]
+    pub option_ids: Vec<i64>,
+    /// The customer's own words for this line, for example a cake message.
+    #[serde(default)]
+    pub note: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -321,11 +372,59 @@ pub struct PatchMenuItem {
     pub name: Option<String>,
     pub description: Option<String>,
     pub price_kobo: Option<i64>,
+    pub category_slug: Option<String>,
     pub image_url: Option<String>,
     pub tags: Option<Vec<String>>,
     pub ingredients: Option<Vec<String>>,
     pub is_available: Option<bool>,
     pub is_featured: Option<bool>,
+}
+
+/* ---------------- priced choices, saved from the dashboard ---------------- */
+
+#[derive(Debug, Deserialize)]
+pub struct OptionIn {
+    pub label: String,
+    #[serde(default)]
+    pub price_delta_kobo: i64,
+    #[serde(default)]
+    pub is_default: bool,
+    #[serde(default = "yes")]
+    pub is_available: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct OptionGroupIn {
+    pub name: String,
+    #[serde(default = "single_kind")]
+    pub kind: String,
+    #[serde(default)]
+    pub help: String,
+    #[serde(default)]
+    pub is_required: bool,
+    #[serde(default)]
+    pub options: Vec<OptionIn>,
+}
+
+fn single_kind() -> String {
+    "single".to_string()
+}
+
+/// The whole set of groups for one dish. Saving replaces what was there, which
+/// is simpler for the caterer than tracking adds and removes separately.
+#[derive(Debug, Deserialize)]
+pub struct SaveOptions {
+    pub groups: Vec<OptionGroupIn>,
+}
+
+/// Switch a whole category, or a shortlist of dishes, on or off at once.
+#[derive(Debug, Deserialize)]
+pub struct BulkAvailability {
+    #[serde(default)]
+    pub category_slug: Option<String>,
+    #[serde(default)]
+    pub item_ids: Vec<i64>,
+    pub is_available: bool,
 }
 
 #[derive(Debug, Deserialize)]
