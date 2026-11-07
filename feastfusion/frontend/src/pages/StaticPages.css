@@ -3,12 +3,12 @@
 }
 
 .static-page__head {
-  padding-block: var(--sp-7) var(--sp-6);
+  padding-block: var(--sp-5) var(--sp-5);
   background: linear-gradient(180deg, var(--gold-veil), transparent);
 }
 
 .static-page__head--compact {
-  padding-block: var(--sp-6) var(--sp-5);
+  padding-block: var(--sp-4) var(--sp-4);
 }
 
 .static-page__logo {

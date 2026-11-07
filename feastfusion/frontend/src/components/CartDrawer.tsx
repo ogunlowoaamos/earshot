@@ -99,7 +99,7 @@ export function CartDrawer() {
               </div>
               <p className="cart-drawer__note">Delivery fee is added at checkout.</p>
               <button
-                className="btn btn--primary btn--lg"
+                className="btn btn--primary"
                 onClick={() => {
                   close()
                   navigate('/checkout')

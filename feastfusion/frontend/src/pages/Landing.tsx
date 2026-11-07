@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { api, naira } from '../lib/api'
 import { Reveal } from '../components/Reveal'
@@ -15,7 +16,8 @@ const HERO_IMG =
 const HERO_IMG_2 =
   'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=700&q=80'
 
-const marquee = [
+// Shown until the real menu arrives, so the ribbon is never empty on first paint.
+const FALLBACK_RIBBON = [
   'Party Jollof',
   'Egusi & Pounded Yam',
   'Peppered Goat Meat',
@@ -123,13 +125,18 @@ function WallTileView({ tile, dup }: { tile: WallTile; dup?: boolean }) {
 
 export function Landing() {
   const [menuCount, setMenuCount] = useState(0)
+  const [ribbon, setRibbon] = useState<string[]>(FALLBACK_RIBBON)
 
   useEffect(() => {
     let alive = true
     api
       .menu()
       .then((items) => {
-        if (alive) setMenuCount(items.length)
+        if (!alive) return
+        setMenuCount(items.length)
+        // The ribbon names every dish the kitchen is selling today, so it grows
+        // on its own as the caterer adds dishes in the admin.
+        if (items.length > 0) setRibbon(items.map((i) => i.name))
       })
       .catch(() => undefined)
     return () => {
@@ -139,88 +146,99 @@ export function Landing() {
 
   return (
     <div className="landing">
-      {/* ---------------- Hero ---------------- */}
-      <section className="hero">
-        <div className="container hero__inner">
-          <div className="hero__copy">
-            <span className="eyebrow">Abuja · Nigerian kitchen</span>
+      {/*
+        The opening screen. It is at least one viewport tall and the ribbon is
+        pinned to its bottom edge, so the ribbon reads as the line that ends the
+        landing page and the next scroll lands on "Pick whatever fits your day".
+      */}
+      <div className="landing__first">
+        {/* ---------------- Hero ---------------- */}
+        <section className="hero">
+          <div className="container hero__inner">
+            <div className="hero__copy">
+              <span className="eyebrow">Abuja · Nigerian kitchen</span>
 
-            <h1 className="hero__title">
-              Food that tastes like
-              <span className="hero__accent"> somebody's mother</span> is showing off.
-            </h1>
+              <h1 className="hero__title">
+                Food that tastes like
+                <span className="hero__accent"> somebody's mother</span> is showing off.
+              </h1>
 
-            <p className="lede hero__lede">
-              Party jollof, slow-braised soups, peppered grills and warm desserts. Cooked fresh
-              each morning, delivered hot across Abuja.
-            </p>
+              <p className="lede hero__lede">
+                Party jollof, slow-braised soups, peppered grills and warm desserts. Cooked fresh
+                each morning, delivered hot across Abuja.
+              </p>
 
-            <div className="hero__actions">
-              <Link to="/menu" className="btn btn--primary btn--lg">
-                Order food
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M5 12h14m-6-6 6 6-6 6"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </Link>
-              <Link to="/catering" className="btn btn--ghost btn--lg">
-                Cater an event
-              </Link>
+              <div className="hero__actions">
+                <Link to="/menu" className="btn btn--primary btn--lg">
+                  Order food
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M5 12h14m-6-6 6 6-6 6"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </Link>
+                <Link to="/catering" className="btn btn--ghost btn--lg">
+                  Cater an event
+                </Link>
+              </div>
             </div>
-          </div>
 
-          <div className="hero__media">
-            <div className="hero__frame hero__frame--main">
-              <img src={HERO_IMG} alt="A bowl of Nigerian party jollof rice" />
-            </div>
-            <div className="hero__frame hero__frame--small">
-              <img src={HERO_IMG_2} alt="A steaming bowl of soup" />
-            </div>
-            <div className="hero__badge">
-              <img src={logo} alt="" width={40} height={40} />
-              <div>
-                <strong>Cooked today</strong>
-                <span>Never frozen</span>
+            <div className="hero__media">
+              <div className="hero__frame hero__frame--main">
+                <img src={HERO_IMG} alt="A bowl of Nigerian party jollof rice" />
+              </div>
+              <div className="hero__frame hero__frame--small">
+                <img src={HERO_IMG_2} alt="A steaming bowl of soup" />
+              </div>
+              <div className="hero__badge">
+                <img src={logo} alt="" width={40} height={40} />
+                <div>
+                  <strong>Cooked today</strong>
+                  <span>Never frozen</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ---------------- Proof strip ---------------- */}
-      <section className="stats-band">
-        <div className="container stats-band__inner">
-          <dl className="stats-band__list">
-            <div>
-              <dt>Avg. delivery</dt>
-              <dd>45 min</dd>
-            </div>
-            <div>
-              <dt>Dishes on menu</dt>
-              <dd>{menuCount > 0 ? menuCount : '24'}</dd>
-            </div>
-            <div>
-              <dt>Events catered</dt>
-              <dd>300+</dd>
-            </div>
-          </dl>
-        </div>
-      </section>
+        {/* ---------------- Proof strip ---------------- */}
+        <section className="stats-band">
+          <div className="container stats-band__inner">
+            <dl className="stats-band__list">
+              <div>
+                <dt>Avg. delivery</dt>
+                <dd>45 min</dd>
+              </div>
+              <div>
+                <dt>Dishes on menu</dt>
+                <dd>{menuCount > 0 ? menuCount : '24'}</dd>
+              </div>
+              <div>
+                <dt>Events catered</dt>
+                <dd>300+</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
 
-      {/* ---------------- Marquee ---------------- */}
-      <div className="marquee" aria-hidden="true">
-        <div className="marquee__track">
-          {[...marquee, ...marquee].map((w, i) => (
-            <span key={i} className="marquee__item">
-              {w}
-              <em>✦</em>
-            </span>
-          ))}
+        {/* ---------------- Marquee ---------------- */}
+        <div
+          className="marquee"
+          aria-hidden="true"
+          style={{ '--marquee-count': ribbon.length } as CSSProperties}
+        >
+          <div className="marquee__track">
+            {[...ribbon, ...ribbon].map((w, i) => (
+              <span key={i} className="marquee__item">
+                {w}
+                <em>✦</em>
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 

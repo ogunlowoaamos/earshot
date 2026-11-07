@@ -2,6 +2,7 @@ mod auth;
 mod catalogue;
 mod db;
 mod error;
+mod ingredients;
 mod models;
 mod notify;
 mod pricing;
@@ -72,7 +73,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/admin/menu", post(routes::admin::create_menu_item))
         .route("/admin/catalogue", get(routes::admin::list_catalogue))
         .route("/admin/availability", post(routes::admin::set_availability))
+        .route(
+            "/admin/categories/:slug/approval",
+            put(routes::admin::set_category_approval),
+        )
         .route("/admin/pairings", put(routes::admin::save_pairings))
+        .route(
+            "/admin/menu/:id/ingredients",
+            put(routes::admin::save_ingredients),
+        )
         .route("/admin/menu/:id/options", put(routes::admin::save_options))
         .route(
             "/admin/menu/:id",

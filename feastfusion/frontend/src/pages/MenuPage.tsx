@@ -43,6 +43,8 @@ export function MenuPage() {
     })
   }, [items, active, query])
 
+  // The server only sends categories the caterer has approved, so every chip
+  // here is one they have deliberately put on the menu.
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params)
     if (!value || value === 'all') next.delete(key)

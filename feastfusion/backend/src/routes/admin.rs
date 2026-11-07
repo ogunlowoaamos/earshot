@@ -9,8 +9,9 @@ use crate::{
     auth::{issue_token, require_admin, verify_password},
     error::{AppError, AppResult},
     models::{
-        BulkAvailability, Catalogue, CateringPricing, CateringRequest, Login, MenuItem,
-        NewMenuItem, Order, PatchMenuItem, PatchOrder, SaveOptions, SavePairings,
+        BulkAvailability, Catalogue, CategoryApproval, CateringPricing, CateringRequest, Login,
+        MenuItem, NewMenuItem, Order, PatchMenuItem, PatchOrder, SaveIngredients, SaveOptions,
+        SavePairings,
     },
     pricing,
     routes::{catering, menu, orders},
@@ -117,7 +118,8 @@ pub async fn list_catalogue(
     require_admin(&headers)?;
 
     let categories = sqlx::query_as::<_, crate::models::Category>(
-        "SELECT id, name, slug, description, sort_order FROM categories ORDER BY sort_order, name",
+        "SELECT id, name, slug, description, sort_order, is_approved
+         FROM categories ORDER BY sort_order, name",
     )
     .fetch_all(&state.pool)
     .await?;
@@ -175,6 +177,33 @@ pub async fn save_pairings(
     tx.commit().await?;
 
     Ok(Json(json!({ "ok": true })))
+}
+
+/// Replaces the ingredient list on one dish. The list is stored one item per
+/// line, which is how the dish page reads it back.
+pub async fn save_ingredients(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    Json(payload): Json<SaveIngredients>,
+) -> AppResult<Json<MenuItem>> {
+    require_admin(&headers)?;
+    menu::fetch_item(&state.pool, id).await?;
+
+    let lines: Vec<&str> = payload
+        .ingredients
+        .iter()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty())
+        .collect();
+
+    sqlx::query("UPDATE menu_items SET ingredients = ? WHERE id = ?")
+        .bind(lines.join("\n"))
+        .bind(id)
+        .execute(&state.pool)
+        .await?;
+
+    Ok(Json(menu::fetch_item(&state.pool, id).await?))
 }
 
 /// Replaces every choice group on one dish. Children are deleted by hand
@@ -260,6 +289,31 @@ pub async fn save_options(
     tx.commit().await?;
 
     Ok(Json(menu::fetch_item(&state.pool, id).await?))
+}
+
+/// Puts one category on or off the customer menu. The catalogue comes back so
+/// the dashboard can redraw without a second round trip.
+pub async fn set_category_approval(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    Path(slug): Path<String>,
+    Json(payload): Json<CategoryApproval>,
+) -> AppResult<Json<Catalogue>> {
+    require_admin(&headers)?;
+
+    let flag = if payload.is_approved { 1 } else { 0 };
+
+    let result = sqlx::query("UPDATE categories SET is_approved = ? WHERE slug = ?")
+        .bind(flag)
+        .bind(&slug)
+        .execute(&state.pool)
+        .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::BadRequest("Unknown category".into()));
+    }
+
+    list_catalogue(headers, State(state)).await
 }
 
 /// Switches a whole category, or a shortlist of dishes, on or off at once.

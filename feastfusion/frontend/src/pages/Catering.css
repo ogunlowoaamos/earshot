@@ -3,7 +3,7 @@
 }
 
 .catering-page__head {
-  padding-block: var(--sp-5);
+  padding-block: var(--sp-3);
   background: var(--wash-gold);
   border-bottom: 1px solid var(--border);
 }

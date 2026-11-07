@@ -3,7 +3,7 @@
 }
 
 .menu-page__head {
-  padding-block: var(--sp-5) var(--sp-4);
+  padding-block: var(--sp-3) var(--sp-3);
   background: linear-gradient(180deg, var(--gold-veil), transparent);
 }
 

@@ -22,16 +22,13 @@ pub(crate) const MENU_SELECT: &str = "
 pub(crate) const VISIBLE: &str = "m.is_available = 1 AND m.price_kobo > 0";
 
 pub async fn list_categories(State(state): State<AppState>) -> AppResult<Json<Vec<Category>>> {
-    // Every category that holds at least one dish, so the menu chips and the
-    // catering dish list always read the same. A category whose dishes are all
-    // still unpriced shows an honest "not on the menu yet" shelf rather than
-    // disappearing, which is what made the two lists drift apart before.
+    // Only the categories the caterer has approved. A category that is still
+    // being built, or one whose dishes are all switched off, stays off the
+    // customer menu until someone deliberately puts it on.
     let rows = sqlx::query_as::<_, Category>(
-        "SELECT c.id, c.name, c.slug, c.description, c.sort_order
+        "SELECT c.id, c.name, c.slug, c.description, c.sort_order, c.is_approved
          FROM categories c
-         WHERE EXISTS (
-            SELECT 1 FROM menu_items m WHERE m.category_id = c.id
-         )
+         WHERE c.is_approved = 1
          ORDER BY c.sort_order, c.name",
     )
     .fetch_all(&state.pool)

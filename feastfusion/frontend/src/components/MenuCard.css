@@ -1,4 +1,5 @@
 .menu-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: var(--bg-elevated);
@@ -10,6 +11,19 @@
     transform var(--dur-base) var(--ease-out),
     box-shadow var(--dur-base) var(--ease-out),
     border-color var(--dur-base) var(--ease-out);
+}
+
+/* Covers the whole card so any tap opens the dish. Sits under the Add button. */
+.menu-card__stretch {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.menu-card__stretch:focus-visible {
+  outline: 2px solid var(--gold-400);
+  outline-offset: -2px;
 }
 
 .menu-card:hover {
@@ -83,10 +97,6 @@
   line-height: 1.25;
 }
 
-.menu-card__head h3 a:hover {
-  color: var(--gold-500);
-}
-
 .menu-card__price {
   font-family: var(--font-display);
   font-size: var(--step-1);
@@ -126,8 +136,11 @@
   min-width: 0;
 }
 
-/* The Add button is the point of the card, so it never shrinks or wraps. */
+/* The Add button is the point of the card, so it never shrinks or wraps.
+   z-index lifts it above the stretched card link so it stays its own tap. */
 .menu-card__foot .btn {
+  position: relative;
+  z-index: 2;
   flex: 0 0 auto;
   margin-left: auto;
 }
@@ -148,17 +161,6 @@
   .menu-card .btn--sm {
     min-height: 44px;
     padding-inline: var(--sp-4);
-  }
-
-  /*
-    The dish name was a 17px tall tap target. People reach for the name rather
-    than the photo, so grow the box to a thumb-sized 44px. The equal negative
-    margin keeps the text exactly where it was, so nothing shifts visually.
-  */
-  .menu-card__head h3 a {
-    display: inline-block;
-    padding-block: 14px;
-    margin-block: -14px;
   }
 
   .menu-card__body {

@@ -1,10 +1,30 @@
+/* ============ OPENING SCREEN ============ */
+
+/*
+  The hero, the proof strip and the ribbon together fill the first screen, with
+  the ribbon sitting on the bottom edge. That makes the ribbon the line that
+  ends the landing page, so the next scroll lands on "Pick whatever fits your
+  day". On a short screen the content is taller than the viewport and the
+  min-height simply does nothing.
+*/
+.landing__first {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--header-h));
+}
+
+.landing__first .hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 /* ============ HERO ============ */
 
 .hero {
   position: relative;
-  /* Tight enough that the hero, the stats band and the marquee all land
-     inside the first screen on a 768px-tall laptop. */
-  padding-block: clamp(var(--sp-5), 3.5vw, var(--sp-7)) var(--sp-6);
+  padding-block: clamp(var(--sp-4), 2.5vw, var(--sp-6)) var(--sp-6);
   overflow: hidden;
 }
 
@@ -197,7 +217,12 @@
 .marquee__track {
   display: flex;
   width: max-content;
-  animation: marqueeScroll 42s linear infinite;
+  /*
+    The track is twice the dish list, so its width grows with the menu. Tying
+    the duration to the dish count keeps the scroll speed steady instead of
+    crawling once the kitchen has a lot of dishes.
+  */
+  animation: marqueeScroll calc(var(--marquee-count, 8) * 4.5s) linear infinite;
 }
 
 .marquee__item {

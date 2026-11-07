@@ -4,6 +4,7 @@ export type Category = {
   name: string
   description: string | null
   sort_order: number
+  is_approved: boolean
 }
 
 export type MenuItem = {
@@ -310,6 +311,13 @@ export const api = {
       body: JSON.stringify({ groups }),
     }),
 
+  adminSaveIngredients: (token: string, id: number, ingredients: string[]) =>
+    request<MenuItem>(`/admin/menu/${id}/ingredients`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ ingredients }),
+    }),
+
   adminSetAvailability: (
     token: string,
     payload: { item_ids?: number[]; category_slug?: string; is_available: boolean },
@@ -318,6 +326,13 @@ export const api = {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
+    }),
+
+  adminSetCategoryApproval: (token: string, slug: string, is_approved: boolean) =>
+    request<Catalogue>(`/admin/categories/${slug}/approval`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ is_approved }),
     }),
 
   adminSavePairings: (token: string, categorySlug: string, accompanies: string[]) =>

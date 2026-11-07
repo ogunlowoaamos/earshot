@@ -37,6 +37,10 @@ function ScrollToTop() {
 }
 
 export default function App() {
+  const { pathname } = useLocation()
+  // The dish page is a fixed-height screen, so a footer below it would force a page scroll.
+  const isDishPage = /^\/menu\/[^/]+$/.test(pathname)
+
   return (
     <>
       <ScrollToTop />
@@ -56,7 +60,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      <Footer />
+      {!isDishPage && <Footer />}
       <CartDrawer />
     </>
   )

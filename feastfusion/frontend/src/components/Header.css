@@ -2,6 +2,8 @@
   position: sticky;
   top: 0;
   z-index: 60;
+  height: var(--header-h);
+  box-sizing: border-box;
   background: var(--header-bg);
   backdrop-filter: blur(14px) saturate(1.4);
   border-bottom: 1px solid transparent;
@@ -17,11 +19,11 @@
 }
 
 .site-header__inner {
-  height: var(--header-h);
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-5);
+  gap: var(--sp-3);
 }
 
 /* ---------- Brand ---------- */
@@ -29,13 +31,13 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   flex-shrink: 0;
 }
 
 .brand__mark {
-  width: 44px;
-  height: 44px;
+  width: 30px;
+  height: 30px;
   transition: transform var(--dur-base) var(--ease-out);
 }
 
@@ -45,7 +47,7 @@
 
 .brand__word {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 0.96rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--ink-900);
@@ -63,7 +65,7 @@
 .site-nav {
   display: flex;
   align-items: center;
-  gap: var(--sp-6);
+  gap: var(--sp-4);
 }
 
 .site-nav__link {
@@ -71,7 +73,7 @@
   font-size: var(--step-0);
   font-weight: 500;
   color: var(--ink-600);
-  padding-block: var(--sp-2);
+  padding-block: 2px;
   transition: color var(--dur-fast) var(--ease-out);
 }
 
@@ -109,7 +111,7 @@
 .site-header__actions {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
 }
 
 .cart-btn,
@@ -117,8 +119,8 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--r-sm);
   border: 1px solid var(--border-strong);
   background: var(--white);
@@ -138,15 +140,15 @@
   position: absolute;
   top: -4px;
   right: -4px;
-  min-width: 20px;
-  height: 20px;
-  padding-inline: 5px;
+  min-width: 16px;
+  height: 16px;
+  padding-inline: 4px;
   display: grid;
   place-items: center;
   border-radius: var(--r-full);
   background: var(--action);
   color: var(--on-action);
-  font-size: 0.7rem;
+  font-size: 0.58rem;
   font-weight: 700;
   line-height: 1;
   border: 2px solid var(--cream);
@@ -154,20 +156,20 @@
 
 .burger {
   display: none;
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--r-sm);
   border: 1px solid var(--border-strong);
   background: var(--white);
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .burger span {
   display: block;
-  width: 18px;
+  width: 15px;
   height: 2px;
   border-radius: 2px;
   background: var(--ink-800);
@@ -229,12 +231,12 @@
 
 @media (max-width: 420px) {
   .brand__word {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .brand__mark {
-    width: 36px;
-    height: 36px;
+    width: 27px;
+    height: 27px;
   }
 
   .site-header__cta {

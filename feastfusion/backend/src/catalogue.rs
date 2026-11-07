@@ -3048,6 +3048,39 @@ pub async fn seed_catalogue(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         .await?;
     }
 
+    // Categories start hidden from customers. The first run approves whatever
+    // already has a live dish, so upgrading does not blank the menu. After that
+    // the caterer owns the switch and this block never runs again.
+    const APPROVED_VERSION: &str = "1";
+
+    let approved: Option<String> =
+        sqlx::query_scalar("SELECT value FROM settings WHERE key = 'categories_approved_version'")
+            .fetch_optional(pool)
+            .await?;
+
+    if approved.as_deref() != Some(APPROVED_VERSION) {
+        sqlx::query(
+            "UPDATE categories SET is_approved = 1
+             WHERE EXISTS (
+                SELECT 1 FROM menu_items m
+                WHERE m.category_id = categories.id
+                  AND m.is_available = 1 AND m.price_kobo > 0
+             )",
+        )
+        .execute(pool)
+        .await?;
+
+        sqlx::query(
+            "INSERT INTO settings (key, value) VALUES ('categories_approved_version', ?)
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        )
+        .bind(APPROVED_VERSION)
+        .execute(pool)
+        .await?;
+    }
+
+    crate::ingredients::backfill(pool).await?;
+
     Ok(())
 }
 

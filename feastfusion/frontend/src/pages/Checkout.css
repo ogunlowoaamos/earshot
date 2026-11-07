@@ -1,11 +1,11 @@
 .checkout {
-  padding-block: var(--sp-6) var(--sp-8);
+  padding-block: var(--sp-4) var(--sp-7);
 }
 
 .checkout__head h1 {
   font-size: var(--step-4);
-  margin-top: var(--sp-3);
-  margin-bottom: var(--sp-6);
+  margin-top: var(--sp-2);
+  margin-bottom: var(--sp-5);
 }
 
 .checkout-empty {

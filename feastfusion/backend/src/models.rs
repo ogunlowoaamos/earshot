@@ -7,6 +7,14 @@ pub struct Category {
     pub slug: String,
     pub description: Option<String>,
     pub sort_order: i64,
+    /// Only approved categories reach the customer menu.
+    pub is_approved: bool,
+}
+
+/// The caterer switching one category on or off the customer menu.
+#[derive(Debug, Deserialize)]
+pub struct CategoryApproval {
+    pub is_approved: bool,
 }
 
 /// The whole shelf for the dashboard: every category and every dish, including
@@ -30,6 +38,12 @@ pub struct Pairing {
 pub struct SavePairings {
     pub category_slug: String,
     pub accompanies: Vec<String>,
+}
+
+/// The caterer's replacement ingredient list for one dish, one per line.
+#[derive(Debug, Deserialize)]
+pub struct SaveIngredients {
+    pub ingredients: Vec<String>,
 }
 
 #[derive(Debug, sqlx::FromRow)]

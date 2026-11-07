@@ -113,9 +113,9 @@
   --dur-slow: 420ms;
 
   /* Layout */
-  --container: 1200px;
+  --container: 1320px;
   --container-narrow: 760px;
-  --header-h: 76px;
+  --header-h: 52px;
 }
 
 /* ============ DARK THEME ============

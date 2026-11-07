@@ -267,6 +267,7 @@ function MenuPanel({ token }: { token: string }) {
   const [query, setQuery] = useState('')
   const [cat, setCat] = useState('all')
   const [openId, setOpenId] = useState<number | null>(null)
+  const [openIngId, setOpenIngId] = useState<number | null>(null)
 
   function load() {
     setLoading(true)
@@ -321,6 +322,14 @@ function MenuPanel({ token }: { token: string }) {
   async function bulk(slug: string, is_available: boolean) {
     try {
       setData(await api.adminSetAvailability(token, { category_slug: slug, is_available }))
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  async function approve(slug: string, is_approved: boolean) {
+    try {
+      setData(await api.adminSetCategoryApproval(token, slug, is_approved))
     } catch (e) {
       setError((e as Error).message)
     }
@@ -410,6 +419,13 @@ function MenuPanel({ token }: { token: string }) {
                   </span>
                 </div>
                 <div className="cat-group__bulk">
+                  <button
+                    className={`status-btn${c.is_approved ? ' is-active' : ''}`}
+                    onClick={() => approve(c.slug, !c.is_approved)}
+                    title="Customers only see categories that are on the menu"
+                  >
+                    {c.is_approved ? 'On the menu' : 'Hidden'}
+                  </button>
                   <button className="status-btn" onClick={() => bulk(c.slug, true)}>
                     Turn all on
                   </button>
@@ -435,6 +451,10 @@ function MenuPanel({ token }: { token: string }) {
                           {it.option_groups.length} option
                           {it.option_groups.length === 1 ? '' : 's'}
                         </span>
+                        <span>
+                          {it.ingredients.length} ingredient
+                          {it.ingredients.length === 1 ? '' : 's'}
+                        </span>
                       </div>
                     </div>
                     <div className="cat-row__actions">
@@ -451,6 +471,12 @@ function MenuPanel({ token }: { token: string }) {
                       >
                         {openId === it.id ? 'Close' : 'Options'}
                       </button>
+                      <button
+                        className="status-btn"
+                        onClick={() => setOpenIngId((v) => (v === it.id ? null : it.id))}
+                      >
+                        {openIngId === it.id ? 'Close' : 'Ingredients'}
+                      </button>
                       <button className="admin-menu__del" onClick={() => remove(it)}>
                         Delete
                       </button>
@@ -459,6 +485,10 @@ function MenuPanel({ token }: { token: string }) {
 
                   {openId === it.id && (
                     <OptionsEditor item={it} token={token} onSaved={setData} />
+                  )}
+
+                  {openIngId === it.id && (
+                    <IngredientsEditor item={it} token={token} onSaved={patchItem} />
                   )}
                 </div>
               ))}
@@ -653,6 +683,74 @@ function OptionsEditor({
         </button>
         <button className="btn btn--primary btn--sm" onClick={save} disabled={busy}>
           {busy ? 'Saving…' : saved ? 'Saved' : 'Save options'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function IngredientsEditor({
+  item,
+  token,
+  onSaved,
+}: {
+  item: CatalogueItem
+  token: string
+  onSaved: (next: MenuItem) => void
+}) {
+  const [text, setText] = useState(item.ingredients.join('\n'))
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    setText(item.ingredients.join('\n'))
+    setSaved(false)
+  }, [item])
+
+  const lines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+
+  async function save() {
+    setBusy(true)
+    setError(null)
+    try {
+      onSaved(await api.adminSaveIngredients(token, item.id, lines))
+      setSaved(true)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="cat-opts">
+      <p className="cat-ing__hint">
+        One ingredient per line. This is what the customer sees under "What is in it".
+      </p>
+      <textarea
+        className="cat-ing__box"
+        value={text}
+        rows={Math.min(Math.max(lines.length + 2, 6), 16)}
+        aria-label="Ingredients, one per line"
+        placeholder={'Long grain rice\nTomato and pepper base\nChicken stock'}
+        onChange={(e) => {
+          setText(e.target.value)
+          setSaved(false)
+        }}
+      />
+
+      {error && <p className="form-error">{error}</p>}
+
+      <div className="cat-opt-foot">
+        <span className="cat-ing__count">
+          {lines.length} ingredient{lines.length === 1 ? '' : 's'}
+        </span>
+        <button className="btn btn--primary btn--sm" onClick={save} disabled={busy}>
+          {busy ? 'Saving…' : saved ? 'Saved' : 'Save ingredients'}
         </button>
       </div>
     </div>
