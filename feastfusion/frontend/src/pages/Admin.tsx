@@ -14,7 +14,7 @@ import {
 } from '../lib/api'
 import './Admin.css'
 
-type Tab = 'orders' | 'menu' | 'catering' | 'pricing'
+type Tab = 'orders' | 'menu' | 'pairings' | 'catering' | 'pricing'
 
 const TOKEN_KEY = 'feastfusion.admin.token'
 
@@ -46,7 +46,7 @@ export function Admin() {
         </header>
 
         <nav className="admin-tabs" role="tablist">
-          {(['orders', 'menu', 'catering', 'pricing'] as Tab[]).map((t) => (
+          {(['orders', 'menu', 'pairings', 'catering', 'pricing'] as Tab[]).map((t) => (
             <button
               key={t}
               role="tab"
@@ -58,15 +58,18 @@ export function Admin() {
                 ? 'Orders'
                 : t === 'menu'
                   ? 'Catalogue'
-                  : t === 'catering'
-                    ? 'Catering requests'
-                    : 'Deposit calculator'}
+                  : t === 'pairings'
+                    ? 'Pairings'
+                    : t === 'catering'
+                      ? 'Catering requests'
+                      : 'Deposit calculator'}
             </button>
           ))}
         </nav>
 
         {tab === 'orders' && <OrdersPanel token={token} />}
         {tab === 'menu' && <MenuPanel token={token} />}
+        {tab === 'pairings' && <PairingsPanel token={token} />}
         {tab === 'catering' && <CateringPanel token={token} />}
         {tab === 'pricing' && <PricingPanel token={token} />}
       </div>
@@ -792,6 +795,185 @@ function NewItemForm({
         {busy ? 'Saving…' : 'Save item'}
       </button>
     </form>
+  )
+}
+
+/* ---------------- pairings ---------------- */
+
+/**
+ * The caterer's "what goes with what" board. Each category gets a row of
+ * toggles for the other categories. Whatever is saved here is what the
+ * customer sees on the catering form and on a dish page, so nothing about
+ * pairing is hardcoded in the shop.
+ */
+function PairingsPanel({ token }: { token: string }) {
+  const [categories, setCategories] = useState<Category[]>([])
+  const [saved, setSaved] = useState<Record<string, string[]>>({})
+  const [draft, setDraft] = useState<Record<string, string[]>>({})
+  const [openSlug, setOpenSlug] = useState<string | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [note, setNote] = useState<string | null>(null)
+
+  useEffect(() => {
+    Promise.all([api.adminCatalogue(token), api.pairings()])
+      .then(([cat, pairs]) => {
+        const list = [...cat.categories].sort((a, b) => a.sort_order - b.sort_order)
+        setCategories(list)
+
+        const grouped: Record<string, string[]> = {}
+        for (const c of list) grouped[c.slug] = []
+        for (const p of pairs) {
+          if (!grouped[p.category_slug]) continue
+          grouped[p.category_slug].push(p.accompanies_slug)
+        }
+
+        setSaved(grouped)
+        setDraft(grouped)
+        setOpenSlug(list[0]?.slug ?? null)
+      })
+      .catch((e: Error) => setError(e.message))
+  }, [token])
+
+  function toggle(slug: string, other: string) {
+    setDraft((d) => {
+      const current = d[slug] ?? []
+      return {
+        ...d,
+        [slug]: current.includes(other)
+          ? current.filter((s) => s !== other)
+          : [...current, other],
+      }
+    })
+    setNote(null)
+  }
+
+  async function save(slug: string) {
+    setBusy(slug)
+    setError(null)
+    setNote(null)
+    try {
+      await api.adminSavePairings(token, slug, draft[slug] ?? [])
+      setSaved((s) => ({ ...s, [slug]: draft[slug] ?? [] }))
+      setNote('Saved.')
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const dirty = (slug: string) => {
+    const a = [...(saved[slug] ?? [])].sort().join(',')
+    const b = [...(draft[slug] ?? [])].sort().join(',')
+    return a !== b
+  }
+
+  if (error && categories.length === 0) {
+    return <p className="form-error">{error}</p>
+  }
+
+  return (
+    <div className="pairings">
+      <p className="pairings__lede">
+        Pick what goes with each category. The shop uses this to suggest extras, so
+        you never have to edit the website to change a pairing.
+      </p>
+
+      {note && <p className="pairings__note">{note}</p>}
+      {error && <p className="form-error">{error}</p>}
+
+      <ul className="pairings__list">
+        {categories.map((c) => {
+          const open = openSlug === c.slug
+          const chosen = draft[c.slug] ?? []
+          return (
+            <li key={c.slug} className={`pairing ${open ? 'is-open' : ''}`}>
+              <button
+                type="button"
+                className="pairing__head"
+                aria-expanded={open}
+                onClick={() => setOpenSlug(open ? null : c.slug)}
+              >
+                <span className="pairing__name">{c.name}</span>
+                <span className="pairing__count">
+                  {chosen.length === 0
+                    ? 'Nothing yet'
+                    : `${chosen.length} ${chosen.length === 1 ? 'pairing' : 'pairings'}`}
+                </span>
+                <span className="pairing__chev" aria-hidden="true">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="m6 9 6 6 6-6"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </button>
+
+              {open && (
+                <div className="pairing__body">
+                  <div className="pairing__chips">
+                    {categories
+                      .filter((o) => o.slug !== c.slug)
+                      .map((o) => {
+                        const on = chosen.includes(o.slug)
+                        return (
+                          <button
+                            key={o.slug}
+                            type="button"
+                            className={`pairing__chip ${on ? 'is-on' : ''}`}
+                            aria-pressed={on}
+                            onClick={() => toggle(c.slug, o.slug)}
+                          >
+                            <span className="pairing__tick" aria-hidden="true">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                                <path
+                                  d="m5 13 4 4L19 7"
+                                  stroke="currentColor"
+                                  strokeWidth="3.4"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </span>
+                            {o.name}
+                          </button>
+                        )
+                      })}
+                  </div>
+
+                  <div className="pairing__foot">
+                    <button
+                      type="button"
+                      className="btn btn--primary btn--sm"
+                      disabled={busy === c.slug || !dirty(c.slug)}
+                      onClick={() => save(c.slug)}
+                    >
+                      {busy === c.slug ? 'Saving…' : dirty(c.slug) ? 'Save pairings' : 'Saved'}
+                    </button>
+                    {dirty(c.slug) && (
+                      <button
+                        type="button"
+                        className="btn btn--ghost btn--sm"
+                        onClick={() =>
+                          setDraft((d) => ({ ...d, [c.slug]: saved[c.slug] ?? [] }))
+                        }
+                      >
+                        Undo
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }
 

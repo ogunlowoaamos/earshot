@@ -29,93 +29,140 @@ pub const CATEGORIES: &[(&str, &str, &str, i64)] = &[
     (
         "Soups & Stews",
         "soups-swallow",
-        "Rich Nigerian soups, from egusi to pepper soup.",
+        "Rich Nigerian soups and the swallows that go with them.",
         3,
-    ),
-    (
-        "Swallows",
-        "swallows",
-        "Pounded yam, amala, eba, semo, tuwo and fufu.",
-        4,
     ),
     (
         "Grills",
         "grills",
         "Charcoal fired chicken, fish, suya and offal.",
-        5,
+        4,
     ),
     (
         "Small Chops",
         "small-chops",
         "The things everyone reaches for first.",
-        6,
+        5,
     ),
     (
         "Pasta & Noodles",
         "pasta-noodles",
         "Jollof spaghetti, creamy pasta, Indomie and stir fried noodles.",
-        7,
+        6,
     ),
     (
         "Fast Food",
         "fast-food",
         "Pizza, burgers, shawarma, chips and wraps.",
-        8,
+        7,
     ),
     (
         "Proteins",
         "proteins",
         "Ponmo, shaki, bokoto, nkwobi, tofu and more.",
-        9,
+        8,
     ),
     (
         "Sides & Extras",
         "sides",
         "Plantain, dips, creams and add-ons.",
-        10,
+        9,
     ),
     (
         "Sauces & Dips",
         "sauces",
         "Stews and sauces that carry the plate.",
-        11,
+        10,
     ),
     (
         "Salads",
         "salads",
         "Abacha, coleslaw, party salad and dressings.",
-        12,
+        11,
     ),
     (
         "Pastries",
         "pastries",
         "Meat pie, sausage roll and scotch egg, warm from the oven.",
-        13,
+        12,
     ),
     (
         "Puddings & Porridges",
         "puddings",
         "Pap, moi moi, asaro and other soft bowls.",
-        14,
+        13,
     ),
     (
         "Desserts & Sweets",
         "desserts",
         "Chin chin, pancakes and small sweets.",
-        15,
+        14,
     ),
     (
         "Cakes",
         "cakes",
         "Celebration cakes, icing and cupcake trays.",
-        16,
+        15,
     ),
     (
         "Drinks",
         "drinks",
         "Zobo, kunu, chapman, palm wine and fresh juice.",
-        17,
+        16,
     ),
+];
+
+/// What goes with what, as a starting point.
+///
+/// Each pair reads "when the customer picks the first category, offer them the
+/// second as a companion". These are only defaults. The caterer edits them from
+/// the admin page and their version wins, because the seeder never overwrites a
+/// pairing that is already there.
+///
+/// The logic is how a Nigerian plate is actually built: soup wants a swallow
+/// and something to drink, rice wants a grill and a side, small chops want a
+/// drink, and a drink is the end of the chain rather than the start of one.
+pub const PAIRINGS: &[(&str, &str)] = &[
+    ("breakfast", "drinks"),
+    ("breakfast", "pastries"),
+    ("breakfast", "puddings"),
+    ("rice-grains", "grills"),
+    ("rice-grains", "proteins"),
+    ("rice-grains", "sides"),
+    ("rice-grains", "salads"),
+    ("rice-grains", "drinks"),
+    ("soups-swallow", "proteins"),
+    ("soups-swallow", "sides"),
+    ("soups-swallow", "drinks"),
+    ("grills", "sides"),
+    ("grills", "sauces"),
+    ("grills", "salads"),
+    ("grills", "drinks"),
+    ("small-chops", "sauces"),
+    ("small-chops", "salads"),
+    ("small-chops", "drinks"),
+    ("pasta-noodles", "proteins"),
+    ("pasta-noodles", "sides"),
+    ("pasta-noodles", "drinks"),
+    ("fast-food", "sides"),
+    ("fast-food", "sauces"),
+    ("fast-food", "drinks"),
+    ("proteins", "sides"),
+    ("proteins", "sauces"),
+    ("proteins", "drinks"),
+    ("sides", "sauces"),
+    ("sides", "drinks"),
+    ("sauces", "sides"),
+    ("salads", "grills"),
+    ("salads", "drinks"),
+    ("pastries", "drinks"),
+    ("pastries", "breakfast"),
+    ("puddings", "breakfast"),
+    ("puddings", "drinks"),
+    ("desserts", "drinks"),
+    ("desserts", "cakes"),
+    ("cakes", "drinks"),
+    ("cakes", "desserts"),
 ];
 
 /// One group of choices on a dish, as a template rather than a one off.
@@ -1077,196 +1124,196 @@ pub const DISHES: &[(&str, &str, Shape, &str, &str)] = &[
     /* ---------------- swallows ---------------- */
     (
         "Pounded Yam",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Smooth, stretchy pounded yam, the classic soup partner.",
         "classic",
     ),
     (
         "Eba (Garri)",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Garri turned in hot water, firm and slightly tangy.",
         "classic, quick",
     ),
     (
         "Amala",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Dark yam flour swallow, smooth and soft.",
         "yoruba",
     ),
     (
         "Poundo Yam",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Instant pounded yam, smooth and stretchy.",
         "quick",
     ),
     (
         "Fufu (Akpu)",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Fermented cassava swallow, soft with a faint sour note.",
         "igbo",
     ),
     (
         "Lafun",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Cassava flour swallow, plain and light.",
         "yoruba",
     ),
     (
         "Pupuru",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Smoked cassava swallow from the Niger Delta.",
         "delta",
     ),
     (
         "Sakoro (Tuwon Sakoro)",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Golden cassava tuwo, smooth and firm.",
         "northern",
     ),
     (
         "Semo (Semolina)",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Wheat semolina swallow, smooth and filling.",
         "classic",
     ),
     (
         "Semovita",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Semolina blend swallow, soft and easy to roll.",
         "classic",
     ),
     (
         "Wheat Swallow (Tuwon Alkama)",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Whole wheat swallow, nutty and firm.",
         "healthy",
     ),
     (
         "Oat Swallow",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Oat flour swallow for a lighter plate.",
         "healthy",
     ),
     (
         "Tuwo Shinkafa",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Rice tuwo, soft and mild, served with miyan kuka.",
         "northern",
     ),
     (
         "Tuwo Masara",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Corn tuwo from the north, firm and filling.",
         "northern",
     ),
     (
         "Tuwo Dawa",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Sorghum tuwo, deep in colour with a nutty taste.",
         "northern",
     ),
     (
         "Tuwo Gero",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Millet tuwo, light and mild.",
         "northern",
     ),
     (
         "Plantain Fufu",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Ripe plantain swallow with a faint sweetness.",
         "modern",
     ),
     (
         "Plantain Amala",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Amala blended with plantain for a softer taste.",
         "modern",
     ),
     (
         "Cocoyam Fufu",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Cocoyam swallow, smooth with a gentle nutty note.",
         "modern",
     ),
     (
         "Potato Fufu",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Irish potato swallow, pale and soft.",
         "modern",
     ),
     (
         "Coconut Fufu",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Cassava swallow with coconut milk folded in.",
         "modern",
     ),
     (
         "Banana Fufu",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Banana swallow with a soft sweet finish.",
         "modern",
     ),
     (
         "Breadfruit Fufu",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Breadfruit swallow, starchy and smooth.",
         "modern",
     ),
     (
         "Starch (Usi)",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Delta starch, pale and stretchy, served with banga.",
         "delta",
     ),
     (
         "Nni Oka",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Corn swallow from the east, firm and mild.",
         "igbo",
     ),
     (
         "Carrot Fufu",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Cassava swallow with carrot for colour and sweetness.",
         "modern",
     ),
     (
         "Rice Fufu",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Rice flour swallow, very light on the plate.",
         "modern",
     ),
     (
         "Broccoli Swallow",
-        "swallows",
+        "soups-swallow",
         Shape::Swallow,
         "Cassava swallow with broccoli blended in.",
         "modern",
@@ -2952,6 +2999,35 @@ pub async fn seed_catalogue(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         }
 
         tx.commit().await?;
+    }
+
+    // The swallow dishes now live under Soups & Stews, so the old category is
+    // empty. Drop it, otherwise it lingers in the admin list forever.
+    sqlx::query("DELETE FROM categories WHERE slug = 'swallows'")
+        .execute(pool)
+        .await?;
+
+    // Pairings are only filled in when the caterer has not set any yet, so
+    // their own version is never overwritten on the next start.
+    let pairing_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM category_pairings")
+        .fetch_one(pool)
+        .await?;
+
+    if pairing_count == 0 {
+        for (index, (slug, accompanies)) in PAIRINGS.iter().enumerate() {
+            sqlx::query(
+                "INSERT OR IGNORE INTO category_pairings
+                    (category_id, accompanies_id, sort_order)
+                 SELECT a.id, b.id, ?
+                 FROM categories a, categories b
+                 WHERE a.slug = ? AND b.slug = ?",
+            )
+            .bind(index as i64)
+            .bind(*slug)
+            .bind(*accompanies)
+            .execute(pool)
+            .await?;
+        }
     }
 
     Ok(())

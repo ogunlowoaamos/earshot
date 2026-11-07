@@ -17,16 +17,37 @@ export function ItemDetail() {
   useEffect(() => {
     let alive = true
     setLoading(true)
-    api
-      .menu()
-      .then((items) => {
+    Promise.all([api.menu(), api.pairings().catch(() => [])])
+      .then(([items, pairs]) => {
         if (!alive) return
         const found = items.find((i) => i.id === Number(id)) ?? null
         setItem(found)
-        setOthers(
-          items.filter((i) => i.id !== Number(id) && i.category_slug === found?.category_slug).slice(0, 3),
+        if (!found) {
+          setError('We could not find that dish.')
+          return
+        }
+
+        // The caterer decides what goes with what, so we read the pairings
+        // rather than guessing. Same-category dishes are only a fallback for
+        // categories the caterer has not set up yet.
+        const paired = pairs
+          .filter((p) => p.category_slug === found.category_slug)
+          .map((p) => p.accompanies_slug)
+
+        // Keep the caterer's own ordering: the first category they paired wins.
+        const rank = (slug: string) => {
+          const at = paired.indexOf(slug)
+          return at === -1 ? paired.length : at
+        }
+
+        const fromPairs = items
+          .filter((i) => i.id !== found.id && paired.includes(i.category_slug))
+          .sort((a, b) => rank(a.category_slug) - rank(b.category_slug))
+        const sameCat = items.filter(
+          (i) => i.id !== found.id && i.category_slug === found.category_slug,
         )
-        if (!found) setError('We could not find that dish.')
+
+        setOthers((fromPairs.length > 0 ? fromPairs : sameCat).slice(0, 3))
       })
       .catch((e: Error) => alive && setError(e.message))
       .finally(() => alive && setLoading(false))

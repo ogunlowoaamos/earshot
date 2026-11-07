@@ -36,6 +36,7 @@ const MIGRATIONS: &[&str] = &[
     include_str!("../migrations/0001_init.sql"),
     include_str!("../migrations/0002_ingredients_and_deposit.sql"),
     include_str!("../migrations/0003_catalogue_and_options.sql"),
+    include_str!("../migrations/0004_pairings.sql"),
 ];
 
 async fn migrate(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {

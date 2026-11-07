@@ -17,6 +17,21 @@ pub struct Catalogue {
     pub items: Vec<MenuItem>,
 }
 
+/// One "what goes with what" rule, written with slugs so the frontend never has
+/// to know a database id.
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct Pairing {
+    pub category_slug: String,
+    pub accompanies_slug: String,
+}
+
+/// The caterer's replacement list of companions for one category.
+#[derive(Debug, Deserialize)]
+pub struct SavePairings {
+    pub category_slug: String,
+    pub accompanies: Vec<String>,
+}
+
 #[derive(Debug, sqlx::FromRow)]
 pub struct MenuRow {
     pub id: i64,

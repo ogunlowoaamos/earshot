@@ -49,6 +49,12 @@ export type Catalogue = {
   items: CatalogueItem[]
 }
 
+/** One "what goes with what" rule, set by the caterer in the admin page. */
+export type Pairing = {
+  category_slug: string
+  accompanies_slug: string
+}
+
 export type OptionIn = {
   label: string
   price_delta_kobo: number
@@ -220,6 +226,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   categories: () => request<Category[]>('/categories'),
   menu: () => request<MenuItem[]>('/menu'),
+  pairings: () => request<Pairing[]>('/pairings'),
   settings: () => request<Settings>('/settings'),
   zones: () => request<DeliveryZone[]>('/zones'),
 
@@ -311,6 +318,13 @@ export const api = {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
+    }),
+
+  adminSavePairings: (token: string, categorySlug: string, accompanies: string[]) =>
+    request<{ ok: boolean }>('/admin/pairings', {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ category_slug: categorySlug, accompanies }),
     }),
 }
 

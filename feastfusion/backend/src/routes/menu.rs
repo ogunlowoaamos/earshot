@@ -6,7 +6,7 @@ use sqlx::SqlitePool;
 use crate::{
     db,
     error::{AppError, AppResult},
-    models::{Category, DeliveryZone, DishOption, MenuItem, MenuRow, OptionGroup, Settings},
+    models::{Category, DeliveryZone, DishOption, MenuItem, MenuRow, OptionGroup, Pairing, Settings},
     AppState,
 };
 
@@ -46,6 +46,21 @@ pub async fn list_menu(State(state): State<AppState>) -> AppResult<Json<Vec<Menu
         .await?;
 
     Ok(Json(with_options(&state.pool, rows).await?))
+}
+
+/// Every "what goes with what" rule the caterer has set, written with slugs.
+pub async fn list_pairings(State(state): State<AppState>) -> AppResult<Json<Vec<Pairing>>> {
+    let rows = sqlx::query_as::<_, Pairing>(
+        "SELECT a.slug AS category_slug, b.slug AS accompanies_slug
+         FROM category_pairings p
+         JOIN categories a ON a.id = p.category_id
+         JOIN categories b ON b.id = p.accompanies_id
+         ORDER BY a.sort_order, p.sort_order, b.sort_order",
+    )
+    .fetch_all(&state.pool)
+    .await?;
+
+    Ok(Json(rows))
 }
 
 /// The whole shelf, including dishes that are switched off or still unpriced.

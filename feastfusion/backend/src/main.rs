@@ -52,6 +52,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api = Router::new()
         .route("/categories", get(routes::menu::list_categories))
         .route("/menu", get(routes::menu::list_menu))
+        .route("/pairings", get(routes::menu::list_pairings))
         .route("/settings", get(routes::menu::get_settings))
         .route("/zones", get(routes::menu::list_zones))
         .route("/orders", post(routes::orders::create_order))
@@ -71,6 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/admin/menu", post(routes::admin::create_menu_item))
         .route("/admin/catalogue", get(routes::admin::list_catalogue))
         .route("/admin/availability", post(routes::admin::set_availability))
+        .route("/admin/pairings", put(routes::admin::save_pairings))
         .route("/admin/menu/:id/options", put(routes::admin::save_options))
         .route(
             "/admin/menu/:id",

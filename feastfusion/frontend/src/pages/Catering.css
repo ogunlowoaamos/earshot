@@ -217,6 +217,62 @@
   box-shadow: 0 0 0 2px var(--gold-500);
 }
 
+/* The caterer's own pairing rules, surfaced as one-tap additions. */
+.dish-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.dish-suggest__label {
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-500);
+}
+
+.dish-suggest__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.dish-suggest__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 0 var(--sp-3);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-full);
+  background: transparent;
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-700);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.dish-suggest__chip:hover {
+  border-style: solid;
+  border-color: var(--gold-500);
+  background: var(--wash-gold);
+  color: var(--ink-900);
+}
+
+.dish-suggest__chip:active {
+  transform: translateY(1px);
+}
+
+.dish-suggest__chip:focus-visible {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 2px;
+}
+
 /* ---------- quote breakdown ---------- */
 
 .quote-breakdown {

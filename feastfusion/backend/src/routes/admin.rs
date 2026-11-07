@@ -10,7 +10,7 @@ use crate::{
     error::{AppError, AppResult},
     models::{
         BulkAvailability, Catalogue, CateringPricing, CateringRequest, Login, MenuItem,
-        NewMenuItem, Order, PatchMenuItem, PatchOrder, SaveOptions,
+        NewMenuItem, Order, PatchMenuItem, PatchOrder, SaveOptions, SavePairings,
     },
     pricing,
     routes::{catering, menu, orders},
@@ -125,6 +125,56 @@ pub async fn list_catalogue(
     let items = menu::fetch_catalogue(&state.pool).await?;
 
     Ok(Json(Catalogue { categories, items }))
+}
+
+/// Replaces the companion list for one category. The caterer owns this, so the
+/// whole list is swapped in one go rather than patched row by row.
+pub async fn save_pairings(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    Json(body): Json<SavePairings>,
+) -> AppResult<Json<Value>> {
+    require_admin(&headers)?;
+
+    let category_id: Option<i64> =
+        sqlx::query_scalar("SELECT id FROM categories WHERE slug = ?")
+            .bind(&body.category_slug)
+            .fetch_optional(&state.pool)
+            .await?;
+
+    let Some(category_id) = category_id else {
+        return Err(AppError::BadRequest("Unknown category".into()));
+    };
+
+    let mut tx = state.pool.begin().await?;
+
+    sqlx::query("DELETE FROM category_pairings WHERE category_id = ?")
+        .bind(category_id)
+        .execute(&mut *tx)
+        .await?;
+
+    for (index, slug) in body.accompanies.iter().enumerate() {
+        // A category cannot accompany itself, and an unknown slug is skipped
+        // rather than failing the whole save.
+        if slug == &body.category_slug {
+            continue;
+        }
+
+        sqlx::query(
+            "INSERT OR IGNORE INTO category_pairings
+                (category_id, accompanies_id, sort_order)
+             SELECT ?, id, ? FROM categories WHERE slug = ?",
+        )
+        .bind(category_id)
+        .bind(index as i64)
+        .bind(slug)
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    tx.commit().await?;
+
+    Ok(Json(json!({ "ok": true })))
 }
 
 /// Replaces every choice group on one dish. Children are deleted by hand

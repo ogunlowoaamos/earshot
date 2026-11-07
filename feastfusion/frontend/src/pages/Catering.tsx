@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, naira, type CateringRequest, type Quote } from '../lib/api'
+import { api, naira, type CateringRequest, type Pairing, type Quote } from '../lib/api'
 import { STATES, areasFor } from '../lib/states'
 import './Catering.css'
 
@@ -41,7 +41,6 @@ const DISH_CATEGORIES = [
   { slug: 'breakfast', label: 'Breakfast' },
   { slug: 'rice-grains', label: 'Rice Dishes' },
   { slug: 'soups-swallow', label: 'Soups & Stews' },
-  { slug: 'swallows', label: 'Swallows' },
   { slug: 'grills', label: 'Grills' },
   { slug: 'small-chops', label: 'Small Chops' },
   { slug: 'pasta-noodles', label: 'Pasta & Noodles' },
@@ -129,6 +128,34 @@ export function Catering() {
       prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
     )
   }
+
+  // The caterer decides what goes with what in the admin page, so this list is
+  // read from the server rather than written here. Nothing is hardcoded.
+  const [pairings, setPairings] = useState<Pairing[]>([])
+  useEffect(() => {
+    api
+      .pairings()
+      .then(setPairings)
+      .catch(() => setPairings([]))
+  }, [])
+
+  const suggestions = useMemo(() => {
+    const chosen = new Set(dishes)
+    const seen = new Set<string>()
+    const out: { slug: string; label: string }[] = []
+
+    for (const p of pairings) {
+      if (!chosen.has(p.category_slug)) continue
+      if (chosen.has(p.accompanies_slug)) continue
+      if (seen.has(p.accompanies_slug)) continue
+      const match = DISH_CATEGORIES.find((c) => c.slug === p.accompanies_slug)
+      if (!match) continue
+      seen.add(p.accompanies_slug)
+      out.push({ slug: match.slug, label: match.label })
+    }
+
+    return out
+  }, [pairings, dishes])
 
   function onStateChange(next: string) {
     setStateName(next)
@@ -356,6 +383,24 @@ export function Catering() {
                 );
               })}
             </ul>
+            {suggestions.length > 0 && (
+              <div className="dish-suggest">
+                <span className="dish-suggest__label">Goes well with</span>
+                <div className="dish-suggest__chips">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s.slug}
+                      type="button"
+                      className="dish-suggest__chip"
+                      onClick={() => toggleDish(s.slug)}
+                    >
+                      <span aria-hidden="true">+</span>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <span className="field__hint">Switch on as many as you need.</span>
           </div>
 
