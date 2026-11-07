@@ -17,6 +17,12 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
 
+  /* The landing page is a single focused sales page: its two hero buttons
+     ("Order food" and "Cater an event") are the only routes out of it, so the
+     header carries no page links there. Every other page keeps the full nav. */
+  const onLanding = location.pathname === '/'
+  const navLinks = onLanding ? [] : links
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
     onScroll()
@@ -39,7 +45,7 @@ export function Header() {
         </Link>
 
         <nav className={`site-nav ${menuOpen ? 'is-open' : ''}`} aria-label="Main">
-          {links.map((l) => (
+          {navLinks.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}

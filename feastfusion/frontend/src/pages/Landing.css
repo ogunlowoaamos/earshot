@@ -38,8 +38,8 @@
 .hero__title {
   /* Slightly smaller than --step-5 at the narrow end so the headline does not
      wrap to a fourth line on a 1024px laptop. */
-  font-size: clamp(2.1rem, 1.35rem + 2.7vw, 3.5rem);
-  line-height: 1;
+  font-size: clamp(1.85rem, 1.25rem + 2.2vw, 2.9rem);
+  line-height: 1.02;
   letter-spacing: -0.035em;
   max-width: 15ch;
 }
@@ -832,7 +832,14 @@
 
 @media (max-width: 520px) {
   .hero {
-    padding-top: var(--sp-6);
+    padding-top: var(--sp-5);
+    padding-bottom: var(--sp-4);
+  }
+
+  /* Trims the two strips just enough that the ribbon still lands inside the
+     first screen on a 390x844 phone. */
+  .stats-band__inner {
+    padding-block: var(--sp-3);
   }
 
   .hero__actions {

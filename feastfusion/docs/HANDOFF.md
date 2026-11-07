@@ -140,9 +140,20 @@ The landing page is now the only home page. It has ten blocks, in this order:
 
 **What changed and why**
 
-- **The type scale was too big.** The largest heading size was 80px, which pushed the
-  hero to about 980px tall and hid the buttons below the fold on a laptop. The scale in
-  `tokens.css` now tops out at 56px. This is a global change, so every page benefits.
+- **The type scale was too big, twice.** The largest heading size started at 80px, which
+  pushed the hero to about 980px tall and hid the buttons below the fold on a laptop. It
+  was cut to 56px. The owner then said the type still read too large across the whole
+  tool, so every step in `tokens.css` was cut by roughly another 15 percent. The scale now
+  tops out at 46px, body text is 15px on a desktop and 14px on a phone, and the hero
+  headline is 46px on a wide screen and 30px on a phone. This is a global change, so every
+  page benefits. The three places that had their own hardcoded heading size were brought
+  down to match: the hero headline in `Landing.css`, the agreement title in
+  `CateringAgreement.css`, and the brand wordmark in `Header.css`.
+- **The landing page header carries no page links.** The owner asked for "Menu" and
+  "Catering" to be gone from the landing page, because the two hero buttons are the only
+  routes out of it. `Header.tsx` now checks whether the current path is `/` and renders an
+  empty link list there. Every other page keeps the full Menu and Catering nav. The
+  "Order now" button inside the nav is still there, so the phone drawer is not empty.
 - **The hero copy was cut** from 27 words to 17, and the three statistics moved into
   their own band underneath.
 - **`/about` no longer exists.** It redirects to `/#kitchen`. `About.tsx` was deleted.
@@ -163,18 +174,21 @@ The landing page is now the only home page. It has ten blocks, in this order:
   of the hero photo and the padding inside both strips were all trimmed, and the
   headline now shrinks a little on narrow laptops so it stops wrapping to a fourth
   line. The hero is 466px at that size now, and the ribbon finishes at 707px, so
-  everything is visible without scrolling.
+  everything is visible without scrolling. After the second font cut the ribbon was
+  measured again and it still fits, but on a 390x844 phone it had crept 20px past the
+  bottom edge, so the phone hero padding and the phone numbers band padding were trimmed
+  as well. It now finishes at 832px of 844.
 
 **How it was checked.** A browser was driven directly and the page was reloaded at each
-of eleven screen sizes, from 360x740 up to 1920x1080. At every size the hero buttons sat
-above the fold and there was no sideways scrolling. The bottom edge of the dish ribbon
-was measured at each desktop size and it lands inside the screen every time: 796px of
-1080, 717 of 900, 707 of 768, 704 of 800, and 674 of 768 on a 1024px laptop. On a phone
-the hero photo drops below the text, so the two strips sit one scroll down; that is
-deliberate, because squeezing a photo and two strips into a phone screen would leave no
-room for the food. The kitchen wall was measured with motion switched on: 558px tall
-window, three columns, tiles scrolling inside it, and a static grid of all fifteen
-photos for anyone who has asked their device to reduce motion.
+of seven screen sizes, from 390x844 up to 1920x1080. At every size the hero buttons sat
+above the fold, the dish ribbon finished inside the screen, and there was no sideways
+scrolling. The bottom edge of the ribbon was measured at each size and it lands inside
+the screen every time: 784px of 1080, 705 of 900, 647 of 768, 658 of 800, 635 of 768 on a
+1024px laptop, 861 of 932 on a large phone, and 832 of 844 on a small one. The header was
+also checked on all three pages: the landing page shows no page links, while `/menu` and
+`/catering` still show Menu and Catering. The kitchen wall was measured with motion
+switched on: 558px tall window, three columns, tiles scrolling inside it, and a static
+grid of all fifteen photos for anyone who has asked their device to reduce motion.
 
 ---
 
@@ -393,6 +407,12 @@ These were learned the hard way. Breaking one causes a bug that is hard to see.
 
 - Buttons and controls 8px, cards 16px, pills and badges fully round. The scale lives
   in `styles/tokens.css`.
+- All text sizes come from the `--step-*` variables in `styles/tokens.css`. Do not
+  hardcode a `font-size` on body copy or a heading; if a size is wrong, change the
+  variable so every page moves together. The only hardcoded sizes left are small labels
+  and decorative glyphs.
+- The landing page is a single sales page. Its header shows no page links, and its two
+  hero buttons are the only routes out of it. Every other page keeps the full nav.
 - No em-dashes or en-dashes anywhere the customer can see them.
 - Fonts are Newsreader and Onest only.
 - The theme lives in `localStorage['feastfusion.theme']` and `data-theme` on `<html>`.
@@ -424,6 +444,8 @@ Steps 1 to 7 are done. What remains is the customer side.
 7. ~~`api.ts` types~~ for options and the catalogue.
 8. ~~Landing page rebuild~~. Hero fits every screen, menu moved to `/menu`, kitchen wall
    added, About folded in, `/about` retired, type scale reduced.
+9. ~~Type scale cut again~~ across every page, and the landing page header stripped of
+   its Menu and Catering links so the two hero buttons are the only way out.
 
 ### Still to do
 
@@ -498,11 +520,17 @@ faster.
 or above 620px.
 
 **Change the biggest heading size.** `styles/tokens.css`, the `--step-5` line. It is
-`clamp(2.3rem, 1.7rem + 3vw, 3.5rem)`, which means 37px on a small phone and 56px on a
-desktop. Raising the last number makes every large heading on the site bigger, so check
+`clamp(1.95rem, 1.45rem + 2.5vw, 2.9rem)`, which means 31px on a small phone and 46px on
+a desktop. Raising the last number makes every large heading on the site bigger, so check
 the hero still fits afterwards. The hero headline has its own slightly smaller version
 of the same formula in `Landing.css` (`.hero__title`) so it does not wrap to a fourth
 line on a 1024px laptop. If you change one, change the other.
+
+**Change the body text size.** Same file, the `--step-0` line. It is
+`clamp(0.88rem, 0.85rem + 0.15vw, 0.94rem)`, which is 14px on a phone and 15px on a
+desktop. Every step in that file was cut by about 15 percent in one pass because the
+owner said the type read too large, so if you raise one step, raise the ones around it
+too or the headings will jump out of proportion.
 
 **Make the first screen taller or shorter.** Three numbers control it, all in
 `Landing.css`. `.hero` `padding-block` sets the space above and below the hero content.
@@ -510,7 +538,14 @@ line on a 1024px laptop. If you change one, change the other.
 photo is allowed to be; they are both `clamp(300px, 44vh, 480px)`, so the photo grows
 with the screen. `.stats-band__inner` and `.marquee` `padding-block` set the thickness
 of the two strips. If you make the hero photo taller, the dish ribbon will drop below
-the fold on a 768px-tall laptop, so re-measure after any change.
+the fold on a 768px-tall laptop, so re-measure after any change. The `@media (max-width:
+520px)` block at the bottom of the file trims the hero and the numbers band again for
+phones, because the ribbon was 20px past the bottom of a 390x844 screen without it.
+
+**Put the Menu and Catering links back on the landing page.** In
+`components/Header.tsx`, delete the `onLanding` line and change `navLinks` back to
+`links`. The landing page is deliberately a single sales page, so this is only worth
+doing if the owner changes their mind.
 
 ---
 
