@@ -146,84 +146,75 @@
 
 /* ---------- dish picker ---------- */
 
+/* 17 categories in one column was 900px of scrolling. Two columns of compact
+   toggles halves it and still reads as a list. */
 .dish-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1.5px solid var(--border-strong);
-  border-radius: var(--r-md);
-  background: var(--white);
-  overflow: hidden;
-}
-
-.dish-list > li + li {
-  border-top: 1px solid var(--border);
 }
 
 .dish-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-4);
-  min-height: 52px;
-  padding: 0 var(--sp-4);
+  gap: var(--sp-2);
+  min-height: 40px;
+  padding: 0 var(--sp-3);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--white);
   cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease-out);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
 }
 
 .dish-row:hover {
-  background: color-mix(in srgb, var(--gold-300) 10%, var(--white));
+  border-color: var(--gold-500);
+}
+
+.dish-row__tick {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-full);
+  color: transparent;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .dish-row__name {
   font-size: var(--step--1);
   font-weight: 600;
+  line-height: 1.25;
   color: var(--ink-700);
 }
 
 .dish-row.is-active {
   background: var(--wash-gold);
+  border-color: var(--gold-500);
 }
 
 .dish-row.is-active .dish-row__name {
   color: var(--ink-900);
 }
 
-.dish-row:focus-within {
-  box-shadow: inset 0 0 0 2px var(--gold-500);
-}
-
-/* The switch itself. Gold track + theme-aware knob, so it reads in
-   both light and dark without extra rules. */
-.dish-row__switch {
-  position: relative;
-  flex: 0 0 auto;
-  width: 44px;
-  height: 26px;
-  border-radius: var(--r-full);
-  background: var(--ink-200);
-  transition: background-color var(--dur-base) var(--ease-out);
-}
-
-.dish-row__switch::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--white);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
-  transition: transform var(--dur-base) var(--ease-out);
-}
-
-.dish-row input:checked ~ .dish-row__switch {
+.dish-row.is-active .dish-row__tick {
   background: var(--gold-500);
+  border-color: var(--gold-500);
+  color: var(--white);
 }
 
-.dish-row input:checked ~ .dish-row__switch::after {
-  transform: translateX(18px);
+.dish-row:focus-within {
+  box-shadow: 0 0 0 2px var(--gold-500);
 }
 
 /* ---------- quote breakdown ---------- */
@@ -325,5 +316,9 @@
 
   .catering-page__aside strong {
     font-size: var(--step-2);
+  }
+
+  .dish-list {
+    grid-template-columns: 1fr;
   }
 }

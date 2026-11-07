@@ -34,13 +34,26 @@ const EVENT_TYPES = [
 ] as const
 
 /** Dish categories, matching the slugs the backend prices against. */
+// Same names and same order as CATEGORIES in backend/src/catalogue.rs, so the
+// catering picker always reads like the menu chips. Slugs are what the deposit
+// engine keys on, so they must not change.
 const DISH_CATEGORIES = [
-  { slug: 'rice-grains', label: 'Rice and grains' },
-  { slug: 'soups-swallow', label: 'Soups and swallow' },
-  { slug: 'grills', label: 'Grills' },
-  { slug: 'small-chops', label: 'Small chops' },
   { slug: 'breakfast', label: 'Breakfast' },
-  { slug: 'desserts', label: 'Desserts' },
+  { slug: 'rice-grains', label: 'Rice Dishes' },
+  { slug: 'soups-swallow', label: 'Soups & Stews' },
+  { slug: 'swallows', label: 'Swallows' },
+  { slug: 'grills', label: 'Grills' },
+  { slug: 'small-chops', label: 'Small Chops' },
+  { slug: 'pasta-noodles', label: 'Pasta & Noodles' },
+  { slug: 'fast-food', label: 'Fast Food' },
+  { slug: 'proteins', label: 'Proteins' },
+  { slug: 'sides', label: 'Sides & Extras' },
+  { slug: 'sauces', label: 'Sauces & Dips' },
+  { slug: 'salads', label: 'Salads' },
+  { slug: 'pastries', label: 'Pastries' },
+  { slug: 'puddings', label: 'Puddings & Porridges' },
+  { slug: 'desserts', label: 'Desserts & Sweets' },
+  { slug: 'cakes', label: 'Cakes' },
   { slug: 'drinks', label: 'Drinks' },
 ] as const
 
@@ -326,8 +339,18 @@ export function Catering() {
                         onChange={() => toggleDish(c.slug)}
                         className="sr-only"
                       />
+                      <span className="dish-row__tick" aria-hidden="true">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="m5 13 4 4L19 7"
+                            stroke="currentColor"
+                            strokeWidth="3.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
                       <span className="dish-row__name">{c.label}</span>
-                      <span className="dish-row__switch" aria-hidden="true" />
                     </label>
                   </li>
                 );

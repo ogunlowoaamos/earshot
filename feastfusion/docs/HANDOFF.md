@@ -107,8 +107,13 @@ These were built, run, and checked on a real phone and on desktop:
 4. **Catering form.** Event details, dish selection with toggles, ingredients,
    and a working deposit calculator.
 5. **Deposit maths** in `pricing.rs`, driven by per category rates the caterer can edit.
-6. **The catalogue.** 237 dishes across 16 categories, each with priced choices, all
+6. **The catalogue.** 289 dishes across 17 categories, each with priced choices, all
    hidden until the caterer switches them on. Admin screen verified in a real browser.
+   The 17 categories are ordered the way a Nigerian customer eats: Breakfast first,
+   then Rice Dishes, Soups & Stews, Swallows, Grills, Small Chops, Pasta & Noodles,
+   Fast Food, Proteins, Sides & Extras, Sauces & Dips, Salads, Pastries,
+   Puddings & Porridges, Desserts & Sweets, Cakes, Drinks. The menu chips and the
+   catering dish picker both read that one order.
 7. **The landing page.** Rebuilt so the first screen fits without scrolling, the menu
    moved out to its own page, and the old "Our Kitchen" page folded into the landing
    page. Details below.
@@ -268,6 +273,20 @@ and there is no sideways scrolling. The catering form loads its quote asynchrono
 its total page height moves by a hundred pixels or so between runs; the head band
 measurement is the stable one.
 
+The category order was checked in the browser after the reorder. The menu chips read
+All, Breakfast, Rice Dishes, Soups & Stews, Swallows, Grills, Small Chops, Pastries,
+Puddings & Porridges, Desserts & Sweets, Drinks. That is ten categories plus All, not
+seventeen, because the other seven hold no priced dish yet and the server filters them
+out. The catering "Which dishes?" list reads all seventeen in the same order.
+
+The catering dish picker was measured before and after its restyle. As a single column
+of switches it was 902px tall and pushed the page to 3493px. As a two column grid of
+40px tick rows it is 424px tall and the page is 3015px, at 1440, 1280, 1024 and 900
+wide. Below 520px it drops to one column and is 808px, which is still shorter than the
+old single column because the rows are 40px instead of 52px. Clicking a row flips its
+tick to gold and checks the box underneath, and no label clipped or wrapped in either
+light or dark mode.
+
 ---
 
 ## 5. The catalogue: what was built
@@ -280,9 +299,9 @@ prices the caterer has already set.
 
 ### The goal
 
-The caterer wants 237 Nigerian dishes loaded into the admin area, covering
+The caterer wants 289 Nigerian dishes loaded into the admin area, covering
 swallows, soups, rice, puddings, salads, desserts, drinks, grills, small chops,
-proteins, sauces, fast food, pastries, sides, breakfast and cakes.
+proteins, sauces, fast food, pastries, sides, breakfast, cakes, and pasta and noodles.
 
 Two rules from the caterer, word for word:
 
@@ -300,8 +319,8 @@ add-on carries its own price rather than sharing one.
 | Piece | File | State |
 |---|---|---|
 | Database tables for options | `migrations/0003_catalogue_and_options.sql` | Done, applied |
-| All 237 dishes, 16 categories | `src/catalogue.rs` | Done |
-| Option templates | `src/catalogue.rs` | Done, 21 templates |
+| All 289 dishes, 17 categories | `src/catalogue.rs` | Done |
+| Option templates | `src/catalogue.rs` | Done, 24 templates |
 | Seeder (safe to re-run) | `src/catalogue.rs` `seed_catalogue()` | Done |
 | Response shapes for options | `src/models.rs` | Done |
 | Availability gate on the shop | `src/routes/menu.rs` | Done |
@@ -311,9 +330,9 @@ add-on carries its own price rather than sharing one.
 
 `catalogue.rs` holds:
 
-- **16 categories** with their display order.
-- **21 option templates** (`Shape`), each a fixed set of choice groups.
-- **237 dishes** spread across all 16 categories.
+- **17 categories** with their display order.
+- **24 option templates** (`Shape`), each a fixed set of choice groups.
+- **289 dishes** spread across all 17 categories.
 
 ### What the database actually contains
 
@@ -321,18 +340,35 @@ Verified by reading the database directly:
 
 | Measure | Count |
 |---|---|
-| Categories | 16 |
-| Dishes | 237 |
+| Categories | 17 |
+| Dishes | 289 |
 | Dishes switched on and priced | 24 |
-| Dishes hidden and unpriced | 213 |
-| Option groups | 501 |
-| Individual choices | 2197 |
+| Dishes hidden and unpriced | 265 |
+| Option groups | 695 |
+| Individual choices | 3437 |
 | Duplicate dish names | 0 |
 
 The 24 live dishes are the original menu. Everything else waits for the caterer.
 
 `Tea and Bread` is the only dish with no option groups. That is deliberate, because
 there is nothing to choose.
+
+### Pasta and noodles
+
+The caterer asked for pasta to be added. It is now its own category,
+`pasta-noodles`, with **52 dishes** covering Nigerian style pasta (jollof macaroni,
+pasta and beans, indomie and egg), continental pasta (alfredo, arrabbiata, lasagne,
+mac and cheese) and noodle bowls. Three new option templates back it: `PASTA`,
+`NOODLES` and `NOODLE_BOWL`, which carry the size, protein, sauce and add-on choices.
+
+The source spec listed about 112 separate pasta and noodle dishes. It also said, in
+its own words, to collapse the "Noodles and X" family into one dish with add-ons
+rather than one dish per combination. The 52 follows that instruction. If the caterer
+wants the full 112, the extra rows go into `DISHES` in `catalogue.rs` and the seeder
+picks them up on the next run.
+
+Like every other dish, all 52 start hidden and unpriced. Nothing appears in the shop
+until the caterer prices and switches them on.
 
 ### What is not started
 
@@ -341,12 +377,10 @@ there is nothing to choose.
   those choices.
 - **Checkout does not price options.** `routes/orders.rs` stores the chosen option
   text but the server-side price check for options still needs confirming.
-- **Catering form still lists 7 categories.** `Catering.tsx` has a hardcoded list of
-  7 slugs; it should offer all 16.
 
 ### What you can see today
 
-The admin area has a **Catalogue** tab. It lists all 237 dishes grouped by category,
+The admin area has a **Catalogue** tab. It lists all 289 dishes grouped by category,
 with a search box, a category filter, a price box per dish, an on/off switch, an
 options editor and a delete button. Only dishes that are switched on **and** priced
 appear in the shop.
@@ -375,8 +409,8 @@ Every one of these was tested in a real browser, not assumed:
 
 | Check | Result |
 |---|---|
-| All 16 category sections render with the right names and counts | Pass |
-| 237 dish rows listed | Pass |
+| All 17 category sections render with the right names and counts | Pass |
+| 289 dish rows listed | Pass |
 | Search "jollof" narrows to 2 dishes | Pass |
 | Category filter "cakes" shows 11 cakes | Pass |
 | Typing a price saves it and the badge flips to naira | Pass, confirmed in the database |
@@ -384,6 +418,9 @@ Every one of these was tested in a real browser, not assumed:
 | The options editor opens with groups, choices and Save | Pass |
 | No sideways scrolling at desktop 1440 wide | Pass |
 | No sideways scrolling at phone 390 wide | Pass |
+| Menu chips read the new category order | Pass, checked in the browser |
+| Catering "Which dishes?" list matches the menu order | Pass, checked in the browser |
+| Catering dish picker fits in 424px instead of 902px | Pass, measured at 1440, 1280, 1024 and 900 |
 
 The test scripts live in `feastfusion/shots/` and can be re-run after any change:
 `admin-catalogue.js`, `cat-test.js`, `cat-price.js` and `cat-shots.js`. They need the
@@ -399,40 +436,55 @@ machine that made it. Recreate the scripts if you work from a fresh clone.
 
 ### Categories
 
-Sixteen, each with a stable slug. The slug is the key the rest of the app uses, so
+Seventeen, each with a stable slug. The slug is the key the rest of the app uses, so
 **never rename a slug** without updating the database and the frontend together.
+
+The order below is the order a Nigerian customer eats in, which is what the caterer
+asked for: Breakfast first, then the main rice and soup plates, then the sides and
+snacks, then sweets and drinks last.
 
 | Order | Slug | Name |
 |---|---|---|
-| 1 | `rice-grains` | Rice Dishes |
-| 2 | `soups-swallow` | Soups & Stews |
-| 3 | `swallows` | Swallows |
-| 4 | `grills` | Grills |
-| 5 | `small-chops` | Small Chops |
-| 6 | `proteins` | Protein Dishes |
-| 7 | `sauces` | Sauces & Dips |
+| 1 | `breakfast` | Breakfast |
+| 2 | `rice-grains` | Rice Dishes |
+| 3 | `soups-swallow` | Soups & Stews |
+| 4 | `swallows` | Swallows |
+| 5 | `grills` | Grills |
+| 6 | `small-chops` | Small Chops |
+| 7 | `pasta-noodles` | Pasta & Noodles |
 | 8 | `fast-food` | Fast Food |
-| 9 | `pastries` | Pastries |
-| 10 | `breakfast` | Breakfast |
-| 11 | `puddings` | Puddings & Porridges |
+| 9 | `proteins` | Protein Dishes |
+| 10 | `sides` | Sides & Extras |
+| 11 | `sauces` | Sauces & Dips |
 | 12 | `salads` | Salads |
-| 13 | `sides` | Sides & Extras |
-| 14 | `desserts` | Desserts & Sweets |
-| 15 | `cakes` | Cakes |
-| 16 | `drinks` | Drinks |
+| 13 | `pastries` | Pastries |
+| 14 | `puddings` | Puddings & Porridges |
+| 15 | `desserts` | Desserts & Sweets |
+| 16 | `cakes` | Cakes |
+| 17 | `drinks` | Drinks |
 
-The first seven already existed and are used by the deposit calculator. **They must
-keep their exact slugs.** The other nine are new and safe to add.
+**The order lives in one place for the menu:** the `CATEGORIES` list at the top of
+`catalogue.rs`. The fourth field of each entry is the sort order. Change those numbers,
+re-run the seeder, and the menu chips follow. The catering "Which dishes?" list is a
+separate hardcoded array in `pages/Catering.tsx`, so it has to be reordered by hand to
+the same sequence.
+
+The first seven slugs already existed and are used by the deposit calculator. **They
+must keep their exact slugs.** The other ten are newer and safe to add.
+
+Only categories that have at least one switched-on, priced dish appear as menu chips.
+Today that is 10 of the 17. The other 7 appear on their own once the caterer prices
+something in them. That is expected, not a bug.
 
 ### Option templates
 
 Rather than write choices per dish, dishes borrow a template. A dish that uses the
-`Shape::Swallow` template gets portion, extras and note choices. This keeps 237
-dishes from becoming 237 blocks of copy.
+`Shape::Swallow` template gets portion, extras and note choices. This keeps 289
+dishes from becoming 289 blocks of copy.
 
 The templates cover the caterer's order checklist: pizza sizes from 6 inch to 18 inch,
 burger single, double and triple, quantity counts, sausage counts, hot dog combos,
-fries sizes and types, and the rest.
+fries sizes and types, pasta shapes and sauces, noodle add-ons, and the rest.
 
 Two details worth knowing:
 
@@ -494,6 +546,14 @@ These were learned the hard way. Breaking one causes a bug that is hard to see.
 - The "Order now" button belongs to the landing page only, and sits at the right hand end
   of the header next to the theme and cart icons. Do not put it back in the nav, or it
   reappears on every page.
+- The menu and catering pages are compact on purpose. The caterer asked for less empty
+  space four times. Section padding is `--sp-7` (48px), not the old 96px. Do not raise
+  it back without being asked.
+- The menu grid is 6 cards across on desktop, 5 at 1100px, 4 at 900px, 3 at 700px and
+  2 at 520px. The caterer asked for 6 per row.
+- The catering "Which dishes?" picker is a two column grid of 40px tick rows, not a
+  single column of switches. It was 902px tall as a single column and is 424px as a
+  grid. It drops to one column below 520px.
 - No em-dashes or en-dashes anywhere the customer can see them.
 - Fonts are Newsreader and Onest only.
 - The theme lives in `localStorage['feastfusion.theme']` and `data-theme` on `<html>`.
@@ -509,7 +569,7 @@ Steps 1 to 7 are done. What remains is the customer side.
 
 ### Done
 
-1. ~~Finish the dish list~~ in `src/catalogue.rs`. All 16 categories, 237 dishes.
+1. ~~Finish the dish list~~ in `src/catalogue.rs`. All 17 categories, 289 dishes.
 2. ~~Write `seed_catalogue`~~ in the same file. It upserts categories, inserts only
    dishes whose names are new, sets `is_available = 0` and `price_kobo = 0`, moves
    existing dishes to their correct category, and creates option groups only when a
@@ -527,6 +587,11 @@ Steps 1 to 7 are done. What remains is the customer side.
    added, About folded in, `/about` retired, type scale reduced.
 9. ~~Type scale cut again~~ across every page, and the landing page header stripped of
    its Menu and Catering links so the two hero buttons are the only way out.
+10. ~~Pasta and noodles~~. New `pasta-noodles` category, three new option templates,
+    52 dishes.
+11. ~~Category order~~. Breakfast first, then the Nigerian favourites, down to Drinks.
+    One list in `catalogue.rs` drives both the menu chips and the catering picker.
+12. ~~Catering dish picker~~. All 17 categories, two column tick grid, 902px down to 424px.
 
 ### Still to do
 
@@ -540,9 +605,7 @@ Steps 1 to 7 are done. What remains is the customer side.
    sizes are two lines, not one.
 4. **Menu card shows "from" the cheapest price**, not a single flat price.
 5. **Checkout sends the chosen options and the note.**
-6. **Catering form** in `Catering.tsx` still has a hardcoded list of 7 category slugs
-   at line 36. Extend it to all 16.
-7. **Verify** with `cargo check` and `npm run build`, then on the real phone.
+6. **Verify** with `cargo check` and `npm run build`, then on the real phone.
 
 The order matters. Gating availability before the admin existed would have hidden the
 whole menu, because every new dish starts switched off. That is why the admin came first.
@@ -581,9 +644,28 @@ reordered, marked required, or priced individually.
 **Hide a whole category.** One switch in admin flips every dish in it. The shop drops
 the category chip automatically because the chip list is built from visible dishes only.
 
-**Add a category.** Add a row to `CATEGORIES` in `catalogue.rs`, add its slug to
-`DISH_CATEGORIES` in `pages/Catering.tsx` if it should appear in the catering form, and
-give it a rate in admin pricing if it should affect the deposit.
+**Add a category.** Four steps, in this order:
+
+1. Add a row to `CATEGORIES` in `catalogue.rs`. The four fields are name, slug,
+   description and sort order. The sort order is the position in the menu, so pick a
+   number and renumber the ones below it if you want it in the middle.
+2. Add a `Shape` variant in the same file if the new dishes need their own choice
+   groups, and add its arm to `Shape::groups()`. If an existing template fits, reuse it
+   and skip this step.
+3. Add the dishes to `DISHES` in the same file. Each row is name, category slug, shape,
+   description and tags. The slug must match the one in step 1 or the seeder skips the
+   dish.
+4. Add the slug to `DISH_CATEGORIES` in `pages/Catering.tsx` if it should appear in the
+   catering form, and give it a rate in admin pricing if it should affect the deposit.
+
+Then rebuild the backend, restart it, and the seeder picks everything up. Nothing
+appears in the shop until the caterer prices and switches the dishes on.
+
+**Change the category order.** Only the fourth field of each `CATEGORIES` entry in
+`catalogue.rs`. Renumber them, rebuild, restart, and the menu chips follow on their own.
+The catering "Which dishes?" list is a separate hardcoded array, `DISH_CATEGORIES` in
+`pages/Catering.tsx`, so reorder that by hand to the same sequence or the two will
+disagree. The slugs in it must not change, because the deposit calculator keys on them.
 
 **Change the deposit.** Admin, pricing. Rates are per event type and per dish category.
 
@@ -650,6 +732,13 @@ instead.
 so 24px above and 16px below. The category buttons are `.chip` in `MenuPage.css`; their
 padding is `0.4rem 0.7rem`, which is what lets all eleven fit on one row at desktop
 width. If you raise it, they wrap to two rows and the head block grows by about 40px.
+
+**Change the catering "Which dishes?" picker.** `pages/Catering.css`, the dish picker
+block. `.dish-list` is a two column grid with `gap: var(--sp-2)`. `.dish-row` is a 40px
+bordered card. `.dish-row__tick` is the 18px round badge that fills gold when a dish is
+picked. The `@media (max-width: 520px)` block at the bottom of the file drops the grid
+to one column, because two columns of 40px rows are too narrow to read on a phone. If
+you add a category, the grid reflows on its own; there is no count to update.
 
 **Change what sits on the menu toolbar's second row.** `pages/MenuPage.tsx` has a
 `.menu-toolbar__row` wrapper holding the dish count and the search box, and
