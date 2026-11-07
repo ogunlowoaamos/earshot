@@ -91,12 +91,14 @@ textarea {
   }
 }
 
+/* 48px top and bottom. This was 96px, which read as an art gallery rather
+   than a food app: five sections meant 960px of pure empty space. */
 .section {
-  padding-block: var(--sp-9);
+  padding-block: var(--sp-7);
 }
 
 .section--tight {
-  padding-block: var(--sp-7);
+  padding-block: var(--sp-5);
 }
 
 /* ---------- Type helpers ---------- */

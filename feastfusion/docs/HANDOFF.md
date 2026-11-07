@@ -178,6 +178,21 @@ The landing page is now the only home page. It has ten blocks, in this order:
   measured again and it still fits, but on a 390x844 phone it had crept 20px past the
   bottom edge, so the phone hero padding and the phone numbers band padding were trimmed
   as well. It now finishes at 832px of 844.
+- **The page was too airy, so the section spacing was halved.** The owner said "i am
+  still seeing empty spaces, compact pleasse". The cause was `.section` in
+  `styles/global.css`, which put 96px of padding above and below every section. Five
+  sections meant 960px of pure empty space. It is now 48px, and the catering band lost a
+  64px margin that was sitting on top of its own 64px padding. The kitchen wall, the
+  story values, the testimonials heading and the closing call to action were trimmed to
+  match. The landing page went from 6130px tall to 5310px, which is 820px shorter, about
+  13 percent. Nothing was removed, only the gaps between things.
+- **The menu shows six dishes per row.** The owner asked for "6 cards per roll". The
+  grid used to be `auto-fill` with a 268px minimum, which gave four across on a laptop.
+  It is now an explicit six columns, stepping down to five at 1100px, four at 900px,
+  three at 700px and two at 520px. Because the cards got narrower, the dish name and the
+  price had to stop sitting side by side: at six across the name column collapsed to
+  about 90px and wrapped to two or three lines. The card head now always stacks, name on
+  top and price underneath, which keeps every name on one line at every size.
 
 **How it was checked.** A browser was driven directly and the page was reloaded at each
 of seven screen sizes, from 390x844 up to 1920x1080. At every size the hero buttons sat
@@ -189,6 +204,14 @@ also checked on all three pages: the landing page shows no page links, while `/m
 `/catering` still show Menu and Catering. The kitchen wall was measured with motion
 switched on: 558px tall window, three columns, tiles scrolling inside it, and a static
 grid of all fifteen photos for anyone who has asked their device to reduce motion.
+
+The menu grid was measured at eight sizes after the six-across change. It shows six
+columns at 1920, 1440 and 1280, five at 1100, four at 900, three at 700, and two at 520
+and 390. Every dish name stayed on one line at every size, and there was no sideways
+scrolling anywhere. The landing page was measured again after the spacing cut and the
+first screen still fits at all seven sizes, with the ribbon finishing at the same
+heights as before, because the hero and both strips sit above the fold and were not
+touched by the section padding.
 
 ---
 
@@ -546,6 +569,21 @@ phones, because the ribbon was 20px past the bottom of a 390x844 screen without 
 `components/Header.tsx`, delete the `onLanding` line and change `navLinks` back to
 `links`. The landing page is deliberately a single sales page, so this is only worth
 doing if the owner changes their mind.
+
+**Change how much space sits between sections.** `styles/global.css`, the `.section`
+rule. It is `padding-block: var(--sp-7)`, which is 48px above and below. It used to be
+`var(--sp-9)`, which is 96px, and that read as an art gallery rather than a food app.
+Raising it makes the whole site airier; lowering it makes it denser. `.section--tight`
+is the smaller variant used where a section already has its own inner spacing. If you
+change this, re-measure the landing page height, because it moves every section at once.
+
+**Change how many dishes show per row.** `pages/MenuPage.css`, the `.menu-grid` rule.
+It is `repeat(6, minmax(0, 1fr))`, meaning six equal columns. The four `@media` blocks
+below it step the count down as the screen narrows: five at 1100px, four at 900px,
+three at 700px and two at 520px. If you go above six, the cards get narrower than about
+170px and the dish name starts to wrap, so also check `.menu-card__head` in
+`components/MenuCard.css`, which stacks the name above the price for exactly that
+reason.
 
 ---
 

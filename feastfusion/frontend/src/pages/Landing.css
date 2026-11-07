@@ -230,7 +230,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  margin-bottom: var(--sp-7);
+  margin-bottom: var(--sp-5);
   max-width: 62ch;
 }
 
@@ -333,7 +333,7 @@
 
 .wall {
   position: relative;
-  padding-block: var(--sp-8);
+  padding-block: var(--sp-6);
   overflow: hidden;
 }
 
@@ -464,7 +464,7 @@
 }
 
 .coverage-map__skeleton {
-  margin-top: var(--sp-6);
+  margin-top: var(--sp-5);
   height: 420px;
   border-radius: var(--r-xl, 1.5rem);
   border: 1px solid var(--border);
@@ -496,8 +496,7 @@
 .catering-band {
   background: var(--bg-inverse);
   color: var(--text-inverse);
-  padding-block: var(--sp-8);
-  margin-block: var(--sp-8);
+  padding-block: var(--sp-7);
   overflow: hidden;
 }
 
@@ -621,8 +620,8 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--sp-5);
-  margin-top: var(--sp-8);
-  padding-top: var(--sp-6);
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-5);
   border-top: 1px solid var(--border);
 }
 
@@ -645,7 +644,7 @@
 
 .voices__title {
   font-size: var(--step-3);
-  margin-bottom: var(--sp-6);
+  margin-bottom: var(--sp-5);
 }
 
 .voices__grid {
@@ -711,7 +710,7 @@
 /* ============ FINAL CTA ============ */
 
 .final-cta {
-  padding-block: var(--sp-9);
+  padding-block: var(--sp-7);
   text-align: center;
 }
 
@@ -719,13 +718,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
 }
 
 .final-cta__logo {
-  width: 72px;
-  height: 72px;
-  margin-bottom: var(--sp-2);
+  width: 64px;
+  height: 64px;
 }
 
 .final-cta h2 {
@@ -744,13 +742,12 @@
   gap: var(--sp-3);
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: var(--sp-3);
+  margin-top: var(--sp-2);
 }
 
 .final-cta__tiny {
   font-size: var(--step--1) !important;
   color: var(--ink-400) !important;
-  margin-top: var(--sp-2);
 }
 
 /* ============ RESPONSIVE ============ */
