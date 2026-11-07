@@ -122,14 +122,32 @@ export function MenuPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="menu-empty">
-            <h2>Nothing matches that</h2>
-            <p>Try a different category or clear your search.</p>
-            <button
-              className="btn btn--ghost"
-              onClick={() => setParams(new URLSearchParams(), { replace: true })}
-            >
-              Clear filters
-            </button>
+            {active !== 'all' && !query.trim() ? (
+              <>
+                <h2>Not on the menu yet</h2>
+                <p>
+                  {categories.find((c) => c.slug === active)?.name ?? 'This category'} is in the
+                  kitchen list but nothing from it is priced and switched on yet.
+                </p>
+                <button
+                  className="btn btn--ghost"
+                  onClick={() => setParams(new URLSearchParams(), { replace: true })}
+                >
+                  See what is ready
+                </button>
+              </>
+            ) : (
+              <>
+                <h2>Nothing matches that</h2>
+                <p>Try a different category or clear your search.</p>
+                <button
+                  className="btn btn--ghost"
+                  onClick={() => setParams(new URLSearchParams(), { replace: true })}
+                >
+                  Clear filters
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div className="menu-grid">

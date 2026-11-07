@@ -41,6 +41,7 @@ const DISH_CATEGORIES = [
   { slug: 'breakfast', label: 'Breakfast' },
   { slug: 'rice-grains', label: 'Rice Dishes' },
   { slug: 'soups-swallow', label: 'Soups & Stews' },
+  { slug: 'swallows', label: 'Swallows' },
   { slug: 'grills', label: 'Grills' },
   { slug: 'small-chops', label: 'Small Chops' },
   { slug: 'pasta-noodles', label: 'Pasta & Noodles' },

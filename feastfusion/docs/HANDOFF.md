@@ -107,14 +107,14 @@ These were built, run, and checked on a real phone and on desktop:
 4. **Catering form.** Event details, dish selection with toggles, ingredients,
    and a working deposit calculator.
 5. **Deposit maths** in `pricing.rs`, driven by per category rates the caterer can edit.
-6. **The catalogue.** 289 dishes across 16 categories, each with priced choices, all
+6. **The catalogue.** 289 dishes across 17 categories, each with priced choices, all
    hidden until the caterer switches them on. Admin screen verified in a real browser.
-   The 16 categories are ordered the way a Nigerian customer eats: Breakfast first,
-   then Rice Dishes, Soups & Stews, Grills, Small Chops, Pasta & Noodles,
+   The 17 categories are ordered the way a Nigerian customer eats: Breakfast first,
+   then Rice Dishes, Soups & Stews, Swallows, Grills, Small Chops, Pasta & Noodles,
    Fast Food, Proteins, Sides & Extras, Sauces & Dips, Salads, Pastries,
    Puddings & Porridges, Desserts & Sweets, Cakes, Drinks. The menu chips and the
-   catering dish picker both read that one order. Swallows are not a category of
-   their own: they live inside Soups & Stews, because that is how they are eaten.
+   catering dish picker both read that one order. Swallows are their own category
+   because they are what the soups are eaten with, and the caterer pairs the two.
 7. **Pairings.** The caterer decides what goes with what on a Pairings tab in the
    admin page. The shop reads those rules, so no pairing is written into the
    website. Details below.
@@ -278,10 +278,17 @@ its total page height moves by a hundred pixels or so between runs; the head ban
 measurement is the stable one.
 
 The category order was checked in the browser after the reorder. The menu chips read
-All, Breakfast, Rice Dishes, Soups & Stews, Grills, Small Chops, Pastries,
-Puddings & Porridges, Desserts & Sweets, Drinks. That is ten categories plus All, not
-sixteen, because the other six hold no priced dish yet and the server filters them
-out. The catering "Which dishes?" list reads all sixteen in the same order.
+All, Breakfast, Rice Dishes, Soups & Stews, Swallows, Grills, Small Chops,
+Pasta & Noodles, Fast Food, Proteins, Sides & Extras, Sauces & Dips, Salads, Pastries,
+Puddings & Porridges, Desserts & Sweets, Cakes, Drinks. That is all seventeen plus All,
+in two rows at 1440 wide. The catering "Which dishes?" list reads the same seventeen in
+the same order.
+
+The menu chips used to show only categories holding a priced dish, which is why they
+once read ten while the catering list read sixteen. `list_categories` in
+`src/routes/menu.rs` now returns every category that holds at least one dish, so the
+two lists can never drift apart again. A category whose dishes are all still unpriced
+opens onto a "Not on the menu yet" message rather than vanishing.
 
 The catering dish picker was measured before and after its restyle. As a single column
 of switches it was 902px tall and pushed the page to 3493px. As a two column grid of
@@ -291,15 +298,17 @@ old single column because the rows are 40px instead of 52px. Clicking a row flip
 tick to gold and checks the box underneath, and no label clipped or wrapped in either
 light or dark mode.
 
-The Pairings tab was checked in the browser at 1440 and 390 wide. It lists all sixteen
-categories, each row showing its saved count. Opening Breakfast shows fifteen toggle
+The Pairings tab was checked in the browser at 1440 and 390 wide. It lists all seventeen
+categories, each row showing its saved count. Opening Breakfast shows sixteen toggle
 buttons with three already on (Pastries, Puddings & Porridges, Drinks), which matches
-the seeded set. The buttons are 154px wide in a grid at 1440 and 317px in a single
-column at 390, with no sideways scrolling at either size. On the customer side, ticking
-Soups & Stews on the catering form brings up a "Goes well with" strip reading Proteins,
-Sides & Extras, Salads, Drinks, Sauces & Dips, in the order the caterer set. On a dish
-page, Meat Pie suggests Drinks before Breakfast, which is the caterer's order and the
-reverse of the menu order, so the caterer's ordering is genuinely the one being used.
+the seeded set. Opening Swallows shows four already on (Soups & Stews, Proteins,
+Sides & Extras, Drinks). The buttons are 154px wide in a grid at 1440 and 317px in a
+single column at 390, with no sideways scrolling at either size. On the customer side,
+ticking Soups & Stews on the catering form brings up a "Goes well with" strip reading
+Proteins, Sides & Extras, Salads, Drinks, Swallows, Sauces & Dips, in the order the
+caterer set. On a dish page, Meat Pie suggests Drinks before Breakfast, which is the
+caterer's order and the reverse of the menu order, so the caterer's ordering is
+genuinely the one being used.
 
 ---
 
@@ -334,7 +343,7 @@ add-on carries its own price rather than sharing one.
 | Piece | File | State |
 |---|---|---|
 | Database tables for options | `migrations/0003_catalogue_and_options.sql` | Done, applied |
-| All 289 dishes, 16 categories | `src/catalogue.rs` | Done |
+| All 289 dishes, 17 categories | `src/catalogue.rs` | Done |
 | Option templates | `src/catalogue.rs` | Done, 24 templates |
 | Seeder (safe to re-run) | `src/catalogue.rs` `seed_catalogue()` | Done |
 | Response shapes for options | `src/models.rs` | Done |
@@ -345,10 +354,10 @@ add-on carries its own price rather than sharing one.
 
 `catalogue.rs` holds:
 
-- **16 categories** with their display order.
+- **17 categories** with their display order.
 - **24 option templates** (`Shape`), each a fixed set of choice groups.
-- **289 dishes** spread across all 16 categories.
-- **40 pairings** saying which category goes with which.
+- **289 dishes** spread across all 17 categories.
+- **45 pairings** saying which category goes with which.
 
 ### What the database actually contains
 
@@ -356,7 +365,7 @@ Verified by reading the database directly:
 
 | Measure | Count |
 |---|---|
-| Categories | 16 |
+| Categories | 17 |
 | Dishes | 289 |
 | Dishes switched on and priced | 24 |
 | Dishes hidden and unpriced | 265 |
@@ -386,16 +395,17 @@ picks them up on the next run.
 Like every other dish, all 52 start hidden and unpriced. Nothing appears in the shop
 until the caterer prices and switches them on.
 
-### Swallows folded into soups
+### Swallows are their own category
 
-Swallows used to be their own category. The caterer pointed out that a swallow is
-never ordered on its own, it always comes with a soup or a stew. So the category is
-gone and all **28 swallow dishes** now sit inside `soups-swallow`, which holds 55
-dishes in total (27 soups plus the 28 swallows). The menu and the catering list both
-show 16 categories now, not 17.
+Swallows sit at position four, right after Soups & Stews, and hold **28 dishes**:
+pounded yam, eba, fufu, amala, semo, wheat, tuwo and the rest. Soups & Stews holds
+**27 dishes** on its own.
 
-The seeder deletes the old `swallows` category row on its next run, so no orphan is
-left behind.
+They were briefly folded into Soups & Stews, on the reasoning that a swallow is never
+ordered alone. The caterer asked for them back as a separate category, because the
+pairing screen is where "this soup goes with that swallow" belongs, and a category
+that does not exist cannot be paired. So the two are separate categories that point
+at each other through the Pairings tab.
 
 ### Pairings: what goes with what
 
@@ -405,16 +415,21 @@ customer side, so whatever the caterer saves is exactly what the customer sees.
 - **The table.** `migrations/0004_pairings.sql` creates `category_pairings`, holding
   a category, the category it goes with, and a sort order. The pairing is one way on
   purpose: soups go with drinks, but drinks do not have to go with soups.
-- **The starting set.** `PAIRINGS` in `catalogue.rs` holds 40 sensible pairs, built
+- **The starting set.** `PAIRINGS` in `catalogue.rs` holds 45 sensible pairs, built
   around how a Nigerian plate actually works. Breakfast goes with pastries, puddings
   and drinks. Rice goes with grills, proteins, sides, salads and drinks. Soups go with
-  proteins, sides and drinks. Grills go with sides, sauces, salads and drinks.
-- **The seeder only fills an empty table.** If the caterer has already saved their own
-  pairings, re-running the seeder leaves them alone.
+  swallows, proteins, sides and drinks. Swallows go with soups, proteins, sides and
+  drinks. Grills go with sides, sauces, salads and drinks.
+- **The seeder tops up once per revision.** `PAIRINGS_VERSION` in `catalogue.rs` is
+  stored in `settings` as `pairings_version`. When the stored value differs from the
+  constant, the seeder inserts the default pairs with `INSERT OR IGNORE`, so a pair
+  the caterer already has is never duplicated, and then records the new version. The
+  caterer's own edits are never overwritten. Bump the constant when you add new
+  default pairs.
 - **Two endpoints.** `GET /api/pairings` returns every pair. `PUT /api/admin/pairings`
   replaces one category's list, and needs an admin token.
-- **The admin screen.** A **Pairings** tab lists all 16 categories. Open one and you
-  get a grid of the other 15 as toggle buttons. Tick what goes with it, press Save.
+- **The admin screen.** A **Pairings** tab lists all 17 categories. Open one and you
+  get a grid of the other 16 as toggle buttons. Tick what goes with it, press Save.
   The count on each row shows how many are set.
 - **Where the customer sees it.** On the catering form, ticking a category shows a
   "Goes well with" strip of the categories the caterer paired with it, so the customer
@@ -461,7 +476,7 @@ Every one of these was tested in a real browser, not assumed:
 
 | Check | Result |
 |---|---|
-| All 16 category sections render with the right names and counts | Pass |
+| All 17 category sections render with the right names and counts | Pass |
 | 289 dish rows listed | Pass |
 | Search "jollof" narrows to 2 dishes | Pass |
 | Category filter "cakes" shows 11 cakes | Pass |
@@ -500,19 +515,20 @@ snacks, then sweets and drinks last.
 | 1 | `breakfast` | Breakfast |
 | 2 | `rice-grains` | Rice Dishes |
 | 3 | `soups-swallow` | Soups & Stews |
-| 4 | `grills` | Grills |
-| 5 | `small-chops` | Small Chops |
-| 6 | `pasta-noodles` | Pasta & Noodles |
-| 7 | `fast-food` | Fast Food |
-| 8 | `proteins` | Protein Dishes |
-| 9 | `sides` | Sides & Extras |
-| 10 | `sauces` | Sauces & Dips |
-| 11 | `salads` | Salads |
-| 12 | `pastries` | Pastries |
-| 13 | `puddings` | Puddings & Porridges |
-| 14 | `desserts` | Desserts & Sweets |
-| 15 | `cakes` | Cakes |
-| 16 | `drinks` | Drinks |
+| 4 | `swallows` | Swallows |
+| 5 | `grills` | Grills |
+| 6 | `small-chops` | Small Chops |
+| 7 | `pasta-noodles` | Pasta & Noodles |
+| 8 | `fast-food` | Fast Food |
+| 9 | `proteins` | Protein Dishes |
+| 10 | `sides` | Sides & Extras |
+| 11 | `sauces` | Sauces & Dips |
+| 12 | `salads` | Salads |
+| 13 | `pastries` | Pastries |
+| 14 | `puddings` | Puddings & Porridges |
+| 15 | `desserts` | Desserts & Sweets |
+| 16 | `cakes` | Cakes |
+| 17 | `drinks` | Drinks |
 
 **The order lives in one place for the menu:** the `CATEGORIES` list at the top of
 `catalogue.rs`. The fourth field of each entry is the sort order. Change those numbers,
@@ -620,7 +636,7 @@ Steps 1 to 7 are done. What remains is the customer side.
 
 ### Done
 
-1. ~~Finish the dish list~~ in `src/catalogue.rs`. All 16 categories, 289 dishes.
+1. ~~Finish the dish list~~ in `src/catalogue.rs`. All 17 categories, 289 dishes.
 2. ~~Write `seed_catalogue`~~ in the same file. It upserts categories, inserts only
    dishes whose names are new, sets `is_available = 0` and `price_kobo = 0`, moves
    existing dishes to their correct category, and creates option groups only when a
@@ -642,7 +658,7 @@ Steps 1 to 7 are done. What remains is the customer side.
     52 dishes.
 11. ~~Category order~~. Breakfast first, then the Nigerian favourites, down to Drinks.
     One list in `catalogue.rs` drives both the menu chips and the catering picker.
-12. ~~Catering dish picker~~. All 16 categories, two column tick grid, 902px down to 424px.
+12. ~~Catering dish picker~~. All 17 categories, two column tick grid, 902px down to 424px.
 
 ### Still to do
 
@@ -721,8 +737,8 @@ disagree. The slugs in it must not change, because the deposit calculator keys o
 **Change what accompanies what.** Admin, Pairings. Open the category, tick the
 categories that go with it, press Save. The customer side follows straight away, with
 no rebuild. The order you tick them in is the order the customer sees them, so tick the
-most likely pairing first. The starting set of 40 lives in `PAIRINGS` in `catalogue.rs`,
-but the seeder only writes it when the table is empty, so your own edits are never
+most likely pairing first. The starting set of 45 lives in `PAIRINGS` in `catalogue.rs`,
+but the seeder only writes it once per `PAIRINGS_VERSION`, so your own edits are never
 overwritten.
 
 **Change the deposit.** Admin, pricing. Rates are per event type and per dish category.
