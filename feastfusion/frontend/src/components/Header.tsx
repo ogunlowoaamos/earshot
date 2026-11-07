@@ -19,9 +19,10 @@ export function Header() {
 
   /* The landing page is a single focused sales page: its two hero buttons
      ("Order food" and "Cater an event") are the only routes out of it, so the
-     header carries no page links there. Every other page keeps the full nav. */
+     header carries no page links there. Every other page keeps the full nav.
+     "Order now" is the landing page's own shortcut, so it lives beside the
+     icons there and is not repeated on the pages that already have a nav. */
   const onLanding = location.pathname === '/'
-  const navLinks = onLanding ? [] : links
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -44,22 +45,27 @@ export function Header() {
           </span>
         </Link>
 
-        <nav className={`site-nav ${menuOpen ? 'is-open' : ''}`} aria-label="Main">
-          {navLinks.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              className={({ isActive }) => `site-nav__link ${isActive ? 'is-active' : ''}`}
-            >
-              {l.label}
-            </NavLink>
-          ))}
-          <Link to="/menu" className="btn btn--primary btn--sm site-nav__cta">
-            Order now
-          </Link>
-        </nav>
+        {!onLanding && (
+          <nav className={`site-nav ${menuOpen ? 'is-open' : ''}`} aria-label="Main">
+            {links.map((l) => (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                className={({ isActive }) => `site-nav__link ${isActive ? 'is-active' : ''}`}
+              >
+                {l.label}
+              </NavLink>
+            ))}
+          </nav>
+        )}
 
         <div className="site-header__actions">
+          {onLanding && (
+            <Link to="/menu" className="btn btn--primary btn--sm site-header__cta">
+              Order now
+            </Link>
+          )}
+
           <button
             className="theme-btn"
             onClick={toggle}
@@ -103,15 +109,17 @@ export function Header() {
             {count > 0 && <span className="cart-btn__badge">{count}</span>}
           </button>
 
-          <button
-            className="burger"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-expanded={menuOpen}
-            aria-label="Toggle menu"
-          >
-            <span />
-            <span />
-          </button>
+          {!onLanding && (
+            <button
+              className="burger"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-label="Toggle menu"
+            >
+              <span />
+              <span />
+            </button>
+          )}
         </div>
       </div>
     </header>

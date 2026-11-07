@@ -56,9 +56,7 @@ export function MenuPage() {
         <div className="container">
           <span className="eyebrow">The kitchen menu</span>
           <h1>Everything we cook</h1>
-          <p className="lede">
-            Fresh daily. Prices in Naira. Add to your basket and check out in under two minutes.
-          </p>
+          <p className="lede">Fresh daily. Prices in Naira. Checkout in under two minutes.</p>
         </div>
       </header>
 
@@ -86,18 +84,25 @@ export function MenuPage() {
             ))}
           </div>
 
-          <div className="menu-search">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
-              <path d="m16.5 16.5 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-            <input
-              type="search"
-              placeholder="Search dishes…"
-              value={query}
-              onChange={(e) => setParam('q', e.target.value)}
-              aria-label="Search dishes"
-            />
+          <div className="menu-toolbar__row">
+            {!loading && !error && filtered.length > 0 && (
+              <p className="menu-count">
+                {filtered.length} {filtered.length === 1 ? 'dish' : 'dishes'}
+              </p>
+            )}
+            <div className="menu-search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+                <path d="m16.5 16.5 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              <input
+                type="search"
+                placeholder="Search dishes…"
+                value={query}
+                onChange={(e) => setParam('q', e.target.value)}
+                aria-label="Search dishes"
+              />
+            </div>
           </div>
         </div>
 
@@ -127,18 +132,13 @@ export function MenuPage() {
             </button>
           </div>
         ) : (
-          <>
-            <p className="menu-count">
-              {filtered.length} {filtered.length === 1 ? 'dish' : 'dishes'}
-            </p>
-            <div className="menu-grid">
-              {filtered.map((item, i) => (
-                <Reveal key={item.id} delay={Math.min(i, 6) * 50}>
-                  <MenuCard item={item} />
-                </Reveal>
-              ))}
-            </div>
-          </>
+          <div className="menu-grid">
+            {filtered.map((item, i) => (
+              <Reveal key={item.id} delay={Math.min(i, 6) * 50}>
+                <MenuCard item={item} />
+              </Reveal>
+            ))}
+          </div>
         )}
       </div>
     </div>

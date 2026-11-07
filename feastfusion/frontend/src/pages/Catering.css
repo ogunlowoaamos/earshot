@@ -3,7 +3,7 @@
 }
 
 .catering-page__head {
-  padding-block: var(--sp-7) var(--sp-7);
+  padding-block: var(--sp-5);
   background: var(--wash-gold);
   border-bottom: 1px solid var(--border);
 }
@@ -11,25 +11,36 @@
 .catering-page__head-inner {
   display: grid;
   grid-template-columns: 1fr 280px;
-  gap: var(--sp-7);
+  gap: var(--sp-5);
   align-items: center;
 }
 
+/* 28ch keeps "Let us cook for your people" on one line. At 18ch it broke
+   after "your", which added a whole extra line to the head band. */
 .catering-page__head h1 {
   font-size: var(--step-4);
-  margin-block: var(--sp-3);
-  max-width: 18ch;
+  margin-block: var(--sp-2);
+  max-width: 28ch;
 }
 
 .catering-page__aside {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  padding: var(--sp-5);
+  padding: var(--sp-4);
   border-radius: var(--r-lg);
   background: var(--bg-inverse);
   color: var(--text-inverse);
   box-shadow: var(--shadow-lg);
+}
+
+/* Label and amount share one line. Stacked, the card grew to 187px and set the
+   height of the whole head band, leaving dead space beside the shorter text. */
+.catering-page__aside-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
 }
 
 .catering-page__aside-label {
@@ -42,8 +53,9 @@
 
 .catering-page__aside strong {
   font-family: var(--font-display);
-  font-size: var(--step-3);
+  font-size: var(--step-2);
   color: var(--gold-100);
+  white-space: nowrap;
 }
 
 .catering-page__aside p {
@@ -55,9 +67,9 @@
 .catering-page__body {
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
-  gap: clamp(var(--sp-6), 5vw, var(--sp-8));
+  gap: clamp(var(--sp-5), 4vw, var(--sp-7));
   align-items: start;
-  padding-top: var(--sp-7);
+  padding-top: var(--sp-5);
 }
 
 .catering-page__steps {
@@ -71,7 +83,7 @@
   display: grid;
   grid-template-columns: auto 1fr;
   gap: var(--sp-4);
-  padding-block: var(--sp-4);
+  padding-block: var(--sp-3);
   border-top: 1px solid var(--border);
 }
 

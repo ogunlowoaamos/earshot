@@ -98,8 +98,10 @@
   transform: scaleX(1);
 }
 
-.site-nav__cta {
-  display: none;
+/* The landing page's own shortcut, sitting beside the theme and cart icons.
+   It is not rendered on any other page, so no display toggle is needed. */
+.site-header__cta {
+  margin-right: var(--sp-1);
 }
 
 /* ---------- Actions ---------- */
@@ -217,15 +219,11 @@
     display: none;
   }
 
-  /* Doubled selector: `.btn--sm` is emitted after this file, so an equal-specificity
-     rule here loses and the CTA renders 32px tall on a phone. */
-  .site-nav .site-nav__cta {
-    display: inline-flex;
-    margin-top: var(--sp-5);
-    width: 100%;
-    min-height: 48px;
-    padding-block: 0.9rem;
-    font-size: var(--step-0);
+  /* On a phone the landing header is brand + Order now + two icons, so the
+     button loses its side padding to keep the row on one line. */
+  .site-header__cta {
+    margin-right: 0;
+    padding-inline: 0.8rem;
   }
 }
 
@@ -237,5 +235,9 @@
   .brand__mark {
     width: 36px;
     height: 36px;
+  }
+
+  .site-header__cta {
+    padding-inline: 0.65rem;
   }
 }

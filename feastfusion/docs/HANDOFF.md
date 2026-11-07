@@ -151,9 +151,17 @@ The landing page is now the only home page. It has ten blocks, in this order:
   `CateringAgreement.css`, and the brand wordmark in `Header.css`.
 - **The landing page header carries no page links.** The owner asked for "Menu" and
   "Catering" to be gone from the landing page, because the two hero buttons are the only
-  routes out of it. `Header.tsx` now checks whether the current path is `/` and renders an
-  empty link list there. Every other page keeps the full Menu and Catering nav. The
-  "Order now" button inside the nav is still there, so the phone drawer is not empty.
+  routes out of it. `Header.tsx` now checks whether the current path is `/` and skips the
+  whole nav there. Every other page keeps the full Menu and Catering nav.
+- **"Order now" belongs to the landing page only, and sits beside the icons.** The owner
+  said the red button "is not suppose to be there, it is only meant for the landing page"
+  and asked for it to be moved "to the sides close to the icons". It used to live inside
+  the nav, which meant it appeared on every page and sat in the middle of the header. It
+  is now the first child of `.site-header__actions`, so on the landing page the header
+  reads brand, then Order now, then the theme and cart icons. On every other page it is
+  not rendered at all. The burger is also hidden on the landing page, because there is no
+  nav to open there. On a phone the button loses its side padding so the row still fits
+  on one line.
 - **The hero copy was cut** from 27 words to 17, and the three statistics moved into
   their own band underneath.
 - **`/about` no longer exists.** It redirects to `/#kitchen`. `About.tsx` was deleted.
@@ -193,6 +201,35 @@ The landing page is now the only home page. It has ten blocks, in this order:
   price had to stop sitting side by side: at six across the name column collapsed to
   about 90px and wrapped to two or three lines. The card head now always stacks, name on
   top and price underneath, which keeps every name on one line at every size.
+- **The menu and catering pages were compacted too.** The owner sent screenshots of both
+  and said "there is still alot of empty space" and "a lot of empty space here too". On
+  the menu page the gold head block went from 48px of padding above and 32px below to
+  24px and 16px, the category buttons lost about a third of their padding, the search box
+  got shorter, and the gaps around the toolbar and the dish count were trimmed. The
+  eleven category buttons now sit on a single row at desktop width instead of wrapping to
+  two. On the catering page the head block went from 48px of padding to 24px, the gap
+  between the two columns was reduced, and the numbered steps lost some vertical padding.
+  The menu page went from 2589px tall to 2429px.
+- **The dish count moved onto the search row, and the deposit card went sideways.** Two
+  more rows of dead space were found by walking the page element by element. On the menu
+  page the "24 dishes" line had a row of its own between the search box and the grid, so
+  it was moved into the toolbar beside the search box and the grid now starts at 340px
+  instead of 372px. On the catering page the dark "Starting deposit" card stacked its
+  label above its amount, which made the card 187px tall and set the height of the whole
+  head band while the text beside it was only 137px. The label and the amount now share
+  one line, the card padding dropped from 24px to 16px, and the amount dropped one step
+  on the type scale. The catering head band went from 236px to about 200px. The menu page
+  is now 2397px tall and the catering page about 2940px.
+- **The menu intro was shortened so it fits on one line.** The owner pointed out that
+  "Fresh daily. Prices in Naira. Add to your basket and check out in under two minutes."
+  took two lines on a desktop and "takes a lot of valuable space". The cause was the
+  shared `.lede` rule, which caps every intro paragraph at 56 characters wide, so the
+  88-character sentence could never fit on one line. Rather than widen that shared rule
+  and change every page, the sentence was cut to "Fresh daily. Prices in Naira. Checkout
+  in under two minutes." It is now one line at desktop width.
+- **The catering heading stopped wrapping.** `.catering-page__head h1` was capped at 18
+  characters wide, so "Let us cook for your people" broke after "your" and added a whole
+  extra line to the head block. The cap is now 28 characters, which keeps it on one line.
 
 **How it was checked.** A browser was driven directly and the page was reloaded at each
 of seven screen sizes, from 390x844 up to 1920x1080. At every size the hero buttons sat
@@ -212,6 +249,24 @@ scrolling anywhere. The landing page was measured again after the spacing cut an
 first screen still fits at all seven sizes, with the ribbon finishing at the same
 heights as before, because the hero and both strips sit above the fold and were not
 touched by the section padding.
+
+The header was measured again after "Order now" moved. On the landing page it is 77px
+tall at 1440, 1350, 1024 and 390 wide, the button sits at the right hand end of the row
+immediately before the theme and cart icons, there are no page links, there is no burger,
+and the row does not overflow at any of those widths. On `/menu` the button is absent,
+the nav shows Menu and Catering, and the burger appears at 390 wide.
+
+The menu page was measured at 1440, 1350, 1024 and 390 wide. At 1440 and 1350 the head
+block is 150px, the heading and the intro are one line each, all eleven category buttons
+sit on one row, the dish count and the search box share the next row, and the grid starts
+at 340px with six columns. At 1024 the buttons wrap to two rows and the grid drops to
+five columns. At 390 the intro takes two lines, the buttons become a sideways scroller,
+and the grid is two columns. There is no sideways scrolling at any size. The catering
+page was measured at the same four widths: the heading is one line everywhere, the head
+block is about 200px at 1440 and the body starts immediately underneath it with no gap,
+and there is no sideways scrolling. The catering form loads its quote asynchronously, so
+its total page height moves by a hundred pixels or so between runs; the head band
+measurement is the stable one.
 
 ---
 
@@ -436,6 +491,9 @@ These were learned the hard way. Breaking one causes a bug that is hard to see.
   and decorative glyphs.
 - The landing page is a single sales page. Its header shows no page links, and its two
   hero buttons are the only routes out of it. Every other page keeps the full nav.
+- The "Order now" button belongs to the landing page only, and sits at the right hand end
+  of the header next to the theme and cart icons. Do not put it back in the nav, or it
+  reappears on every page.
 - No em-dashes or en-dashes anywhere the customer can see them.
 - Fonts are Newsreader and Onest only.
 - The theme lives in `localStorage['feastfusion.theme']` and `data-theme` on `<html>`.
@@ -566,9 +624,46 @@ the fold on a 768px-tall laptop, so re-measure after any change. The `@media (ma
 phones, because the ribbon was 20px past the bottom of a 390x844 screen without it.
 
 **Put the Menu and Catering links back on the landing page.** In
-`components/Header.tsx`, delete the `onLanding` line and change `navLinks` back to
-`links`. The landing page is deliberately a single sales page, so this is only worth
-doing if the owner changes their mind.
+`components/Header.tsx`, delete the `onLanding` line and remove the `{!onLanding && (`
+wrapper around the `<nav>`. The landing page is deliberately a single sales page, so this
+is only worth doing if the owner changes their mind. If you do it, also remove the
+`{!onLanding && (` wrapper around the burger, or the phone will show two ways to open the
+same menu.
+
+**Move the Order now button.** In `components/Header.tsx` it is the first child of
+`.site-header__actions`, wrapped in `{onLanding && ( ... )}`. That wrapper is what keeps
+it off every page except the home page. To show it everywhere, delete the wrapper. To put
+it back in the middle of the header, move the `<Link>` into the `<nav>` and give it the
+`site-nav__cta` class again, but then it will appear on every page. Its spacing lives in
+`components/Header.css` under `.site-header__cta`, including the two phone overrides that
+shrink its side padding so the row stays on one line.
+
+**Change the menu intro wording.** `pages/MenuPage.tsx`, the `<p className="lede">` inside
+`.menu-page__head`. Keep it under about 60 characters or it will wrap to two lines,
+because the shared `.lede` rule in `styles/global.css` caps every intro paragraph at
+`max-width: 56ch`. Widening that cap would change every page, so shorten the sentence
+instead.
+
+**Change how tight the menu or catering head is.** `pages/MenuPage.css`
+`.menu-page__head` and `pages/Catering.css` `.catering-page__head`. Both are
+`padding-block: var(--sp-5)`, which is 24px. The menu one is `var(--sp-5) var(--sp-4)`,
+so 24px above and 16px below. The category buttons are `.chip` in `MenuPage.css`; their
+padding is `0.4rem 0.7rem`, which is what lets all eleven fit on one row at desktop
+width. If you raise it, they wrap to two rows and the head block grows by about 40px.
+
+**Change what sits on the menu toolbar's second row.** `pages/MenuPage.tsx` has a
+`.menu-toolbar__row` wrapper holding the dish count and the search box, and
+`pages/MenuPage.css` gives it `flex: 1 1 100%` so it always takes its own line under the
+category buttons. The count is only rendered when there are results. If you pull the
+search box back out of that wrapper it gets a row of its own again and the grid starts
+about 32px lower.
+
+**Change the catering deposit card.** `pages/Catering.tsx` wraps the label and the amount
+in `.catering-page__aside-top`, and `pages/Catering.css` lays that out as one line with
+`justify-content: space-between`. Stacking them again makes the card about 50px taller,
+and because the card is the tallest thing in the head band, the whole band grows with it.
+The amount is `var(--step-2)`; it was `var(--step-3)` and at that size it wrapped against
+the label inside the 280px card.
 
 **Change how much space sits between sections.** `styles/global.css`, the `.section`
 rule. It is `padding-block: var(--sp-7)`, which is 48px above and below. It used to be

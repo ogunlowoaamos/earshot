@@ -3,13 +3,13 @@
 }
 
 .menu-page__head {
-  padding-block: var(--sp-7) var(--sp-6);
+  padding-block: var(--sp-5) var(--sp-4);
   background: linear-gradient(180deg, var(--gold-veil), transparent);
 }
 
 .menu-page__head h1 {
   font-size: var(--step-4);
-  margin-block: var(--sp-3) var(--sp-3);
+  margin-block: var(--sp-2) var(--sp-2);
 }
 
 /* ---------- toolbar ---------- */
@@ -18,21 +18,34 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
   flex-wrap: wrap;
-  padding-bottom: var(--sp-5);
+  padding-bottom: var(--sp-3);
   border-bottom: 1px solid var(--border);
-  margin-bottom: var(--sp-5);
+  margin-bottom: var(--sp-4);
 }
 
 .chips {
   display: flex;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
   flex-wrap: wrap;
 }
 
+/* The count and the search share the second toolbar row, so the count no
+   longer needs a row of its own above the grid. */
+.menu-toolbar__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex: 1 1 100%;
+}
+
+/* Tight enough that the eleven categories sit on one row at desktop width.
+   The font stays on the type scale so the chips do not read as a different
+   size class from the rest of the page. */
 .chip {
-  padding: 0.55rem 1rem;
+  padding: 0.4rem 0.7rem;
   border-radius: var(--r-sm);
   border: 1px solid var(--border-strong);
   background: var(--white);
@@ -60,12 +73,12 @@
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  padding: 0.55rem 0.9rem;
+  padding: 0.4rem 0.75rem;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
   background: var(--white);
   color: var(--ink-400);
-  min-width: 240px;
+  min-width: 200px;
 }
 
 .menu-search input {
@@ -83,7 +96,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-400);
-  margin-bottom: var(--sp-4);
+  white-space: nowrap;
 }
 
 /* Six across on a desktop, stepping down as the screen narrows. Explicit
@@ -131,6 +144,11 @@
 
 @media (max-width: 700px) {
   .menu-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .menu-toolbar__row {
     flex-direction: column;
     align-items: stretch;
   }

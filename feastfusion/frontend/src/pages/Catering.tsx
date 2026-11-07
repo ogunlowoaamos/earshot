@@ -195,12 +195,14 @@ export function Catering() {
           </div>
 
           <aside className="catering-page__aside">
-            <span className="catering-page__aside-label">Starting deposit</span>
-            <strong>{quoting ? 'Working it out' : quote ? naira(quote.deposit_kobo) : 'Ask us'}</strong>
-            <p>
-              {quote?.reason ??
-                'Pick your event and dishes and the deposit appears here with the reason behind it.'}
-            </p>
+           <div className="catering-page__aside-top">
+             <span className="catering-page__aside-label">Starting deposit</span>
+             <strong>{quoting ? 'Working it out' : quote ? naira(quote.deposit_kobo) : 'Ask us'}</strong>
+           </div>
+           <p>
+             {quote?.reason ??
+               'Pick your event and dishes and the deposit appears here with the reason behind it.'}
+           </p>
           </aside>
         </div>
       </header>
