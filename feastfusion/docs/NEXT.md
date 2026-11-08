@@ -22,26 +22,59 @@ A short note so a fresh chat can pick up with no history.
 9. **Menu cards** are fully clickable. The Add button still works on its own.
 10. **Landing ribbon** sits exactly on the fold and cycles every live dish.
 11. **Ingredients** exist for all 289 dishes, and the admin can edit them.
+12. **Catering page rebuilt as four collapsible step cards.** See the section below.
+
+## The catering page, as it stands
+
+File: `feastfusion/frontend/src/pages/Catering.tsx` and `Catering.css`.
+
+The page is one `<form>` laid out in two columns.
+
+**Left column — four numbered steps.** Each step is a heading button plus a card
+underneath it holding the real fields:
+
+| Step | Heading | Fields inside the card |
+| --- | --- | --- |
+| 1 | Tell us the job | job kind, occasion, guests, date |
+| 2 | Pick the dishes | dish categories, suggestions, other dishes |
+| 3 | Say where and when | state, LGA, street |
+| 4 | Choose how we reach you | channel, handle, name, phone, email, details |
+
+- Clicking a heading opens that card and closes the other three. Clicking the
+  open one closes it. Only one card is open at a time.
+- The caret on the right of each heading flips to show open or closed.
+- Every card is `border-radius: 8px`. So are the side column, the summary and
+  the deposit breakdown.
+- The cards are deliberately tight: small padding, small labels, small inputs.
+  The whole page is about 1330px tall on a 1440px-wide screen, down from 3160px.
+
+**Right column — the live summary.** Top to bottom:
+
+1. **Your request so far** — a dark card listing only the things filled in so
+   far: job, occasion, guests, date, dishes, extra dishes, venue, how to reach
+   you, notes. Empty rows are hidden.
+2. **How the deposit is worked out** — a dark espresso card (`--bg-inverse`,
+   which is `#14100c` in the light theme) with a gold heading, the price lines,
+   the total, and the plain-English reason underneath the total.
+3. The error message, the submit button, and the agreement note.
+
+**Submitting.** The submit button is `type="button"` and calls `submitAll()`,
+which opens all four cards first and then calls `formRef.current.requestSubmit()`.
+That way the browser still validates the required fields that were hidden.
 
 ## Not finished
 
-1. **Catering steps 1 to 4 are not clickable yet.** This is the next job.
-2. The basket drawer has not been checked on a phone width.
-3. Rectangular dish photos are still cropped. The plan is to stop cropping and show the whole photo.
-4. The admin ingredients editor has never been checked in the browser.
-5. The big "less scrolling on every page" pass is only partly done.
+1. The basket drawer has not been checked on a phone width.
+2. Rectangular dish photos are still cropped. The plan is to stop cropping and show the whole photo.
+3. The admin ingredients editor has never been checked in the browser.
+4. The big "less scrolling on every page" pass is only partly done.
+5. The catering page has only been checked at 1440px wide. 980px and 520px are untested.
 
-## Next job: make the catering steps clickable
+## Next job
 
-File: `feastfusion/frontend/src/pages/Catering.tsx`
-
-- The four steps are at lines 250 to 281, inside `.catering-page__steps`.
-- Each step is a plain `<div className="catering-step">`. Turn each into a `<button type="button">`.
-- Give the four form sections these ids: `catering-job`, `catering-dishes`, `catering-where`, `catering-contact`.
-  - Do not use `catering-dishes-label`, because `id="dishes-label"` already exists on the inner span.
-- On click, run `document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })`.
-- In `Catering.css`, add `scroll-margin-top: calc(var(--header-h) + var(--sp-4))` to the four targets so the sticky header does not cover them.
-- Also in `Catering.css`, add `cursor: pointer`, a hover tint, and a `:focus-visible` outline to `.catering-step`. Keep the existing `border-top` hairlines and the `display: grid`.
+The user is still sending small UI edits for the catering page, one at a time.
+Wait for the next one. When the page is signed off, check it at 980px and 520px
+wide, then move on to the phone-width basket drawer.
 
 ## Traps worth knowing
 

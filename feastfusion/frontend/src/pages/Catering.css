@@ -2,6 +2,14 @@
   padding-bottom: var(--sp-8);
 }
 
+/* The step buttons jump to these sections, so keep the sticky header clear. */
+#catering-job,
+#catering-dishes,
+#catering-where,
+#catering-contact {
+  scroll-margin-top: calc(var(--header-h) + var(--sp-4));
+}
+
 .catering-page__head {
   padding-block: var(--sp-3);
   background: var(--wash-gold);
@@ -9,81 +17,50 @@
 }
 
 .catering-page__head-inner {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: var(--sp-5);
-  align-items: center;
+  display: block;
 }
 
 /* 28ch keeps "Let us cook for your people" on one line. At 18ch it broke
    after "your", which added a whole extra line to the head band. */
 .catering-page__head h1 {
-  font-size: var(--step-4);
-  margin-block: var(--sp-2);
+  font-size: var(--step-3);
+  margin-block: var(--sp-1);
   max-width: 28ch;
 }
 
-.catering-page__aside {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-4);
-  border-radius: var(--r-lg);
-  background: var(--bg-inverse);
-  color: var(--text-inverse);
-  box-shadow: var(--shadow-lg);
-}
-
-/* Label and amount share one line. Stacked, the card grew to 187px and set the
-   height of the whole head band, leaving dead space beside the shorter text. */
-.catering-page__aside-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-3);
-}
-
-.catering-page__aside-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--gold-300);
-}
-
-.catering-page__aside strong {
-  font-family: var(--font-display);
-  font-size: var(--step-2);
-  color: var(--gold-100);
-  white-space: nowrap;
-}
-
-.catering-page__aside p {
+/* One line of lede instead of two keeps the head band short. */
+.catering-page__head .lede {
   font-size: var(--step--1);
-  color: var(--text-inverse-muted);
-  line-height: 1.55;
+  line-height: 1.45;
+  max-width: 62ch;
 }
 
 .catering-page__body {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
+  grid-template-columns: 1.15fr 0.85fr;
   gap: clamp(var(--sp-5), 4vw, var(--sp-7));
   align-items: start;
   padding-top: var(--sp-5);
 }
 
+.catering-page__rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  align-self: start;
+}
+
 .catering-page__steps {
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: calc(var(--header-h) + var(--sp-5));
 }
 
+/* Each step is a heading you can click plus the card of fields it fills in. */
 .catering-step {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--sp-4);
-  padding-block: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
   border-top: 1px solid var(--border);
 }
 
@@ -91,40 +68,146 @@
   border-bottom: 1px solid var(--border);
 }
 
-.catering-step > span {
+.catering-step__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-1) 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.catering-step__head:hover h3 {
+  color: var(--chili-500);
+}
+
+.catering-step__head:focus-visible {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 2px;
+}
+
+.catering-step h3 {
+  font-size: var(--step-0);
+  line-height: 1.3;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.catering-step__num {
   font-family: var(--font-display);
-  font-size: var(--step-1);
+  font-size: var(--step-0);
   font-weight: 600;
   color: var(--gold-500); /* gold-300 is 2.13:1 on cream */
 }
 
-.catering-step h3 {
-  font-size: var(--step-1);
-  margin-bottom: var(--sp-1);
+/* Small caret on the right: points down when open, right when closed. */
+.catering-step__chev {
+  flex: none;
+  margin-left: auto;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--ink-400);
+  border-bottom: 2px solid var(--ink-400);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 
-.catering-step p {
-  font-size: var(--step--1);
-  color: var(--text-muted);
-  line-height: 1.6;
+.catering-step__head[aria-expanded='false'] .catering-step__chev {
+  transform: rotate(-45deg);
 }
 
-.catering-form {
+/* The fillable part of each step sits in its own card under the heading. */
+.catering-step__card {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
-  padding: clamp(var(--sp-4), 3vw, var(--sp-6));
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+}
+
+.catering-step__card.is-closed {
+  display: none;
+}
+
+/* Tighter fields inside the step cards so the page stays short. */
+.catering-step__card .field {
+  gap: var(--sp-1);
+}
+
+.catering-step__card .field label,
+.catering-step__card .field__label {
+  font-size: 0.78rem;
+}
+
+.catering-step__card .field input,
+.catering-step__card .field select,
+.catering-step__card .field textarea {
+  padding: 0.45rem 0.65rem;
+  font-size: var(--step--1);
+}
+
+.catering-step__card .field select {
+  padding-right: 2.2rem;
+  background-position: right 0.65rem center;
+}
+
+.catering-step__card .field textarea {
+  min-height: 60px;
+}
+
+.catering-step__card .field__hint {
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.catering-step__card .panel__grid {
+  gap: var(--sp-3);
+}
+
+.catering-step__card .choices {
+  gap: var(--sp-2);
+}
+
+.catering-step__card .choice {
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.catering-step__card .choice strong {
+  font-size: var(--step--1);
+}
+
+.catering-step__card .choice span {
+  font-size: 0.72rem;
+}
+
+.catering-step__card .dish-row {
+  min-height: 34px;
+  padding: 0 var(--sp-2);
+}
+
+.catering-step__card .dish-row__tick {
+  width: 16px;
+  height: 16px;
+}
+
+.catering-page__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: 8px;
   box-shadow: var(--shadow-sm);
 }
 
-.catering-form h2 {
-  font-size: var(--step-2);
-}
-
-.catering-form .btn {
+.catering-page__side .btn {
   align-self: flex-start;
   min-width: 200px;
 }
@@ -273,58 +356,125 @@
   outline-offset: 2px;
 }
 
+/* ---------- live summary ---------- */
+
+/* Everything typed in steps 1-4, read back in one place. */
+.catering-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.catering-summary h3 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-500);
+}
+
+.catering-summary dl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+}
+
+.catering-summary dl > div {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.catering-summary dl > div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.catering-summary dt {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.catering-summary dd {
+  margin: 0;
+  font-size: var(--step--1);
+  line-height: 1.4;
+  color: var(--ink-700);
+  overflow-wrap: anywhere;
+}
+
 /* ---------- quote breakdown ---------- */
 
+/* Dark espresso card, the same colour as the deposit panel it replaced. */
 .quote-breakdown {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
-  padding: var(--sp-4);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--wash-gold);
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: 8px;
+  background: var(--bg-inverse);
+  color: var(--text-inverse);
 }
 
 .quote-breakdown h3 {
-  font-size: var(--step-0);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-300);
 }
 
 .quote-breakdown ul {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
   list-style: none;
 }
 
 .quote-breakdown li {
   display: flex;
   justify-content: space-between;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
   font-size: var(--step--1);
-  color: var(--text-muted);
+  color: var(--text-inverse-muted);
 }
 
 .quote-breakdown li span:last-child {
   font-variant-numeric: tabular-nums;
-  color: var(--ink-700);
+  color: var(--text-inverse);
 }
 
 .quote-breakdown__total {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: var(--sp-4);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--border-strong);
+  gap: var(--sp-3);
+  padding-top: var(--sp-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
   font-size: var(--step--1);
   font-weight: 600;
-  color: var(--ink-700);
+  color: var(--text-inverse);
 }
 
 .quote-breakdown__total strong {
   font-family: var(--font-display);
-  font-size: var(--step-2);
-  color: var(--gold-500);
+  font-size: var(--step-1);
+  color: var(--gold-100);
+}
+
+/* The plain-language reason sits right under the figure it explains. */
+.quote-breakdown__reason {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-inverse-muted);
 }
 
 .catering-done {
@@ -336,7 +486,7 @@
   padding: var(--sp-8) var(--sp-5);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: 8px;
 }
 
 .catering-done h2 {
@@ -354,18 +504,13 @@
 }
 
 @media (max-width: 980px) {
-  .catering-page__head-inner,
   .catering-page__body {
     grid-template-columns: 1fr;
-  }
-
-  .catering-page__steps {
-    position: static;
   }
 }
 
 @media (max-width: 520px) {
-  .catering-form .btn {
+  .catering-page__side .btn {
     width: 100%;
     align-self: stretch;
   }
