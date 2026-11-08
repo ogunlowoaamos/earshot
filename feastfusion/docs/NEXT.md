@@ -38,7 +38,7 @@ underneath it holding the real fields:
 
 | Step | Heading | Fields inside the card |
 | --- | --- | --- |
-| 1 | Tell us the job | job kind, occasion, guests, date |
+| 1 | Tell us the job | job kind, then the dark "tell us the job" panel: service toggles (only for "Something else"), occasion, guests, date |
 | 2 | Pick the dishes | dish categories, suggestions, other dishes |
 | 3 | Say where and when | state, LGA, street |
 | 4 | Choose how we reach you | channel, handle, name, phone, email, details |
@@ -49,7 +49,44 @@ underneath it holding the real fields:
 - Every card is `border-radius: 8px`. So are the side column, the summary and
   the deposit breakdown.
 - The cards are deliberately tight: small padding, small labels, small inputs.
-  The whole page is about 1330px tall on a 1440px-wide screen, down from 3160px.
+  The whole page is about 1090px tall on a 1440px-wide screen, down from 3160px.
+
+**The dark espresso surface.** The parts of the form you actually fill in sit on
+a dark espresso card, so they read as "this is where you answer" against the
+cream page. One shared class does it: `.catering-dark` in `Catering.css`.
+
+- It sets `background: var(--bg-inverse)`, a translucent white border, `8px`
+  radius, `color-scheme: dark`, and a light `--chevron-down` override so the
+  dropdown arrows stay visible.
+- Everything inside it is re-coloured: labels, inputs, selects, textareas,
+  placeholders, hints, `.choice` cards, `.dish-row` rows and
+  `.dish-suggest__chip` chips all get light text on translucent white wells.
+- Step 1 uses it on the inner `.catering-subchoices` panel. Steps 2, 3 and 4
+  use it on the whole `.catering-step__card`.
+- **Never** use raw colour ramp steps inside it. Use `--bg-inverse`,
+  `--text-inverse` and `--text-inverse-muted` so both themes work.
+
+**"Something else" follow-ups.** Picking "Something else" as the job kind opens
+two toggle groups inside the dark panel:
+
+1. **Which service do you need?** — Chef-at-home service, or Custom
+   chef-prepared meal delivery.
+2. **Who is providing the food?** — only appears for chef-at-home: ingredients
+   supplied, or the chef buys them.
+
+Each group shows a gold "Needs your answer" pill until it is answered. The
+toggles are `aria-pressed` buttons, not radios, so they can be switched off by
+picking the other one.
+
+The backend only knows three job kinds (`event`, `cook_only`, `custom`), so
+these two answers are not sent as their own field. `onSubmit` writes them into
+`details` as `Service: … Food: …` above whatever the customer typed.
+
+**Occasion and guests are asked for every job kind.** They used to be hidden for
+"Cook only". Now all three kinds show occasion, guests and date, and the chosen
+occasion is sent as `event_type` (it used to be hard-coded to `cook_only`).
+`quote_cook_only` in `backend/src/pricing.rs` ignores `event_type`, so the
+deposit maths is unchanged.
 
 **Right column — the live summary.** Top to bottom:
 
@@ -93,6 +130,11 @@ So `/menu` and `/checkout` are the two pages left to squeeze.
 The user is still sending small UI edits for the catering page, one at a time.
 Wait for the next one. When the page is signed off, check it at 980px and 520px
 wide, then move on to the phone-width basket drawer.
+
+Open question the user has not answered: should the two "Something else"
+services (chef-at-home, meal delivery) become their own `job_kind` values with
+their own pricing rules in the Rust backend, instead of being folded into
+`details`? Right now they are only text for the caterer to read.
 
 ## Traps worth knowing
 

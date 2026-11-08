@@ -196,6 +196,251 @@
   height: 16px;
 }
 
+/* The follow-up questions that open up once a job kind is picked. */
+.catering-subchoices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding: var(--sp-3);
+}
+
+/* A dark espresso surface for the parts of the form you fill in, so they read
+   as "this is where you answer" and stand apart from the cream page. */
+.catering-dark {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: var(--bg-inverse);
+  color-scheme: dark;
+  /* The surface is always dark, so the dropdown arrow must always be light. */
+  --chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.6 6 6.4l5-4.8' fill='none' stroke='%23c2b6a4' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* Fields on the dark surface need light text and translucent wells. */
+.catering-dark .field label,
+.catering-dark .field__label {
+  color: var(--text-inverse);
+}
+
+.catering-dark .field input,
+.catering-dark .field select,
+.catering-dark .field textarea {
+  border-color: rgba(255, 255, 255, 0.18);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-inverse);
+}
+
+.catering-dark .field input::placeholder,
+.catering-dark .field textarea::placeholder {
+  color: var(--text-inverse-muted);
+}
+
+.catering-dark .field__hint {
+  color: var(--text-inverse-muted);
+}
+
+.catering-dark .field select option {
+  background: var(--white);
+  color: var(--ink-900);
+}
+
+/* Choice cards on the dark surface. */
+.catering-dark .choice {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.catering-dark .choice:hover {
+  border-color: var(--gold-300);
+}
+
+.catering-dark .choice.is-active {
+  border-color: var(--gold-300);
+  background: rgba(217, 162, 39, 0.16);
+}
+
+.catering-dark .choice strong {
+  color: var(--text-inverse);
+}
+
+.catering-dark .choice span {
+  color: var(--text-inverse-muted);
+}
+
+.catering-dark .choice.is-active strong::after {
+  color: var(--gold-300);
+}
+
+/* Dish rows on the dark surface. */
+.catering-dark .dish-row {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.catering-dark .dish-row:hover {
+  border-color: var(--gold-300);
+}
+
+.catering-dark .dish-row__tick {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.catering-dark .dish-row__name {
+  color: var(--text-inverse);
+}
+
+.catering-dark .dish-row.is-active {
+  border-color: var(--gold-300);
+  background: rgba(217, 162, 39, 0.16);
+}
+
+.catering-dark .dish-row.is-active .dish-row__name {
+  color: var(--text-inverse);
+}
+
+.catering-dark .dish-row.is-active .dish-row__tick {
+  border-color: var(--gold-300);
+  background: var(--gold-300);
+  color: var(--bg-inverse);
+}
+
+.catering-dark .dish-row:focus-within {
+  box-shadow: 0 0 0 2px var(--gold-300);
+}
+
+.catering-dark .dish-suggest__label {
+  color: var(--text-inverse-muted);
+}
+
+.catering-dark .dish-suggest__chip {
+  border-color: rgba(255, 255, 255, 0.28);
+  color: var(--text-inverse);
+}
+
+.catering-dark .dish-suggest__chip:hover {
+  border-color: var(--gold-300);
+  color: var(--gold-100);
+}
+
+.catering-subchoices__nested {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+  padding-top: var(--sp-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.catering-subchoices__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.catering-subchoices__label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold-100);
+}
+
+.catering-subchoices__flag {
+  padding: 1px 6px;
+  border-radius: var(--r-full);
+  background: var(--gold-300);
+  color: var(--gold-600);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.catering-subchoices__next {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-inverse-muted);
+}
+
+.catering-toggles {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.catering-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.catering-toggle:hover {
+  border-color: var(--gold-300);
+}
+
+.catering-toggle:focus-visible {
+  outline: 2px solid var(--gold-300);
+  outline-offset: 1px;
+}
+
+.catering-toggle.is-on {
+  background: rgba(217, 162, 39, 0.16);
+  border-color: var(--gold-300);
+}
+
+.catering-toggle__tick {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  border-radius: var(--r-full);
+  color: transparent;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.catering-toggle.is-on .catering-toggle__tick {
+  background: var(--gold-300);
+  border-color: var(--gold-300);
+  color: var(--bg-inverse);
+}
+
+.catering-toggle__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.catering-toggle__text strong {
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--text-inverse);
+}
+
+.catering-toggle__text span {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-inverse-muted);
+}
+
 .catering-page__side {
   display: flex;
   flex-direction: column;

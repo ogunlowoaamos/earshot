@@ -23,6 +23,38 @@ const JOB_KINDS = [
   },
 ] as const
 
+/**
+ * The two services that sit under "Something else". Both are priced by hand,
+ * so they only change what the caterer is told, not the deposit maths.
+ */
+const CUSTOM_SERVICES = [
+  {
+    value: 'chef_at_home',
+    label: 'Chef-at-home service',
+    blurb: 'A chef comes to your home to cook and prepare the meals on-site.',
+  },
+  {
+    value: 'meal_delivery',
+    label: 'Custom chef-prepared meal delivery',
+    blurb:
+      'The chef buys the ingredients, cooks the finished meal in their own kitchen, and delivers it to you.',
+  },
+] as const
+
+/** Who is providing the food for a chef-at-home job. */
+const INGREDIENT_SOURCES = [
+  {
+    value: 'supplied',
+    label: 'Ingredients are supplied',
+    blurb: 'You already have them, or you will buy them before the chef arrives.',
+  },
+  {
+    value: 'chef_buys',
+    label: 'The chef buys the ingredients',
+    blurb: 'The chef shops for everything and adds the cost to your quote.',
+  },
+] as const
+
 /** Event types the caterer has set a per-guest rate for. */
 const EVENT_TYPES = [
   { value: 'birthday', label: 'Birthday party' },
@@ -65,6 +97,8 @@ const CONTACT_CHANNELS = [
 ] as const
 
 type JobKind = (typeof JOB_KINDS)[number]['value']
+type CustomService = (typeof CUSTOM_SERVICES)[number]['value']
+type IngredientSource = (typeof INGREDIENT_SOURCES)[number]['value']
 type ContactChannel = (typeof CONTACT_CHANNELS)[number]['value']
 
 const ALL_STEPS = ['catering-job', 'catering-dishes', 'catering-where', 'catering-contact']
@@ -78,6 +112,8 @@ function formatDate(value: string) {
 
 export function Catering() {
   const [jobKind, setJobKind] = useState<JobKind>('event')
+  const [customService, setCustomService] = useState<CustomService | ''>('')
+  const [ingredientSource, setIngredientSource] = useState<IngredientSource | ''>('')
   const [eventType, setEventType] = useState<string>('birthday')
   const [guestCount, setGuestCount] = useState('50')
   const [dishes, setDishes] = useState<string[]>(['rice-grains', 'grills'])
@@ -134,7 +170,7 @@ export function Catering() {
       api
         .quote({
           job_kind: jobKind,
-          event_type: jobKind === 'cook_only' ? 'cook_only' : eventType,
+          event_type: eventType,
           guest_count: guests,
           dishes,
         })
@@ -153,6 +189,15 @@ export function Catering() {
     setDishes((prev) =>
       prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
     )
+  }
+
+  /** Leaving "Something else" drops the two follow-up answers with it. */
+  function pickJobKind(next: JobKind) {
+    setJobKind(next)
+    if (next !== 'custom') {
+      setCustomService('')
+      setIngredientSource('')
+    }
   }
 
   // The caterer decides what goes with what in the admin page, so this list is
@@ -192,6 +237,15 @@ export function Catering() {
     e.preventDefault()
     setError('')
     setSubmitting(true)
+    // The backend only knows the three job kinds, so the "Something else"
+    // follow-up answers travel in the notes where the caterer will read them.
+    const serviceNote = [
+      customServiceLabel && `Service: ${customServiceLabel}.`,
+      ingredientSourceLabel && `Food: ${ingredientSourceLabel}.`,
+    ]
+      .filter(Boolean)
+      .join(' ')
+    const fullDetails = [serviceNote, details.trim()].filter(Boolean).join('\n\n') || null
     try {
       const created = await api.createCatering({
         name,
@@ -199,9 +253,9 @@ export function Catering() {
         email,
         event_date: eventDate,
         guest_count: Number(guestCount) || 0,
-        event_type: jobKind === 'cook_only' ? 'cook_only' : eventType,
+        event_type: eventType,
         location: `${street}, ${lga}, ${stateName}`,
-        details: details || null,
+        details: fullDetails,
         state: stateName,
         lga,
         street_address: street,
@@ -244,10 +298,11 @@ export function Catering() {
     )
   }
 
-  const showGuests = jobKind === 'event'
-  const showEventType = jobKind !== 'cook_only'
-
   const jobKindLabel = JOB_KINDS.find((k) => k.value === jobKind)?.label ?? jobKind
+  const customServiceLabel =
+    CUSTOM_SERVICES.find((s) => s.value === customService)?.label ?? ''
+  const ingredientSourceLabel =
+    INGREDIENT_SOURCES.find((i) => i.value === ingredientSource)?.label ?? ''
   const eventTypeLabel = EVENT_TYPES.find((t) => t.value === eventType)?.label ?? eventType
   const dishLabels = dishes.map(
     (slug) => DISH_CATEGORIES.find((c) => c.slug === slug)?.label ?? slug,
@@ -303,7 +358,7 @@ export function Catering() {
                           name="job_kind"
                           value={k.value}
                           checked={jobKind === k.value}
-                          onChange={() => setJobKind(k.value)}
+                          onChange={() => pickJobKind(k.value)}
                           className="sr-only"
                         />
                         <strong>{k.label}</strong>
@@ -313,8 +368,97 @@ export function Catering() {
                   </div>
                 </div>
 
-                <div className="panel__grid">
-                  {showEventType && (
+                <div className="catering-subchoices catering-dark">
+                  {jobKind === 'custom' && (
+                    <>
+                      <div className="catering-subchoices__head">
+                        <p className="catering-subchoices__label">Which service do you need?</p>
+                        {!customService && (
+                          <span className="catering-subchoices__flag">Needs your answer</span>
+                            )}
+                          </div>
+                          <div className="catering-toggles">
+                            {CUSTOM_SERVICES.map((s) => {
+                              const on = customService === s.value
+                              return (
+                                <button
+                                  key={s.value}
+                                  type="button"
+                                  className={`catering-toggle${on ? ' is-on' : ''}`}
+                                  aria-pressed={on}
+                                  onClick={() => {
+                                    setCustomService(s.value)
+                                    if (s.value !== 'chef_at_home') setIngredientSource('')
+                                  }}
+                                >
+                                  <span className="catering-toggle__tick" aria-hidden="true">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                                      <path
+                                        d="M4 12.5 9.5 18 20 6.5"
+                                        stroke="currentColor"
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                    </svg>
+                                  </span>
+                                  <span className="catering-toggle__text">
+                                    <strong>{s.label}</strong>
+                                    <span>{s.blurb}</span>
+                                  </span>
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          {customService === 'chef_at_home' && (
+                            <div className="catering-subchoices__nested">
+                              <div className="catering-subchoices__head">
+                                <p className="catering-subchoices__label">
+                                  Who is providing the food?
+                                </p>
+                                {!ingredientSource && (
+                                  <span className="catering-subchoices__flag">
+                                    Needs your answer
+                                  </span>
+                                )}
+                              </div>
+                              <div className="catering-toggles">
+                                {INGREDIENT_SOURCES.map((i) => {
+                                  const on = ingredientSource === i.value
+                                  return (
+                                    <button
+                                      key={i.value}
+                                      type="button"
+                                      className={`catering-toggle${on ? ' is-on' : ''}`}
+                                      aria-pressed={on}
+                                      onClick={() => setIngredientSource(i.value)}
+                                    >
+                                      <span className="catering-toggle__tick" aria-hidden="true">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                                          <path
+                                            d="M4 12.5 9.5 18 20 6.5"
+                                            stroke="currentColor"
+                                            strokeWidth="3"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                          />
+                                        </svg>
+                                      </span>
+                                      <span className="catering-toggle__text">
+                                        <strong>{i.label}</strong>
+                                        <span>{i.blurb}</span>
+                                      </span>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                  )}
+
+                  <div className="panel__grid">
                     <div className="field">
                       <label htmlFor="event_type">What is the occasion?</label>
                       <select
@@ -329,9 +473,7 @@ export function Catering() {
                         ))}
                       </select>
                     </div>
-                  )}
 
-                  {showGuests && (
                     <div className="field">
                       <label htmlFor="guests">How many guests?</label>
                       <input
@@ -344,17 +486,17 @@ export function Catering() {
                       />
                       <span className="field__hint">A rough number is fine for now.</span>
                     </div>
-                  )}
 
-                  <div className="field">
-                    <label htmlFor="event_date">When do you need us?</label>
-                    <input
-                      id="event_date"
-                      type="date"
-                      value={eventDate}
-                      onChange={(e) => setEventDate(e.target.value)}
-                      required
-                    />
+                    <div className="field">
+                      <label htmlFor="event_date">When do you need us?</label>
+                      <input
+                        id="event_date"
+                        type="date"
+                        value={eventDate}
+                        onChange={(e) => setEventDate(e.target.value)}
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -374,7 +516,7 @@ export function Catering() {
               </button>
               <div
                 id="catering-dishes-card"
-                className={`catering-step__card${openSteps.includes('catering-dishes') ? '' : ' is-closed'}`}
+                className={`catering-step__card catering-dark${openSteps.includes('catering-dishes') ? '' : ' is-closed'}`}
               >
                 <div className="field">
                   <span className="field__label" id="dishes-label">
@@ -460,7 +602,7 @@ export function Catering() {
               </button>
               <div
                 id="catering-where-card"
-                className={`catering-step__card${openSteps.includes('catering-where') ? '' : ' is-closed'}`}
+                className={`catering-step__card catering-dark${openSteps.includes('catering-where') ? '' : ' is-closed'}`}
               >
                 <div className="panel__grid">
                   <div className="field">
@@ -522,7 +664,7 @@ export function Catering() {
               </button>
               <div
                 id="catering-contact-card"
-                className={`catering-step__card${openSteps.includes('catering-contact') ? '' : ' is-closed'}`}
+                className={`catering-step__card catering-dark${openSteps.includes('catering-contact') ? '' : ' is-closed'}`}
               >
                 <div className="field">
                   <label>How should we reach you?</label>
@@ -617,18 +759,26 @@ export function Catering() {
                 <dt>Job</dt>
                 <dd>{jobKindLabel}</dd>
               </div>
-              {showEventType && (
+              {customServiceLabel && (
                 <div>
-                  <dt>Occasion</dt>
-                  <dd>{eventTypeLabel}</dd>
+                  <dt>Service</dt>
+                  <dd>{customServiceLabel}</dd>
                 </div>
               )}
-              {showGuests && (
+              {ingredientSourceLabel && (
                 <div>
-                  <dt>Guests</dt>
-                  <dd>{guestCount ? `${guestCount} people` : 'Not given yet'}</dd>
+                  <dt>Food</dt>
+                  <dd>{ingredientSourceLabel}</dd>
                 </div>
               )}
+              <div>
+                <dt>Occasion</dt>
+                <dd>{eventTypeLabel}</dd>
+              </div>
+              <div>
+                <dt>Guests</dt>
+                <dd>{guestCount ? `${guestCount} people` : 'Not given yet'}</dd>
+              </div>
               <div>
                 <dt>Date</dt>
                 <dd>{eventDate ? formatDate(eventDate) : 'Not given yet'}</dd>
