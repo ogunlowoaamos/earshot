@@ -23,6 +23,9 @@ A short note so a fresh chat can pick up with no history.
 10. **Landing ribbon** sits exactly on the fold and cycles every live dish.
 11. **Ingredients** exist for all 289 dishes, and the admin can edit them.
 12. **Catering page rebuilt as four collapsible step cards.** See the section below.
+13. **The site footer only shows on the landing page.** Every other page is an app
+    screen, so the footer was just adding scroll. `App.tsx` now checks
+    `pathname === '/'` instead of the old dish-page check.
 
 ## The catering page, as it stands
 
@@ -69,6 +72,21 @@ That way the browser still validates the required fields that were hidden.
 3. The admin ingredients editor has never been checked in the browser.
 4. The big "less scrolling on every page" pass is only partly done.
 5. The catering page has only been checked at 1440px wide. 980px and 520px are untested.
+
+## Page heights at 1440 x 900 (the scroll budget)
+
+The user wants every page except the landing page to fit the screen like an app.
+
+| Page | Height | Scrolls? |
+| --- | --- | --- |
+| `/` landing | 5614px | yes, on purpose |
+| `/menu` | 1937px | yes, about 1000px too tall |
+| `/catering` | 900px | no |
+| `/checkout` | 1641px | yes, about 740px too tall |
+| `/track` | 900px | no |
+| `/admin` | 900px | no |
+
+So `/menu` and `/checkout` are the two pages left to squeeze.
 
 ## Next job
 

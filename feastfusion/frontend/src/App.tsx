@@ -38,8 +38,9 @@ function ScrollToTop() {
 
 export default function App() {
   const { pathname } = useLocation()
-  // The dish page is a fixed-height screen, so a footer below it would force a page scroll.
-  const isDishPage = /^\/menu\/[^/]+$/.test(pathname)
+  // Only the landing page is a scrolling marketing page. Every other page is an
+  // app screen, so a footer there would just add scroll for no reason.
+  const isLandingPage = pathname === '/'
 
   return (
     <>
@@ -60,7 +61,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      {!isDishPage && <Footer />}
+      {isLandingPage && <Footer />}
       <CartDrawer />
     </>
   )
