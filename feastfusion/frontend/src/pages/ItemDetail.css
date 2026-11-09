@@ -300,15 +300,19 @@
 .detail__more-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: var(--sp-2);
 }
 
 /* Small by default: just the name and the price. The photo and the
    ingredient list live in a panel that opens on hover, so a whole category
-   of pairings fits in the rail without turning it into a wall of pictures. */
+   of pairings fits in the rail without turning it into a wall of pictures.
+   Two columns: the add target, then the small "see details" arrow. Once
+   something is in the basket a stepper takes a third row underneath. */
 .related {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 26px;
   align-items: stretch;
   min-height: 44px;
   border: 1px solid var(--border);
@@ -323,6 +327,19 @@
 .related:focus-within {
   border-color: var(--gold-300);
   background-color: var(--gold-veil);
+}
+
+/* Already in the basket, so the card keeps the gold edge without a hover. */
+.related.is-picked {
+  border-color: var(--gold-300);
+}
+
+.related.is-picked .related__add {
+  border-radius: var(--r-sm) 0 0 0;
+}
+
+.related.is-picked .related__go {
+  border-radius: 0 var(--r-sm) 0 0;
 }
 
 /* The card body is the add-to-basket target. */
@@ -380,6 +397,48 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--success);
+}
+
+/* The stepper. It only exists once the dish is in the basket, so an
+   untouched card stays two lines tall. */
+.related__qty {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-1);
+  padding: 2px 4px 4px;
+  border-top: 1px solid var(--border);
+}
+
+.related__qty button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background-color: var(--white);
+  color: var(--ink-700);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.related__qty button:hover {
+  border-color: var(--gold-300);
+  color: var(--gold-500);
+}
+
+.related__qty span {
+  font-size: var(--step--1);
+  font-weight: 700;
+  color: var(--ink-900);
+  font-variant-numeric: tabular-nums;
 }
 
 /* The small "see details" arrow. Never nested inside the add button. */
@@ -509,14 +568,17 @@
   /* No hover on touch, so the photo sits inline and the ingredient chips
      stay out of the way. */
   .related {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--sp-2);
     padding: var(--sp-2);
   }
 
   .related__add {
     padding: 0;
+  }
+
+  .related__qty {
+    padding: 4px 0 0;
   }
 
   .related__go {

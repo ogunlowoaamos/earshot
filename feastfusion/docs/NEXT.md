@@ -26,6 +26,10 @@ A short note so a fresh chat can pick up with no history.
 13. **The site footer only shows on the landing page.** Every other page is an app
     screen, so the footer was just adding scroll. `App.tsx` now checks
     `pathname === '/'` instead of the old dish-page check.
+14. **"Goes well with" cards have − / + steppers.** Tapping the card body adds one
+    and the stepper appears underneath; − takes one off and the stepper disappears
+    at zero. The card keeps a gold edge while it is in the basket. Capped at 20,
+    same as the main dish. See the note below.
 
 ## The catering page, as it stands
 
@@ -221,6 +225,33 @@ category by name still shows it, so the caterer can add the first dish.
 **Submitting.** The submit button is `type="button"` and calls `submitAll()`,
 which opens all four cards first and then calls `formRef.current.requestSubmit()`.
 That way the browser still validates the required fields that were hidden.
+
+## The dish page's "Goes well with" rail
+
+Each pairing card is a two-column grid: the card body (name and price) is the
+add target, and a 26px arrow on the right opens that dish's own page. The card
+is 55px tall and shows nothing else, so a whole category of pairings fits in the
+rail.
+
+**The stepper only appears once the dish is in the basket.** Tapping the card
+body calls `add(item, 1)`. `qtyOf(id)` reads the cart line for that dish, and
+when it is above zero the card gets `is-picked` (a gold edge that stays without
+hovering) and a third grid row appears underneath: − / count / +. The − button
+calls `setQty(id, picked - 1)`, which the cart turns into a removal at zero, so
+the stepper disappears again. The + button caps at 20, matching the main dish
+stepper. The count is `tabular-nums` so the card does not jitter as it changes.
+
+The old version flashed an "Added" tick for 1.4 seconds. That is gone — a
+persistent count is a better signal, and it lets people fix a mis-tap without
+opening the basket.
+
+**The grid is `align-items: start`.** Without it, a card that grew a stepper
+stretched its neighbour in the same row to the same height, leaving a card with
+no stepper looking oddly tall. Only the picked card grows now.
+
+At 900px and below the card becomes a single column, the stepper gets
+`padding: 4px 0 0`, and the arrow stays `position: absolute` in the top-right
+corner so it does not eat a whole row.
 
 ## Not finished
 
