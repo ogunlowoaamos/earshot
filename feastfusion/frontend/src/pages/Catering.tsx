@@ -158,8 +158,14 @@ export function Catering() {
   const [error, setError] = useState('')
   const [done, setDone] = useState<CateringRequest | null>(null)
 
-  // Only one card is open at a time so the page stays short.
-  const [openSteps, setOpenSteps] = useState<string[]>(['catering-job'])
+  // Only one card is open at a time so the page stays short. Nothing starts
+  // open, so the page lands on the four headings plus the intro line, and the
+  // intro folds away the moment you open a step.
+  const [openSteps, setOpenSteps] = useState<string[]>([])
+  // The intro paragraph is only worth its height before you start filling the
+  // form in, so the first click on any step folds the head band down to a
+  // small title bar and it stays that way.
+  const [headCompact, setHeadCompact] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
   function goToStep(id: string) {
@@ -169,6 +175,7 @@ export function Catering() {
   function toggleStep(id: string) {
     const willOpen = !openSteps.includes(id)
     setOpenSteps(willOpen ? [id] : [])
+    setHeadCompact(true)
     if (willOpen) requestAnimationFrame(() => goToStep(id))
   }
 
@@ -176,6 +183,7 @@ export function Catering() {
   // checks the form. requestAnimationFrame waits for React to paint first.
   function submitAll() {
     setOpenSteps(ALL_STEPS)
+    setHeadCompact(true)
     requestAnimationFrame(() => formRef.current?.requestSubmit())
   }
 
@@ -340,7 +348,7 @@ export function Catering() {
 
   return (
     <div className="catering-page">
-      <header className="catering-page__head">
+      <header className={`catering-page__head${headCompact ? ' is-compact' : ''}`}>
         <div className="container catering-page__head-inner">
           <span className="eyebrow">Catering</span>
           <h1>Let us cook for your people</h1>

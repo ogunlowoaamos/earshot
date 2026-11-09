@@ -35,6 +35,25 @@
   max-width: 62ch;
 }
 
+/* Once you start filling the form in, the intro has done its job: drop the
+   paragraph and shrink the title so the fields get the screen. */
+.catering-page__head.is-compact {
+  padding-block: var(--sp-2);
+}
+
+.catering-page__head.is-compact .lede {
+  display: none;
+}
+
+.catering-page__head.is-compact .eyebrow {
+  font-size: 0.66rem;
+}
+
+.catering-page__head.is-compact h1 {
+  font-size: var(--step-1);
+  margin-block: 0;
+}
+
 .catering-page__body {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
