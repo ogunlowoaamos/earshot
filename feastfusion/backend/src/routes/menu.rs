@@ -74,6 +74,8 @@ pub(crate) async fn fetch_catalogue(pool: &SqlitePool) -> AppResult<Vec<MenuItem
 }
 
 async fn with_options(pool: &SqlitePool, rows: Vec<MenuRow>) -> AppResult<Vec<MenuItem>> {
+    sync_derived_groups(pool).await?;
+
     let ids: Vec<i64> = rows.iter().map(|row| row.id).collect();
     let mut groups = options_by_item(pool, &ids).await?;
 
@@ -99,12 +101,14 @@ pub(crate) async fn options_by_item(
     let marks = vec!["?"; item_ids.len()].join(",");
 
     let group_sql = format!(
-        "SELECT id, menu_item_id, name, kind, help, is_required, allows_quantity
+        "SELECT id, menu_item_id, name, kind, help, is_required, allows_quantity,
+                source_category_slug
          FROM item_option_groups
          WHERE menu_item_id IN ({marks})
          ORDER BY sort_order, id"
     );
-    let mut query = sqlx::query_as::<_, (i64, i64, String, String, String, bool, bool)>(&group_sql);
+    let mut query =
+        sqlx::query_as::<_, (i64, i64, String, String, String, bool, bool, String)>(&group_sql);
     for id in item_ids {
         query = query.bind(id);
     }
@@ -140,7 +144,9 @@ pub(crate) async fn options_by_item(
         });
     }
 
-    for (id, menu_item_id, name, kind, help, is_required, allows_quantity) in group_rows {
+    for (id, menu_item_id, name, kind, help, is_required, allows_quantity, source_category_slug) in
+        group_rows
+    {
         grouped.entry(menu_item_id).or_default().push(OptionGroup {
             id,
             name,
@@ -148,11 +154,111 @@ pub(crate) async fn options_by_item(
             help,
             is_required,
             allows_quantity,
+            source_category_slug,
             options: by_group.remove(&id).unwrap_or_default(),
         });
     }
 
     Ok(grouped)
+}
+
+/// Fills in every group that reads its choices from a category.
+///
+/// The caterer keeps one chop list, in the catalogue. A platter that offers
+/// chops points at that category instead of holding a second copy, so a chop
+/// added, renamed, repriced or switched off in the dashboard reaches the
+/// customer without anyone retyping a list. Rows are updated in place so a
+/// choice keeps its id and a basket already holding it stays valid.
+pub(crate) async fn sync_derived_groups(pool: &SqlitePool) -> AppResult<()> {
+    let derived = sqlx::query_as::<_, (i64, String)>(
+        "SELECT id, source_category_slug FROM item_option_groups
+         WHERE source_category_slug <> ''",
+    )
+    .fetch_all(pool)
+    .await?;
+
+    if derived.is_empty() {
+        return Ok(());
+    }
+
+    for (group_id, slug) in derived {
+        // The dish that owns the group is left out, so a platter never offers
+        // itself as one of its own chops.
+        let owner: i64 = sqlx::query_scalar(
+            "SELECT menu_item_id FROM item_option_groups WHERE id = ?",
+        )
+        .bind(group_id)
+        .fetch_one(pool)
+        .await?;
+
+        // Every dish in the category is read, switched off ones included, so a
+        // chop the caterer pauses keeps its place and its id. The customer only
+        // sees the ones that are on offer today.
+        let dishes = sqlx::query_as::<_, (i64, String, bool)>(
+            "SELECT m.id, m.name, m.is_available
+             FROM menu_items m
+             JOIN categories c ON c.id = m.category_id
+             WHERE c.slug = ? AND m.id <> ?
+             ORDER BY m.sort_order, m.name",
+        )
+        .bind(&slug)
+        .bind(owner)
+        .fetch_all(pool)
+        .await?;
+
+        let mut tx = pool.begin().await?;
+
+        let keep: Vec<i64> = dishes.iter().map(|(id, _, _)| *id).collect();
+        let marks = vec!["?"; keep.len()].join(",");
+
+        // Anything no longer in the category goes, along with the choices that
+        // pointed at it. A dish that is merely switched off is kept but hidden,
+        // so switching it back on restores the same choice.
+        if keep.is_empty() {
+            sqlx::query("DELETE FROM item_options WHERE group_id = ?")
+                .bind(group_id)
+                .execute(&mut *tx)
+                .await?;
+        } else {
+            let sql = format!(
+                "DELETE FROM item_options
+                 WHERE group_id = ? AND source_item_id > 0 AND source_item_id NOT IN ({marks})"
+            );
+            let mut query = sqlx::query(&sql).bind(group_id);
+            for id in &keep {
+                query = query.bind(id);
+            }
+            query.execute(&mut *tx).await?;
+        }
+
+        // A chop is part of the platter, not an extra, so it carries no price of
+        // its own. The dish price is the price of a whole portion and would be
+        // wrong here.
+        for (index, (item_id, name, is_available)) in dishes.iter().enumerate() {
+            sqlx::query(
+                "INSERT INTO item_options
+                    (group_id, label, price_delta_kobo, is_default, is_available,
+                     source_item_id, sort_order)
+                 VALUES (?, ?, 0, 0, ?, ?, ?)
+                 ON CONFLICT (group_id, source_item_id) WHERE source_item_id > 0 DO UPDATE SET
+                    label = excluded.label,
+                    price_delta_kobo = 0,
+                    is_available = excluded.is_available,
+                    sort_order = excluded.sort_order",
+            )
+            .bind(group_id)
+            .bind(name)
+            .bind(is_available)
+            .bind(item_id)
+            .bind(index as i64)
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        tx.commit().await?;
+    }
+
+    Ok(())
 }
 
 pub async fn get_settings(State(state): State<AppState>) -> AppResult<Json<Settings>> {
@@ -186,6 +292,8 @@ pub(crate) async fn zone_fee(pool: &SqlitePool, state_name: &str) -> AppResult<i
 }
 
 pub(crate) async fn fetch_item(pool: &SqlitePool, id: i64) -> AppResult<MenuItem> {
+    sync_derived_groups(pool).await?;
+
     let sql = format!("{MENU_SELECT} WHERE m.id = ?");
     let row = sqlx::query_as::<_, MenuRow>(&sql)
         .bind(id)

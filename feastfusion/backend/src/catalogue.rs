@@ -184,6 +184,12 @@ pub struct GroupSpec {
     pub kind: &'static str,
     pub help: &'static str,
     pub required: bool,
+    /// True when each choice gets its own how-many stepper.
+    pub allows_quantity: bool,
+    /// When set, the choices are the switched-on dishes of this category rather
+    /// than the list below. The caterer keeps one chop list, in the catalogue,
+    /// and every dish that offers chops reads it.
+    pub source_category: &'static str,
     pub options: &'static [&'static str],
 }
 
@@ -198,6 +204,8 @@ const fn one(
         kind: "single",
         help,
         required,
+        allows_quantity: false,
+        source_category: "",
         options,
     }
 }
@@ -212,7 +220,29 @@ const fn many(
         kind: "multi",
         help,
         required: false,
+        allows_quantity: false,
+        source_category: "",
         options,
+    }
+}
+
+/// A counted group whose choices are whatever the caterer has switched on in
+/// one category. Nothing is typed twice, so the platter can never fall behind
+/// the chop list in the catalogue.
+const fn counted_from(
+    name: &'static str,
+    help: &'static str,
+    required: bool,
+    category: &'static str,
+) -> GroupSpec {
+    GroupSpec {
+        name,
+        kind: "multi",
+        help,
+        required,
+        allows_quantity: true,
+        source_category: category,
+        options: &[],
     }
 }
 
@@ -786,6 +816,24 @@ const NOODLE_BOWL: &[GroupSpec] = &[
     ),
 ];
 
+/// A platter is a pile of separate chops, not one portion, so the customer
+/// builds it: how many puff-puff, how many samosa, and so on. The chop list is
+/// the caterer's own Small Chops category, so adding a chop there is enough.
+const CHOPS: &[GroupSpec] = &[
+    one(
+        "Portion",
+        "How much goes in the pack",
+        true,
+        &["Regular", "Large", "Family tray"],
+    ),
+    counted_from(
+        "Chops",
+        "Say how many of each chop you want",
+        true,
+        "small-chops",
+    ),
+];
+
 /// Which template of choices a dish gets.
 #[derive(Clone, Copy)]
 pub enum Shape {
@@ -813,6 +861,7 @@ pub enum Shape {
     Pasta,
     Noodles,
     NoodleBowl,
+    Chops,
 }
 
 impl Shape {
@@ -842,6 +891,7 @@ impl Shape {
             Shape::Pasta => PASTA,
             Shape::Noodles => NOODLES,
             Shape::NoodleBowl => NOODLE_BOWL,
+            Shape::Chops => CHOPS,
         }
     }
 }
@@ -1503,8 +1553,8 @@ pub const DISHES: &[(&str, &str, Shape, &str, &str)] = &[
     (
         "Small Chops Platter",
         "small-chops",
-        Shape::Plate,
-        "Samosa, spring roll, sausage roll, puff puff and gizdodo together.",
+        Shape::Chops,
+        "Puff-puff, samosa, spring rolls, peppered gizzard and chin chin. Feeds two.",
         "party, sharing",
     ),
     /* ---------------- protein dishes ---------------- */
@@ -2982,8 +3032,9 @@ pub async fn seed_catalogue(pool: &SqlitePool) -> Result<(), sqlx::Error> {
             for (group_index, group) in shape.groups().iter().enumerate() {
                 let group_id: i64 = sqlx::query_scalar(
                     "INSERT INTO item_option_groups
-                        (menu_item_id, name, kind, help, is_required, sort_order)
-                     VALUES (?, ?, ?, ?, ?, ?)
+                        (menu_item_id, name, kind, help, is_required, allows_quantity,
+                         source_category_slug, sort_order)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                      RETURNING id",
                 )
                 .bind(item_id)
@@ -2991,6 +3042,8 @@ pub async fn seed_catalogue(pool: &SqlitePool) -> Result<(), sqlx::Error> {
                 .bind(group.kind)
                 .bind(group.help)
                 .bind(if group.required { 1 } else { 0 })
+                .bind(if group.allows_quantity { 1 } else { 0 })
+                .bind(group.source_category)
                 .bind(group_index as i64)
                 .fetch_one(&mut *tx)
                 .await?;

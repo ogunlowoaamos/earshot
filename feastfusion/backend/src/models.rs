@@ -83,6 +83,9 @@ pub struct OptionGroup {
     /// True when the group counts pieces, so each choice gets its own how-many
     /// stepper and its price is charged per piece.
     pub allows_quantity: bool,
+    /// Set when the choices are filled in from a category rather than typed by
+    /// hand. The dashboard shows these as read-only.
+    pub source_category_slug: String,
     pub options: Vec<DishOption>,
 }
 
@@ -456,6 +459,10 @@ pub struct OptionGroupIn {
     pub is_required: bool,
     #[serde(default)]
     pub allows_quantity: bool,
+    /// Fill this group from a category instead of the list below. The dashboard
+    /// sends the slug back unchanged for a group it did not edit.
+    #[serde(default)]
+    pub source_category_slug: String,
     #[serde(default)]
     pub options: Vec<OptionIn>,
 }

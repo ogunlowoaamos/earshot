@@ -706,6 +706,16 @@
   white-space: nowrap;
 }
 
+.cat-opt-source {
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--white);
+  font-size: 0.7rem;
+  color: var(--ink-800);
+  max-width: 15rem;
+}
+
 .cat-opt-note {
   margin: 0;
   padding: var(--sp-2) var(--sp-3);
@@ -714,6 +724,40 @@
   font-size: 0.7rem;
   line-height: 1.5;
   color: var(--ink-600);
+}
+
+/* A group whose choices come from a category. Read-only, because the list is
+   the catalogue itself and editing it here would only drift. */
+.cat-opt-derived {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--border);
+}
+
+.cat-opt-derived li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 0.4rem 0.6rem;
+  background: var(--white);
+  font-size: 0.75rem;
+  color: var(--ink-800);
+}
+
+.cat-opt-derived__cost {
+  color: var(--ink-500);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cat-opt-derived__empty {
+  color: var(--ink-500);
+  font-style: italic;
 }
 
 .cat-opt-row input[type='text'] {

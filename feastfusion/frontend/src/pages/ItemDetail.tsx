@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, naira, type MenuItem, type OptionPick } from '../lib/api'
 import { useCart } from '../lib/cart'
 import {
+  canQuickAdd,
   defaultPicks,
   missingRequiredGroup,
   picksExtraKobo,
@@ -30,10 +31,11 @@ export function ItemDetail() {
   const unitKobo = (item?.price_kobo ?? 0) + extraKobo
   const stillToAnswer = item ? missingRequiredGroup(item, picks) : null
 
-  /** The rail quick-adds, so a dish that insists on a choice takes its first. */
-  function quickPicks(o: MenuItem) {
-    return defaultPicks(o)
-  }
+  /** The rail quick-adds, so a dish that insists on a choice takes its first.
+     *  A dish that counts pieces cannot be answered in one tap, so no quick add. */
+    function quickPicks(o: MenuItem) {
+      return canQuickAdd(o) ? defaultPicks(o) : null
+    }
 
   function addToBasket(then?: () => void) {
     if (!item || stillToAnswer) return
@@ -72,7 +74,8 @@ export function ItemDetail() {
         setItem(found)
         // Anything the dish insists on starts on its first available choice, so
         // the basket button is never a dead end. The customer can change it.
-        setPicks(found ? (defaultPicks(found) ?? []) : [])
+                // A dish that counts pieces starts empty and asks.
+                setPicks(found ? defaultPicks(found) : [])
         setQty(1)
         if (!found) {
           setError('We could not find that dish.')
@@ -218,7 +221,7 @@ export function ItemDetail() {
 
                 {stillToAnswer && (
                   <p className="detail__needed" role="status">
-                    Choose a {stillToAnswer} above and we can add it to your basket.
+                                    Still to choose: {stillToAnswer}.
                   </p>
                 )}
 
@@ -231,7 +234,7 @@ export function ItemDetail() {
                     {!item.is_available
                       ? 'Sold out today'
                       : stillToAnswer
-                        ? `Choose a ${stillToAnswer}`
+                                        ? 'Finish your choices'
                         : `Add ${qty} to basket`}
                   </button>
                   <button

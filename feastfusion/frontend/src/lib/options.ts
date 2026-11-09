@@ -101,16 +101,28 @@ export function missingRequiredGroup(item: MenuItem, picks: OptionPick[]): strin
 
 /**
  * A card that adds in one tap cannot ask questions, so anything the dish
- * insists on is answered with its first available choice. Returns null when a
- * required group has nothing left to offer, which means no quick add.
+ * insists on is answered with its first available choice. A group that counts
+ * pieces has no sensible default — one puff-puff is not an answer — so it is
+ * left out and the dish has to be opened instead.
  */
-export function defaultPicks(item: MenuItem): OptionPick[] | null {
+export function defaultPicks(item: MenuItem): OptionPick[] {
   const picks: OptionPick[] = []
   for (const group of item.option_groups ?? []) {
-    if (!group.is_required) continue
+    if (!group.is_required || group.allows_quantity) continue
     const first = group.options.find((o) => o.is_available)
-    if (!first) return null
-    picks.push({ option_id: first.id, qty: 1 })
+    if (first) picks.push({ option_id: first.id, qty: 1 })
   }
   return picks
+}
+
+/**
+ * True when a dish can go straight into the basket with its defaults. A dish
+ * that counts pieces cannot, because the customer has to say how many.
+ */
+export function canQuickAdd(item: MenuItem): boolean {
+  return (item.option_groups ?? []).every(
+    (group) =>
+      !group.is_required ||
+      (!group.allows_quantity && group.options.some((o) => o.is_available)),
+  )
 }

@@ -81,7 +81,6 @@ async fn price_options(
     .bind(item_id)
     .fetch_all(&mut *conn)
     .await?;
-
     if groups.is_empty() {
         if picks.is_empty() {
             return Ok((0, String::new()));
@@ -227,6 +226,11 @@ pub async fn create_order(
     if payload.items.is_empty() {
         return Err(AppError::BadRequest("Your basket is empty.".into()));
     }
+
+    // A chop list that reads from the catalogue is refreshed before pricing, so
+    // a chop the caterer switched off after the basket was filled is caught
+    // here rather than sold.
+    super::menu::sync_derived_groups(&state.pool).await?;
     if !matches!(payload.order_type.as_str(), "delivery" | "pickup") {
         return Err(AppError::BadRequest("Choose delivery or pickup.".into()));
     }

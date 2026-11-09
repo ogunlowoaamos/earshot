@@ -498,7 +498,12 @@ function MenuPanel({ token }: { token: string }) {
                   </div>
 
                   {openId === it.id && (
-                    <OptionsEditor item={it} token={token} onSaved={setData} />
+                    <OptionsEditor
+                      item={it}
+                      token={token}
+                      categories={categories}
+                      onSaved={setData}
+                    />
                   )}
 
                   {openIngId === it.id && (
@@ -549,16 +554,21 @@ function PriceInput({ value, onCommit }: { value: number; onCommit: (kobo: numbe
 function OptionsEditor({
   item,
   token,
+  categories,
   onSaved,
 }: {
   item: CatalogueItem
   token: string
+  categories: Category[]
   onSaved: (next: Catalogue) => void
 }) {
   const [groups, setGroups] = useState<OptionGroupIn[]>(() => toDraft(item))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+
+  const categoryName = (slug: string) =>
+    categories.find((c) => c.slug === slug)?.name ?? slug
 
   useEffect(() => {
     setGroups(toDraft(item))
@@ -590,6 +600,7 @@ function OptionsEditor({
         help: '',
         is_required: false,
         allows_quantity: false,
+        source_category_slug: '',
         options: [],
       },
     ])
@@ -673,49 +684,93 @@ function OptionsEditor({
               />
               Ask how many of each
             </label>
+            <select
+              className="cat-opt-source"
+              value={g.source_category_slug}
+              aria-label="Where the choices come from"
+              title="Fill this group from a category instead of typing the choices"
+              onChange={(e) => patchGroup(gi, { source_category_slug: e.target.value })}
+            >
+              <option value="">Type the choices here</option>
+              {categories.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  Use the {c.name} list
+                </option>
+              ))}
+            </select>
             <button className="admin-menu__del" onClick={() => removeGroup(gi)}>
               Remove group
             </button>
           </div>
 
-          {g.allows_quantity && (
+          {g.allows_quantity && !g.source_category_slug && (
             <p className="cat-opt-note">
               Customers will say how many of each choice they want. Put the price of one
               piece in the price box.
             </p>
           )}
 
-          {g.options.map((o, oi) => (
-            <div key={oi} className="cat-opt-row">
-              <input
-                type="text"
-                value={o.label}
-                aria-label="Choice label"
-                onChange={(e) => patchOption(gi, oi, { label: e.target.value })}
-              />
-              <PriceInput
-                value={o.price_delta_kobo}
-                onCommit={(k) => patchOption(gi, oi, { price_delta_kobo: k })}
-              />
-              <label className="cat-check cat-check--avail" title="Untick to hide this choice today">
-                <input
-                  type="checkbox"
-                  checked={o.is_available}
-                  onChange={(e) => patchOption(gi, oi, { is_available: e.target.checked })}
-                />
-                Available
-              </label>
-              <button className="admin-menu__del" onClick={() => removeOption(gi, oi)}>
-                Remove
-              </button>
-            </div>
-          ))}
+          {g.source_category_slug ? (
+            <>
+              <p className="cat-opt-note">
+                This list is the <strong>{categoryName(g.source_category_slug)}</strong>{' '}
+                category, so it always matches the catalogue. Add, rename, price or switch
+                off a dish there and it changes here too.
+              </p>
+              <ul className="cat-opt-derived">
+                {g.options.map((o, oi) => (
+                  <li key={oi}>
+                    <span>{o.label}</span>
+                    <span className="cat-opt-derived__cost">
+                      {o.price_delta_kobo === 0 ? 'No extra' : `+${naira(o.price_delta_kobo)}`}
+                    </span>
+                  </li>
+                ))}
+                {g.options.length === 0 && (
+                  <li className="cat-opt-derived__empty">
+                    Nothing in that category is switched on yet.
+                  </li>
+                )}
+              </ul>
+            </>
+          ) : (
+            <>
+              {g.options.map((o, oi) => (
+                <div key={oi} className="cat-opt-row">
+                  <input
+                    type="text"
+                    value={o.label}
+                    aria-label="Choice label"
+                    onChange={(e) => patchOption(gi, oi, { label: e.target.value })}
+                  />
+                  <PriceInput
+                    value={o.price_delta_kobo}
+                    onCommit={(k) => patchOption(gi, oi, { price_delta_kobo: k })}
+                  />
+                  <label
+                    className="cat-check cat-check--avail"
+                    title="Untick to hide this choice today"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={o.is_available}
+                      onChange={(e) => patchOption(gi, oi, { is_available: e.target.checked })}
+                    />
+                    Available
+                  </label>
+                  <button className="admin-menu__del" onClick={() => removeOption(gi, oi)}>
+                    Remove
+                  </button>
+                </div>
+              ))}
 
-          <div className="cat-opt-foot">
-            <button className="status-btn" onClick={() => addOption(gi)}>
-              + Add choice
-            </button>
-          </div>
+              <div className="cat-opt-foot">
+                <button className="status-btn" onClick={() => addOption(gi)}>
+                  + Add choice
+                </button>
+              </div>
+            </>
+          )}
         </div>
       ))}
 
@@ -807,8 +862,9 @@ function toDraft(item: CatalogueItem): OptionGroupIn[] {
     kind: g.kind,
     help: g.help,
     is_required: g.is_required,
-        allows_quantity: g.allows_quantity,
-        options: g.options.map((o) => ({
+    allows_quantity: g.allows_quantity,
+    source_category_slug: g.source_category_slug,
+    options: g.options.map((o) => ({
       label: o.label,
       price_delta_kobo: o.price_delta_kobo,
       is_default: o.is_default,

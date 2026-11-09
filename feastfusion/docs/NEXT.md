@@ -279,7 +279,7 @@ At 900px and below the card becomes a single column, the body gets
 A dish can carry **option groups** — "Portion" (pick one), "Add-ons" (pick
 many). A group can also be switched to **ask how many of each**, which turns
 each choice from a tick-box into a − / count / + stepper. That is what lets the
-Small Chops Platter offer "3 × Extra chicken, 2 × Samosa".
+Small Chops Platter offer "3 × Peppered Chicken, 2 × Samosa".
 
 **Backend.** `item_option_groups.allows_quantity` (migration
 `0008_chop_quantities.sql`). `item_options` already had `price_delta_kobo` and
@@ -320,26 +320,70 @@ breakdown line ("₦4,000 + ₦1,500 of choices") only when the choices cost ext
 **Catering page.** `Catering.tsx` keeps `dishPicks` per dish name. Only counting
 groups are shown there, below the dish dropdown in `.catering-picks`, because
 the catering flow is quote-based and never prices anything. The counts are
-folded into plain text — `Small Chops Platter (3 × Extra chicken)` — for the
+folded into plain text — `Small Chops Platter (3 × Peppered Chicken)` — for the
 chip, the review panel and the submitted `picked_dishes`, via
 `dishWithCounts()`. `closeOnBlank` ignores clicks inside `.catering-picks` so
 the dropdown does not close while the customer is counting.
 
+## Derived groups: the platter reads the caterer's own chop list
+
+The first version of the platter held a **second, hand-typed copy** of the chop
+names. It drifted from the catalogue immediately: the admin's Small Chops
+category had fifteen dishes, the platter offered six, and the user's verdict was
+"the admin logic is not correlating with the users pages". A copy of a list is
+always wrong eventually, so the copy is gone.
+
+**A group can now point at a category.** `item_option_groups.source_category_slug`
+(migration `0009_derived_choices.sql`). When it is set, the group's choices are
+**generated** from the switched-on dishes of that category instead of being
+typed. `item_options.source_item_id` records which dish a generated choice came
+from, and a partial unique index
+`idx_item_options_source ON item_options (group_id, source_item_id) WHERE source_item_id > 0`
+makes the sync an upsert.
+
+**`sync_derived_groups(pool)` in `routes/menu.rs`** does the work. It runs at
+the top of `with_options` (every menu read), `fetch_item` (every dish read),
+`save_options` (after the admin commits) and `create_order` (before pricing, so
+a chop switched off after the basket was filled is caught rather than sold).
+For each derived group it:
+
+- reads **every** dish in the category, switched-off ones included, so a paused
+  chop keeps its row and its id;
+- leaves out the dish that owns the group, so a platter never offers itself as
+  one of its own chops;
+- writes `price_delta_kobo = 0` — a chop is part of the platter, not an extra,
+  and a dish price is the price of a whole portion (the first sync copied dish
+  prices and put Dodo at +₦120,000);
+- upserts on `(group_id, source_item_id)` so a choice keeps its id and a basket
+  already holding it stays valid;
+- deletes only choices whose dish has **left** the category.
+
+**SQLite partial-index trap.** `ON CONFLICT (a, b) DO UPDATE` fails with "ON
+CONFLICT clause does not match any PRIMARY KEY or UNIQUE constraint" when the
+unique index is partial. The predicate has to be repeated:
+`ON CONFLICT (group_id, source_item_id) WHERE source_item_id > 0 DO UPDATE SET …`.
+
 **Admin page.** The Catalogue tab's `Options` editor has an "Ask how many of
-each" checkbox per group, with a `.cat-opt-note` explaining it, and an
-"Available" checkbox per choice. Unticking Available hides that chop from the
-customer picker. The `.cat-opt-row` grid is four columns.
+each" checkbox per group, an "Available" checkbox per choice, and a
+`.cat-opt-source` select per group: "Type the choices here" or "Use the
+<Category> list". A derived group renders a read-only `.cat-opt-derived` list
+with a note saying the list follows the catalogue, and `save_options` skips the
+option loop for it. `counted_from(name, help, required, category)` in
+`catalogue.rs` is the seed template; `CHOPS` uses
+`counted_from("Chops", "Say how many of each chop you want", true, "small-chops")`.
 
-**Verified live:** dish page, catering step 2 and the admin editor. A temporary
-₦500 price on "Extra chicken" made the dish page show ₦5,500 and the server
-store `unit_price_kobo: 550000` with `options: ["Regular", "3 × Extra chicken",
-"Extra fish"]`; the price was set back to ₦0 afterwards.
+**Verified live:** the platter lists the 14 other Small Chops dishes at ₦0 and
+not itself; switching Samosa off in the admin removes it from the platter and
+switching it back on restores the **same** option id; the dish page starts every
+chop at 0 and the button reads "Finish your choices" until one is counted; the
+basket line reads `Regular · 5 × Dodo (Fried Plantain) · 4 × Samosa · 3 ×
+Peppered Chicken`; the catering page folds the same counts into its chip; and
+`POST /api/orders` stored `options: ["Regular", "5 × Dodo (Fried Plantain)",
+"4 × Samosa", "3 × Peppered Chicken"]`.
 
-**Open questions for the user.** Every choice in the catalogue is priced at ₦0,
-so counts never change the total today — the caterer can type a price per piece
-in the admin if they want that. And the chop list is the caterer's own wording
-("Extra chicken", "Extra beef"…) rather than the real chops named in the dish
-description (puff-puff, samosa, spring rolls, peppered gizzard, chin chin).
+**Open questions for the user.** Every derived choice is ₦0, so counts never
+change the total — the caterer can type a price per piece in the admin if they
+want that. And there is no cap on the total number of chops in a platter.
 
 ## Not finished
 

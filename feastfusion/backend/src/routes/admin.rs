@@ -246,8 +246,9 @@ pub async fn save_options(
 
         let group_id: i64 = sqlx::query_scalar(
             "INSERT INTO item_option_groups
-                (menu_item_id, name, kind, help, is_required, allows_quantity, sort_order)
-             VALUES (?, ?, ?, ?, ?, ?, ?)
+                (menu_item_id, name, kind, help, is_required, allows_quantity,
+                 source_category_slug, sort_order)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
              RETURNING id",
         )
         .bind(id)
@@ -256,9 +257,16 @@ pub async fn save_options(
         .bind(group.help.trim())
         .bind(if group.is_required { 1 } else { 0 })
         .bind(if group.allows_quantity { 1 } else { 0 })
+        .bind(group.source_category_slug.trim())
         .bind(group_index as i64)
         .fetch_one(&mut *tx)
         .await?;
+
+        // A group filled from a category has no list of its own to save; the
+        // refresh below writes its choices from the catalogue.
+        if !group.source_category_slug.trim().is_empty() {
+            continue;
+        }
 
         for (option_index, option) in group.options.iter().enumerate() {
             let label = option.label.trim();
@@ -288,6 +296,10 @@ pub async fn save_options(
     }
 
     tx.commit().await?;
+
+    // A group that reads its choices from a category is filled in here, so the
+    // dashboard gets the real list back rather than an empty one.
+    menu::sync_derived_groups(&state.pool).await?;
 
     Ok(Json(menu::fetch_item(&state.pool, id).await?))
 }

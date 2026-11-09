@@ -40,6 +40,11 @@ export type OptionGroup = {
   is_required: boolean
   /** True when the group counts pieces, so each choice gets its own how-many stepper. */
   allows_quantity: boolean
+  /**
+   * Set when the choices are filled in from a category rather than typed by
+   * hand. The dashboard shows these as read-only.
+   */
+  source_category_slug: string
   sort_order: number
   options: DishOption[]
 }
@@ -79,6 +84,8 @@ export type OptionGroupIn = {
   help: string
   is_required: boolean
   allows_quantity: boolean
+  /** Fill this group from a category instead of the list below. */
+  source_category_slug: string
   options: OptionIn[]
 }
 
