@@ -226,25 +226,52 @@ export function ItemDetail() {
                           onFocus={(e) => showPeek(e.currentTarget, o.id)}
                           onBlur={() => setPeek(null)}
                         >
-                          {/* The card body adds one. Once something is in the
-                              basket a stepper appears underneath, so a second
-                              or third helping is one tap away. */}
-                          <button
-                            type="button"
-                            className="related__add"
-                            disabled={!o.is_available}
-                            onClick={() => add(o, 1)}
-                            aria-label={
-                              o.is_available
-                                ? `Add ${o.name} to basket, ${naira(o.price_kobo)}`
-                                : `${o.name} is sold out today`
-                            }
-                          >
-                            <span className="related__text">
+                          {/* Every card carries its own stepper, sitting on
+                              the same line as the price, so the count is
+                              always in the same place. The name is still a
+                              big tap target that adds one. */}
+                          <div className="related__body">
+                            <button
+                              type="button"
+                              className="related__add"
+                              disabled={!o.is_available}
+                              onClick={() => add(o, 1)}
+                              aria-label={
+                                o.is_available
+                                  ? `Add ${o.name} to basket, ${naira(o.price_kobo)}`
+                                  : `${o.name} is sold out today`
+                              }
+                            >
                               <strong>{o.name}</strong>
-                              <span>{naira(o.price_kobo)}</span>
-                            </span>
-                          </button>
+                            </button>
+
+                            <div className="related__foot">
+                              <span className="related__price">{naira(o.price_kobo)}</span>
+                              <div className="related__qty">
+                                <button
+                                  type="button"
+                                  onClick={() => setLineQty(o.id, picked - 1)}
+                                  disabled={picked === 0}
+                                  aria-label={`One less ${o.name}`}
+                                >
+                                  −
+                                </button>
+                                <span aria-live="polite">{picked}</span>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    picked === 0
+                                      ? add(o, 1)
+                                      : setLineQty(o.id, Math.min(20, picked + 1))
+                                  }
+                                  disabled={!o.is_available || picked >= 20}
+                                  aria-label={`One more ${o.name}`}
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          </div>
 
                           <Link
                             to={`/menu/${o.id}`}
@@ -262,26 +289,6 @@ export function ItemDetail() {
                               />
                             </svg>
                           </Link>
-
-                          {picked > 0 && (
-                            <div className="related__qty">
-                              <button
-                                type="button"
-                                onClick={() => setLineQty(o.id, picked - 1)}
-                                aria-label={`One less ${o.name}`}
-                              >
-                                −
-                              </button>
-                              <span aria-live="polite">{picked}</span>
-                              <button
-                                type="button"
-                                onClick={() => setLineQty(o.id, Math.min(20, picked + 1))}
-                                aria-label={`One more ${o.name}`}
-                              >
-                                +
-                              </button>
-                            </div>
-                          )}
 
                           {/* Hidden until hover on desktop, shown inline on touch
                               where there is no hover to reveal it. */}
