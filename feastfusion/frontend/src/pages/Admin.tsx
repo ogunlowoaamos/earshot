@@ -1101,7 +1101,10 @@ function CateringPanel({ token }: { token: string }) {
           <div className="admin-order__top">
             <div>
               <strong>{r.reference}</strong>
-              <span>{r.event_type} · {new Date(r.event_date).toLocaleDateString('en-NG')}</span>
+              <span>
+                {r.event_type} · {new Date(r.event_date).toLocaleDateString('en-NG')}
+                {r.event_time ? ` · ${r.event_time}` : ''}
+              </span>
             </div>
             <div className="admin-order__total">{r.guest_count} guests</div>
           </div>

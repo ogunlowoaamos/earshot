@@ -38,7 +38,7 @@ underneath it holding the real fields:
 
 | Step | Heading | Fields inside the card |
 | --- | --- | --- |
-| 1 | Tell us the job | job kind, then the dark "tell us the job" panel: service toggles (only for "Something else"), occasion, guests, date |
+| 1 | Tell us the job | job kind, then the dark "tell us the job" panel: service toggles (only for "Something else"), occasion, guests, date, time |
 | 2 | Pick the dishes | dish categories, suggestions, other dishes |
 | 3 | Say where and when | state, LGA, street |
 | 4 | Choose how we reach you | channel, handle, name, phone, email, details |
@@ -82,11 +82,17 @@ The backend only knows three job kinds (`event`, `cook_only`, `custom`), so
 these two answers are not sent as their own field. `onSubmit` writes them into
 `details` as `Service: … Food: …` above whatever the customer typed.
 
-**Occasion and guests are asked for every job kind.** They used to be hidden for
-"Cook only". Now all three kinds show occasion, guests and date, and the chosen
-occasion is sent as `event_type` (it used to be hard-coded to `cook_only`).
-`quote_cook_only` in `backend/src/pricing.rs` ignores `event_type`, so the
-deposit maths is unchanged.
+**Occasion, guests, date and time are asked for every job kind.** They used to
+be hidden for "Cook only". Now all three kinds show occasion, guests, date and
+time, and the chosen occasion is sent as `event_type` (it used to be hard-coded
+to `cook_only`). `quote_cook_only` in `backend/src/pricing.rs` ignores
+`event_type`, so the deposit maths is unchanged.
+
+**The time field.** `event_time` is a new column on `catering_requests`
+(migration `0006_catering_time.sql`, `TEXT NOT NULL DEFAULT ''`). It is
+required by the form and by `create_catering`, which rejects an empty value with
+"What time do you need us?". The summary shows it as "2:30 pm" via `formatTime`,
+and the admin request list appends it after the date.
 
 **Right column — the live summary.** Top to bottom:
 

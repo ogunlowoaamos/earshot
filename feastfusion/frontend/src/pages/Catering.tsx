@@ -110,6 +110,14 @@ function formatDate(value: string) {
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+/** "14:30" reads as "2:30 pm" so the summary matches how people speak. */
+function formatTime(value: string) {
+  const [hours, minutes] = value.split(':').map(Number)
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return value
+  const date = new Date(2000, 0, 1, hours, minutes)
+  return date.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true })
+}
+
 export function Catering() {
   const [jobKind, setJobKind] = useState<JobKind>('event')
   const [customService, setCustomService] = useState<CustomService | ''>('')
@@ -123,6 +131,7 @@ export function Catering() {
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [eventDate, setEventDate] = useState('')
+  const [eventTime, setEventTime] = useState('')
   const [stateName, setStateName] = useState('FCT Abuja')
   const [lga, setLga] = useState('')
   const [street, setStreet] = useState('')
@@ -252,6 +261,7 @@ export function Catering() {
         phone,
         email,
         event_date: eventDate,
+        event_time: eventTime,
         guest_count: Number(guestCount) || 0,
         event_type: eventType,
         location: `${street}, ${lga}, ${stateName}`,
@@ -496,6 +506,18 @@ export function Catering() {
                         onChange={(e) => setEventDate(e.target.value)}
                         required
                       />
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="event_time">What time?</label>
+                      <input
+                        id="event_time"
+                        type="time"
+                        value={eventTime}
+                        onChange={(e) => setEventTime(e.target.value)}
+                        required
+                      />
+                      <span className="field__hint">The time the food should be ready.</span>
                     </div>
                   </div>
                 </div>
@@ -782,6 +804,10 @@ export function Catering() {
               <div>
                 <dt>Date</dt>
                 <dd>{eventDate ? formatDate(eventDate) : 'Not given yet'}</dd>
+              </div>
+              <div>
+                <dt>Time</dt>
+                <dd>{eventTime ? formatTime(eventTime) : 'Not given yet'}</dd>
               </div>
               <div>
                 <dt>Dishes</dt>

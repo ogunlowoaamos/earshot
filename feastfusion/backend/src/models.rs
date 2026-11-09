@@ -206,6 +206,7 @@ pub struct CateringRequest {
     #[serde(rename = "email")]
     pub email: String,
     pub event_date: String,
+    pub event_time: String,
     pub guest_count: i64,
     pub event_type: String,
     pub location: String,
@@ -346,6 +347,8 @@ pub struct NewCatering {
     #[serde(default)]
     pub email: String,
     pub event_date: String,
+    #[serde(default)]
+    pub event_time: String,
     pub guest_count: i64,
     pub event_type: String,
     pub location: String,

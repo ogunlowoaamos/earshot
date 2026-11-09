@@ -10,7 +10,7 @@ use crate::{
 
 const CATERING_COLUMNS: &str = "
     id, reference, customer_name, customer_phone, customer_email, event_date,
-    guest_count, event_type, location, budget_kobo, details, deposit_kobo,
+    event_time, guest_count, event_type, location, budget_kobo, details, deposit_kobo,
     deposit_status, proof_url, status, created_at, state, lga, street_address,
     dishes, other_dishes, contact_channel, contact_handle, job_kind, deposit_reason
 ";
@@ -39,6 +39,7 @@ pub async fn create_catering(
     let location = payload.location.trim();
     let event_type = payload.event_type.trim();
     let event_date = payload.event_date.trim();
+    let event_time = payload.event_time.trim();
     let job_kind = payload.job_kind.trim();
     let state_name = payload.state.trim();
     let lga = payload.lga.trim();
@@ -64,6 +65,9 @@ pub async fn create_catering(
     }
     if event_date.is_empty() {
         return Err(AppError::BadRequest("When do you need us?".into()));
+    }
+    if event_time.is_empty() {
+        return Err(AppError::BadRequest("What time do you need us?".into()));
     }
     if job_kind == "event" && payload.guest_count <= 0 {
         return Err(AppError::BadRequest(
@@ -121,10 +125,10 @@ pub async fn create_catering(
     let inserted = sqlx::query(
         "INSERT INTO catering_requests
             (reference, customer_name, customer_phone, customer_email, event_type,
-             event_date, guest_count, location, budget_kobo, details, deposit_kobo,
+             event_date, event_time, guest_count, location, budget_kobo, details, deposit_kobo,
              deposit_status, status, state, lga, street_address, dishes,
              other_dishes, contact_channel, contact_handle, job_kind, deposit_reason)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&reference)
     .bind(name)
@@ -132,6 +136,7 @@ pub async fn create_catering(
     .bind(&email)
     .bind(event_type)
     .bind(event_date)
+    .bind(event_time)
     .bind(payload.guest_count)
     .bind(location)
     .bind(payload.budget_kobo)

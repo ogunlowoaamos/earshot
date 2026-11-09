@@ -120,6 +120,7 @@ export type CateringRequest = {
   phone: string
   email: string
   event_date: string
+  event_time: string
   guest_count: number
   event_type: string
   location: string
