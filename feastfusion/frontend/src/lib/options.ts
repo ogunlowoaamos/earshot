@@ -16,7 +16,7 @@ export function picksKey(itemId: number, picks: OptionPick[]): string {
   const parts = [...picks]
     .filter((p) => p.qty > 0)
     .sort((a, b) => a.option_id - b.option_id)
-    .map((p) => `${p.option_id}x${p.qty}`)
+    .map((p) => `${p.option_id}x${p.qty}${p.text ? `~${p.text}` : ''}`)
   return `${itemId}|${parts.join(',')}`
 }
 
@@ -34,21 +34,31 @@ export function setPickQty(
   optionId: number,
   qty: number,
 ): OptionPick[] {
+  // Keep any words already typed for this choice, so tapping the chip again
+  // does not wipe what the customer wrote.
+  const kept = picks.find((p) => p.option_id === optionId)?.text
   const next = drop(picks, optionId)
   const wanted = Math.max(0, Math.min(99, qty))
+  const withText = (pick: OptionPick): OptionPick => (kept ? { ...pick, text: kept } : pick)
 
   if (wanted === 0) {
     return next
   }
   if (group.kind === 'single' && !group.allows_quantity) {
     const others = group.options.map((o) => o.id)
-    return [...next.filter((p) => !others.includes(p.option_id)), { option_id: optionId, qty: 1 }]
+    return [
+      ...next.filter((p) => !others.includes(p.option_id)),
+      withText({ option_id: optionId, qty: 1 }),
+    ]
   }
   if (group.kind === 'single') {
     const others = group.options.map((o) => o.id)
-    return [...next.filter((p) => !others.includes(p.option_id)), { option_id: optionId, qty: wanted }]
+    return [
+      ...next.filter((p) => !others.includes(p.option_id)),
+      withText({ option_id: optionId, qty: wanted }),
+    ]
   }
-  return [...next, { option_id: optionId, qty: wanted }]
+  return [...next, withText({ option_id: optionId, qty: wanted })]
 }
 
 /** Adds or removes one choice, for the tick-style groups. */
@@ -82,12 +92,30 @@ export function pickLabels(item: MenuItem, picks: OptionPick[]): string[] {
     .map((p) => {
       const found = findOption(item, p.option_id)
       if (!found) return null
-      return p.qty > 1 ? `${p.qty} × ${found.option.label}` : found.option.label
+      const base = p.qty > 1 ? `${p.qty} × ${found.option.label}` : found.option.label
+      // The customer's own words, when the group asked for them.
+      return p.text ? `${base} (${p.text})` : base
     })
     .filter((label): label is string => label !== null)
 }
 
-/** The name of a group the customer still has to answer, or null when done. */
+/** Sets the words the customer typed for one choice. */
+export function setPickText(picks: OptionPick[], optionId: number, text: string): OptionPick[] {
+  return picks.map((p) => (p.option_id === optionId ? { ...p, text } : p))
+}
+
+/** The words the customer typed for one choice, or an empty string. */
+export function pickText(picks: OptionPick[], optionId: number): string {
+  return picks.find((p) => p.option_id === optionId)?.text ?? ''
+}
+
+/**
+ * The name of a group the customer still has to answer, or null when done.
+ *
+ * A group that lets the customer type their own answer is only answered when
+ * they have said something, unless they took the first choice — that is the
+ * house standard, so there is nothing to explain.
+ */
 export function missingRequiredGroup(item: MenuItem, picks: OptionPick[]): string | null {
   for (const group of item.option_groups ?? []) {
     if (!group.is_required) continue
@@ -95,8 +123,18 @@ export function missingRequiredGroup(item: MenuItem, picks: OptionPick[]): strin
       (o) => o.is_available && pickedQty(picks, o.id) > 0,
     )
     if (!answered) return group.name
+    if (group.free_text && needsWords(group, picks)) return group.name
   }
   return null
+}
+
+/** True when the customer picked something other than the house standard. */
+function needsWords(group: OptionGroup, picks: OptionPick[]): boolean {
+  const first = group.options.find((o) => o.is_available)
+  if (!first) return false
+  const picked = picks.find((p) => p.qty > 0 && group.options.some((o) => o.id === p.option_id))
+  if (!picked || picked.option_id === first.id) return false
+  return !picked.text?.trim()
 }
 
 /**

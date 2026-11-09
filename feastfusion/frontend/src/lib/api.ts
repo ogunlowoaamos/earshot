@@ -45,6 +45,11 @@ export type OptionGroup = {
    * hand. The dashboard shows these as read-only.
    */
   source_category_slug: string
+  /**
+   * True when the group also asks the customer to type their own answer, for
+   * example "Custom" on a portion. The words ride along with the pick.
+   */
+  free_text: boolean
   sort_order: number
   options: DishOption[]
 }
@@ -53,6 +58,8 @@ export type OptionGroup = {
 export type OptionPick = {
   option_id: number
   qty: number
+  /** The customer's own words, when the group asked them to type an answer. */
+  text?: string
 }
 
 export type CatalogueItem = MenuItem & {
@@ -86,6 +93,8 @@ export type OptionGroupIn = {
   allows_quantity: boolean
   /** Fill this group from a category instead of the list below. */
   source_category_slug: string
+  /** Let the customer type their own answer as well as picking a choice. */
+  free_text: boolean
   options: OptionIn[]
 }
 

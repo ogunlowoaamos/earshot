@@ -601,6 +601,7 @@ function OptionsEditor({
         is_required: false,
         allows_quantity: false,
         source_category_slug: '',
+        free_text: false,
         options: [],
       },
     ])
@@ -684,6 +685,17 @@ function OptionsEditor({
               />
               Ask how many of each
             </label>
+            <label
+              className="cat-check"
+              title="Adds a box so the customer can say what they want in their own words"
+            >
+              <input
+                type="checkbox"
+                checked={g.free_text}
+                onChange={(e) => patchGroup(gi, { free_text: e.target.checked })}
+              />
+              Let them type it
+            </label>
             <select
               className="cat-opt-source"
               value={g.source_category_slug}
@@ -707,6 +719,14 @@ function OptionsEditor({
             <p className="cat-opt-note">
               Customers will say how many of each choice they want. Put the price of one
               piece in the price box.
+            </p>
+          )}
+
+          {g.free_text && (
+            <p className="cat-opt-note">
+              A box appears under the choices so the customer can say what they want in
+              their own words, for example a custom portion. Their words show on the
+              order and on the kitchen receipt.
             </p>
           )}
 
@@ -864,6 +884,7 @@ function toDraft(item: CatalogueItem): OptionGroupIn[] {
     is_required: g.is_required,
     allows_quantity: g.allows_quantity,
     source_category_slug: g.source_category_slug,
+    free_text: g.free_text,
     options: g.options.map((o) => ({
       label: o.label,
       price_delta_kobo: o.price_delta_kobo,

@@ -190,6 +190,9 @@ pub struct GroupSpec {
     /// than the list below. The caterer keeps one chop list, in the catalogue,
     /// and every dish that offers chops reads it.
     pub source_category: &'static str,
+    /// True when the group also asks the customer to type their own answer, for
+    /// example "Custom" on a portion.
+    pub free_text: bool,
     pub options: &'static [&'static str],
 }
 
@@ -206,6 +209,7 @@ const fn one(
         required,
         allows_quantity: false,
         source_category: "",
+        free_text: false,
         options,
     }
 }
@@ -222,6 +226,7 @@ const fn many(
         required: false,
         allows_quantity: false,
         source_category: "",
+        free_text: false,
         options,
     }
 }
@@ -242,7 +247,24 @@ const fn counted_from(
         required,
         allows_quantity: true,
         source_category: category,
+        free_text: false,
         options: &[],
+    }
+}
+
+/// A portion that is either the house standard or whatever the customer asks
+/// for. "Custom" opens a box so they can say the size and the amount in their
+/// own words, which is the only way a portion can fit every dish.
+const fn portion_custom(help: &'static str) -> GroupSpec {
+    GroupSpec {
+        name: "Portion",
+        kind: "single",
+        help,
+        required: true,
+        allows_quantity: false,
+        source_category: "",
+        free_text: true,
+        options: &["Standard", "Custom"],
     }
 }
 
@@ -344,12 +366,7 @@ const SWALLOW: &[GroupSpec] = &[
     ),
 ];
 
-const TUB: &[GroupSpec] = &[one(
-    "Portion",
-    "How much goes in the tub",
-    true,
-    &["Small tub", "Medium tub", "Large tub"],
-)];
+const TUB: &[GroupSpec] = &[portion_custom("The house tub, or tell us the size you want")];
 
 const PASTRY: &[GroupSpec] = &[
     one(
@@ -396,12 +413,7 @@ const COUNTED: &[GroupSpec] = &[
 ];
 
 const GRILL: &[GroupSpec] = &[
-    one(
-        "Portion",
-        "How much of it you want",
-        true,
-        &["Quarter", "Half", "Full"],
-    ),
+    portion_custom("The house cut, or tell us how much you want"),
     one(
         "Pieces",
         "Number of pieces in the pack",
@@ -819,20 +831,13 @@ const NOODLE_BOWL: &[GroupSpec] = &[
 /// A platter is a pile of separate chops, not one portion, so the customer
 /// builds it: how many puff-puff, how many samosa, and so on. The chop list is
 /// the caterer's own Small Chops category, so adding a chop there is enough.
-const CHOPS: &[GroupSpec] = &[
-    one(
-        "Portion",
-        "How much goes in the pack",
-        true,
-        &["Regular", "Large", "Family tray"],
-    ),
-    counted_from(
-        "Chops",
-        "Say how many of each chop you want",
-        true,
-        "small-chops",
-    ),
-];
+/// There is no Portion group: the chop counts already say how big it is.
+const CHOPS: &[GroupSpec] = &[counted_from(
+    "Chops",
+    "Say how many of each chop you want",
+    true,
+    "small-chops",
+)];
 
 /// Which template of choices a dish gets.
 #[derive(Clone, Copy)]
@@ -3033,8 +3038,8 @@ pub async fn seed_catalogue(pool: &SqlitePool) -> Result<(), sqlx::Error> {
                 let group_id: i64 = sqlx::query_scalar(
                     "INSERT INTO item_option_groups
                         (menu_item_id, name, kind, help, is_required, allows_quantity,
-                         source_category_slug, sort_order)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                         source_category_slug, free_text, sort_order)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                      RETURNING id",
                 )
                 .bind(item_id)
@@ -3044,6 +3049,7 @@ pub async fn seed_catalogue(pool: &SqlitePool) -> Result<(), sqlx::Error> {
                 .bind(if group.required { 1 } else { 0 })
                 .bind(if group.allows_quantity { 1 } else { 0 })
                 .bind(group.source_category)
+                .bind(if group.free_text { 1 } else { 0 })
                 .bind(group_index as i64)
                 .fetch_one(&mut *tx)
                 .await?;

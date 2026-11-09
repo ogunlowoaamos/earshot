@@ -247,8 +247,8 @@ pub async fn save_options(
         let group_id: i64 = sqlx::query_scalar(
             "INSERT INTO item_option_groups
                 (menu_item_id, name, kind, help, is_required, allows_quantity,
-                 source_category_slug, sort_order)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 source_category_slug, free_text, sort_order)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
              RETURNING id",
         )
         .bind(id)
@@ -258,6 +258,7 @@ pub async fn save_options(
         .bind(if group.is_required { 1 } else { 0 })
         .bind(if group.allows_quantity { 1 } else { 0 })
         .bind(group.source_category_slug.trim())
+        .bind(if group.free_text { 1 } else { 0 })
         .bind(group_index as i64)
         .fetch_one(&mut *tx)
         .await?;

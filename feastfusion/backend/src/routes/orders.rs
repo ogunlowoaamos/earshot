@@ -37,8 +37,14 @@ pub(crate) fn split_options(text: &str) -> Vec<String> {
 }
 
 /// One choice with how many of it were asked for. Groups that count pieces can
-/// hold more than one; everything else stays at one.
-type Pick = (i64, i64);
+/// hold more than one; everything else stays at one. `text` holds the customer's
+/// own words when the group asked them to type an answer.
+#[derive(Debug, Clone)]
+pub(crate) struct Pick {
+    pub option_id: i64,
+    pub qty: i64,
+    pub text: String,
+}
 
 /// The order form sends ids for a plain choice and `{option_id, qty}` when the
 /// group counts pieces. Both are folded into one list here so the rest of the
@@ -47,19 +53,33 @@ pub(crate) fn merge_picks(ids: &[i64], counted: &[PickedOptionIn]) -> Vec<Pick> 
     let mut merged: Vec<Pick> = Vec::new();
 
     for id in ids {
-        if !merged.iter().any(|(existing, _)| existing == id) {
-            merged.push((*id, 1));
+        if !merged.iter().any(|pick| pick.option_id == *id) {
+            merged.push(Pick {
+                option_id: *id,
+                qty: 1,
+                text: String::new(),
+            });
         }
     }
 
     for pick in counted {
         let qty = pick.qty.max(1);
+        let text = pick.text.trim().to_string();
         match merged
             .iter_mut()
-            .find(|(existing, _)| *existing == pick.option_id)
+            .find(|existing| existing.option_id == pick.option_id)
         {
-            Some(slot) => slot.1 = slot.1.max(qty),
-            None => merged.push((pick.option_id, qty)),
+            Some(slot) => {
+                slot.qty = slot.qty.max(qty);
+                if !text.is_empty() {
+                    slot.text = text;
+                }
+            }
+            None => merged.push(Pick {
+                option_id: pick.option_id,
+                qty,
+                text,
+            }),
         }
     }
 
@@ -74,8 +94,9 @@ async fn price_options(
     item_name: &str,
     picks: &[Pick],
 ) -> AppResult<(i64, String)> {
-    let groups = sqlx::query_as::<_, (i64, String, String, bool, bool)>(
-        "SELECT id, name, kind, is_required, allows_quantity FROM item_option_groups
+    let groups = sqlx::query_as::<_, (i64, String, String, bool, bool, bool)>(
+        "SELECT id, name, kind, is_required, allows_quantity, free_text
+         FROM item_option_groups
          WHERE menu_item_id = ? ORDER BY sort_order, id",
     )
     .bind(item_id)
@@ -94,7 +115,7 @@ async fn price_options(
     let mut labels: Vec<String> = Vec::new();
     let mut used: Vec<i64> = Vec::new();
 
-    for (group_id, group_name, kind, is_required, allows_quantity) in &groups {
+    for (group_id, group_name, kind, is_required, allows_quantity, free_text) in &groups {
         let options = sqlx::query_as::<_, (i64, String, i64, bool)>(
             "SELECT id, label, price_delta_kobo, is_available FROM item_options
              WHERE group_id = ? ORDER BY sort_order, id",
@@ -105,7 +126,7 @@ async fn price_options(
 
         let mut in_group = 0;
         for (option_id, label, price_delta_kobo, is_available) in options {
-            let Some(&(_, asked)) = picks.iter().find(|(id, _)| *id == option_id) else {
+            let Some(pick) = picks.iter().find(|pick| pick.option_id == option_id) else {
                 continue;
             };
             if !is_available {
@@ -114,15 +135,26 @@ async fn price_options(
                 )));
             }
             // A count only means something in a group that counts pieces.
-            let qty = if *allows_quantity { asked.clamp(1, 99) } else { 1 };
+            let qty = if *allows_quantity {
+                pick.qty.clamp(1, 99)
+            } else {
+                1
+            };
             in_group += 1;
             used.push(option_id);
             extra_kobo += price_delta_kobo * qty;
-            labels.push(if qty > 1 {
+
+            // The customer's own words go on the receipt next to the choice, so
+            // the kitchen reads "Custom (a big bowl for four)".
+            let mut shown = if qty > 1 {
                 format!("{qty} × {label}")
             } else {
                 label
-            });
+            };
+            if *free_text && !pick.text.is_empty() {
+                shown = format!("{shown} ({})", pick.text);
+            }
+            labels.push(shown);
         }
 
         if kind.as_str() == "single" && in_group > 1 {

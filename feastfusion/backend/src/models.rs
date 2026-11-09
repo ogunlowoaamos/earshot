@@ -86,6 +86,9 @@ pub struct OptionGroup {
     /// Set when the choices are filled in from a category rather than typed by
     /// hand. The dashboard shows these as read-only.
     pub source_category_slug: String,
+    /// True when the group also asks the customer to type their own answer, for
+    /// example "Custom" on a portion. The words ride along with the pick.
+    pub free_text: bool,
     pub options: Vec<DishOption>,
 }
 
@@ -332,6 +335,9 @@ pub struct PickedOptionIn {
     pub option_id: i64,
     #[serde(default)]
     pub qty: i64,
+    /// The customer's own words, when the group asked them to type an answer.
+    #[serde(default)]
+    pub text: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -463,6 +469,9 @@ pub struct OptionGroupIn {
     /// sends the slug back unchanged for a group it did not edit.
     #[serde(default)]
     pub source_category_slug: String,
+    /// Let the customer type their own answer as well as picking a choice.
+    #[serde(default)]
+    pub free_text: bool,
     #[serde(default)]
     pub options: Vec<OptionIn>,
 }

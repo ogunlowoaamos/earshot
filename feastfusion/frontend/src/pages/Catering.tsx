@@ -15,11 +15,12 @@ import { STATES, areasFor } from '../lib/states'
 import './Catering.css'
 
 /**
- * Groups where the customer says how many of each they want, e.g. the chops in
- * a small chops platter. Everything else on a dish is left to the kitchen here.
+ * Groups the customer has to answer here: the ones that count pieces (the chops
+ * in a platter) and the ones that let them type their own size. Everything else
+ * on a dish is left to the kitchen, because a caterer is cooking to a headcount.
  */
 function countingGroups(item: MenuItem) {
-  return (item.option_groups ?? []).filter((g) => g.allows_quantity)
+  return (item.option_groups ?? []).filter((g) => g.allows_quantity || g.free_text)
 }
 
 /** The three kinds of job a caterer takes. The deposit maths differs for each. */
@@ -416,7 +417,7 @@ export function Catering() {
     })
   }, [approvedSlugs, menuItems])
 
-  /** Dishes that were picked and that ask how many of each. */
+  /** Dishes that were picked and that ask the customer for a size or a count. */
   const countingDishes = useMemo(
     () => menuItems.filter((m) => pickedDishes.includes(m.name) && countingGroups(m).length > 0),
     [menuItems, pickedDishes],
@@ -993,7 +994,7 @@ export function Catering() {
                   {countingDishes.length > 0 && (
                     <div className="catering-picks">
                       <span className="catering-picks__label">
-                        How many of each?
+                        How many, and how much?
                       </span>
                       {countingDishes.map((dish) => (
                         <div className="catering-picks__dish" key={dish.id}>

@@ -48,6 +48,41 @@
   color: var(--ink-500);
 }
 
+/* The box a "type it yourself" group opens, e.g. a custom portion. */
+.opts__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+}
+
+.opts__text-label {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ink-500);
+}
+
+.opts__text-input {
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink-900);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.opts__text-input::placeholder {
+  color: var(--ink-400);
+}
+
+.opts__text-input:focus-visible {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 1px;
+  border-color: var(--gold-500);
+}
+
 .opts__list {
   display: flex;
   flex-wrap: wrap;
@@ -260,6 +295,20 @@
 .opts--dark .opt-row.is-on .opt-row__cost,
 .opts--dark .opt-chip.is-on .opt-chip__cost {
   color: var(--gold-300);
+}
+
+.opts--dark .opts__text-label {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.opts--dark .opts__text-input {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-inverse);
+}
+
+.opts--dark .opts__text-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 @media (max-width: 560px) {

@@ -102,13 +102,14 @@ pub(crate) async fn options_by_item(
 
     let group_sql = format!(
         "SELECT id, menu_item_id, name, kind, help, is_required, allows_quantity,
-                source_category_slug
+                source_category_slug, free_text
          FROM item_option_groups
          WHERE menu_item_id IN ({marks})
          ORDER BY sort_order, id"
     );
-    let mut query =
-        sqlx::query_as::<_, (i64, i64, String, String, String, bool, bool, String)>(&group_sql);
+    let mut query = sqlx::query_as::<_, (i64, i64, String, String, String, bool, bool, String, bool)>(
+        &group_sql,
+    );
     for id in item_ids {
         query = query.bind(id);
     }
@@ -144,8 +145,17 @@ pub(crate) async fn options_by_item(
         });
     }
 
-    for (id, menu_item_id, name, kind, help, is_required, allows_quantity, source_category_slug) in
-        group_rows
+    for (
+        id,
+        menu_item_id,
+        name,
+        kind,
+        help,
+        is_required,
+        allows_quantity,
+        source_category_slug,
+        free_text,
+    ) in group_rows
     {
         grouped.entry(menu_item_id).or_default().push(OptionGroup {
             id,
@@ -155,6 +165,7 @@ pub(crate) async fn options_by_item(
             is_required,
             allows_quantity,
             source_category_slug,
+            free_text,
             options: by_group.remove(&id).unwrap_or_default(),
         });
     }

@@ -34,6 +34,10 @@ A short note so a fresh chat can pick up with no history.
 15. **Dishes can ask "how many of each".** A dish like the Small Chops Platter can
     ask the customer to pick individual chops and say how many of each. Works on
     the dish page, the catering page and the admin page. See the note below.
+16. **Portion is the caterer's switch, not the code's.** A group can be marked
+    "Let them type it", and the customer then gets a box to say the size in their
+    own words. 51 dishes are Standard/Custom, 107 keep three tiers, and the
+    platter has no Portion at all. See the note below.
 
 ## The catering page, as it stands
 
@@ -307,9 +311,11 @@ handler.
 
 **All the arithmetic lives in `lib/options.ts`:** `pickedQty`, `picksKey`,
 `setPickQty`, `togglePick`, `findOption`, `picksExtraKobo`, `pickLabels`,
-`missingRequiredGroup`, `defaultPicks`. A basket line's identity is
-`picksKey(item.id, picks)` — `"15|3514x1,3517x3"`, sorted by option id — so the
-same dish with different chops is a different basket line.
+`missingRequiredGroup`, `defaultPicks`, plus `pickText` / `setPickText` for the
+"let them type it" box. A basket line's identity is
+`picksKey(item.id, picks)` — `"15|3514x1,3517x3"`, sorted by option id, with
+`~{text}` appended when the customer typed something — so the same dish with
+different chops, or with a different custom size, is a different basket line.
 
 **Dish page.** `ItemDetail.tsx` seeds `defaultPicks` on load so a required group
 starts answered, renders `<OptionPicker>` in `.detail__options`, and disables
@@ -317,13 +323,17 @@ Add / Buy-now with the label "Choose a Portion" while `stillToAnswer`. The total
 becomes `unit × qty` plus `picksExtraKobo`, with a `.detail__total-note`
 breakdown line ("₦4,000 + ₦1,500 of choices") only when the choices cost extra.
 
-**Catering page.** `Catering.tsx` keeps `dishPicks` per dish name. Only counting
-groups are shown there, below the dish dropdown in `.catering-picks`, because
-the catering flow is quote-based and never prices anything. The counts are
-folded into plain text — `Small Chops Platter (3 × Peppered Chicken)` — for the
-chip, the review panel and the submitted `picked_dishes`, via
-`dishWithCounts()`. `closeOnBlank` ignores clicks inside `.catering-picks` so
-the dropdown does not close while the customer is counting.
+**Catering page.** `Catering.tsx` keeps `dishPicks` per dish name. Only the
+groups the customer has to answer are shown there, below the dish dropdown in
+`.catering-picks`, because the catering flow is quote-based and never prices
+anything. That means counting groups **and** "let them type it" groups — a
+caterer cooking for 50 people still needs to know the size. The label reads
+"How many, and how much?". The answers are folded into plain text —
+`Small Chops Platter (3 × Peppered Chicken)`, or
+`Peppered Goat Meat (Custom (enough for 40 guests))` — for the chip, the review
+panel and the submitted `picked_dishes`, via `dishWithCounts()`.
+`closeOnBlank` ignores clicks inside `.catering-picks` so the dropdown does not
+close while the customer is counting or typing.
 
 ## Derived groups: the platter reads the caterer's own chop list
 
@@ -385,6 +395,68 @@ Peppered Chicken`; the catering page folds the same counts into its chip; and
 change the total — the caterer can type a price per piece in the admin if they
 want that. And there is no cap on the total number of chops in a platter.
 
+## Portion, and the "Let them type it" switch
+
+The user's ask was that Portion should not be the same everywhere: pizza and
+some meals want three sizes, some want just Standard and Custom, and some want
+no portion at all. The first instinct was to hardcode which dish gets which.
+The user's better idea was to make it **the caterer's switch**, so nothing about
+portion is baked into the code.
+
+**`item_option_groups.free_text`** (migration `0010_option_free_text.sql`,
+`INTEGER NOT NULL DEFAULT 0`) is that switch. It is one flag per group, and it
+means "this group's choices are not enough on their own — let the customer say
+the rest in their own words".
+
+**What the customer sees.** `OptionPicker.tsx` renders a `FreeTextBox` under the
+choices of any `free_text` group. It only appears once the customer picks
+something **other than the first choice**, because the first choice is the house
+standard and needs no explaining. The label reads "Tell us the custom size and
+how much you want" and the box takes up to 120 characters.
+
+**The words are required.** `missingRequiredGroup` in `lib/options.ts` treats a
+`free_text` group as unanswered while a non-first choice is picked and the box
+is empty, so the button reads "Finish your choices" and the page says "Still to
+choose: Portion." A quick-add is unaffected: it takes the first choice, which
+needs no words.
+
+**The words travel with the pick.** `OptionPick.text` is carried through the
+basket, and `picksKey` includes it, so two different custom amounts are two
+basket lines rather than one merged line. `pickLabels` renders
+`Custom (a big bowl that feeds four)`. On the server, `PickedOptionIn.text` is
+merged by `merge_picks` and `price_options` appends it to the receipt label, so
+the kitchen sees the customer's own words. Picks are still stored as the single
+`options_text` string on `order_items` — there is no `order_item_options` table.
+
+**The admin switch.** The Catalogue tab's `Options` editor has a "Let them type
+it" checkbox in each group's head row, with a `.cat-opt-note` explaining it when
+on. `addGroup` and `toDraft` carry the flag, and `save_options` writes it.
+
+**The live data was reshaped once.** Choice seeding only runs on a dish with no
+option groups, so the 159 existing Portion groups had to be fixed through the
+admin API. A one-off script kept three choices where the labels were a real
+three-tier portion (107 dishes: `Regular / Large / Family tray`,
+`Small bowl / Large bowl / Family pot`, `Quarter / Half / Full`,
+`Stack of 3 / Stack of 5 / Party tray`), converted the tub-style ones to
+`Standard / Custom` with `free_text` on (51 dishes), and removed Portion from
+the Small Chops Platter entirely (1 dish, because its chop counts already say
+the size). The script is gone; the data is what matters.
+
+**Verified live:** `/menu/13` hides the box on Standard, shows it on Custom,
+blocks the add until words are typed, and stores
+`{"option_id":4823,"qty":1,"text":"a big bowl that feeds four"}`; two different
+custom amounts make two basket lines; the catering page shows the same box on
+its dark card and its summary reads
+`Peppered Goat Meat (Custom (enough for 40 guests))`; the admin editor shows the
+checkbox ticked for those 51 dishes and the note appears and disappears with it;
+and a real order `FF-36F04B` came back from `/api/admin/orders` as
+`Custom (a big bowl that feeds four)`.
+
+**Open questions for the user.** The 107 three-choice dishes still use
+category-specific wording (bowl/pot for soups, stack/party tray for pancakes).
+Should those become uniform? And a Custom portion is priced at ₦0 like Standard
+— should a custom size cost more?
+
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.
@@ -426,3 +498,11 @@ their own pricing rules in the Rust backend, instead of being folded into
 - Because of that, a `getComputedStyle` read taken right after a class change can still return the **old** value — the transition is technically running. If a style change looks like it did not apply, inject `*{transition:none!important}` and read again before touching the CSS.
 - `eval-page.js` needs `$env:CDP_PORT='9335'`.
 - Push to `mine`, never `origin` (origin is read only).
+- **Choice seeding only runs on a dish with zero option groups** (`group_count == 0` in `seed_catalogue`). A new template in `catalogue.rs` therefore only reaches a fresh database; an existing dish has to be fixed through the admin API. That is why the Portion reshape needed a one-off script.
+- **Option ids change on every admin save** for hand-typed groups, because `PUT /api/admin/menu/:id/options` deletes and re-inserts them. Derived groups are the exception. Never reuse an id across saves — re-read `/api/menu` first.
+- **`/api/menu/:id` does not exist** (404). Read the dish from `/api/menu` and filter by id.
+- **`/api/menu` only returns the switched-on categories**, so a dish missing from it is hidden, not deleted. Use `/api/admin/catalogue` to see all 289.
+- **`POST /api/orders` requires `payment_method`** and `delivery_state` (not `state`). Active delivery zones are FCT Abuja, Nasarawa and Niger only.
+- **There is no `order_item_options` table.** Picks are one `options_text` string on `order_items`, joined with `" | "`. That is why a typed size is appended to the label rather than stored in its own column.
+- **`Stop-Process` is blocked inside a `ForEach-Object` pipeline.** Use a `foreach` loop or a standalone call. The running exe locks `target\debug\feastfusion-api.exe`, so it must be stopped before `cargo build`.
+- **The backend takes longer than 40s to boot.** Poll `/api/menu` with retries; there is no `/api/health`.

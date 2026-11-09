@@ -1,6 +1,6 @@
 import type { OptionGroup, OptionPick } from '../lib/api'
 import { naira } from '../lib/api'
-import { pickedQty, setPickQty, togglePick } from '../lib/options'
+import { pickText, pickedQty, setPickQty, setPickText, togglePick } from '../lib/options'
 import './OptionPicker.css'
 
 /**
@@ -124,9 +124,55 @@ export function OptionPicker({
                 )
               })}
             </ul>
+
+            {group.free_text && <FreeTextBox group={group} picks={picks} onChange={onChange} />}
           </section>
         )
       })}
+    </div>
+  )
+}
+
+/**
+ * The box a "type it yourself" group opens. It only appears once the customer
+ * has picked something other than the first choice, because the first choice is
+ * the house standard and needs no explaining.
+ */
+function FreeTextBox({
+  group,
+  picks,
+  onChange,
+}: {
+  group: OptionGroup
+  picks: OptionPick[]
+  onChange: (update: (prev: OptionPick[]) => OptionPick[]) => void
+}) {
+  const first = group.options.find((o) => o.is_available)
+  const picked = picks.find(
+    (p) => p.qty > 0 && group.options.some((o) => o.id === p.option_id),
+  )
+  if (!first || !picked || picked.option_id === first.id) return null
+
+  const label = group.options.find((o) => o.id === picked.option_id)?.label ?? 'Custom'
+  const fieldId = `opt-text-${group.id}`
+
+  return (
+    <div className="opts__text">
+      <label className="opts__text-label" htmlFor={fieldId}>
+        Tell us the {label.toLowerCase()} size and how much you want
+      </label>
+      <input
+        id={fieldId}
+        className="opts__text-input"
+        type="text"
+        maxLength={120}
+        placeholder="e.g. a big bowl that feeds four"
+        value={pickText(picks, picked.option_id)}
+        onChange={(e) => {
+          const words = e.target.value
+          onChange((prev) => setPickText(prev, picked.option_id, words))
+        }}
+      />
     </div>
   )
 }
