@@ -5,11 +5,22 @@ import {
   naira,
   type CateringRequest,
   type MenuItem,
+  type OptionPick,
   type Pairing,
   type Quote,
 } from '../lib/api'
+import { pickLabels } from '../lib/options'
+import { OptionPicker } from '../components/OptionPicker'
 import { STATES, areasFor } from '../lib/states'
 import './Catering.css'
+
+/**
+ * Groups where the customer says how many of each they want, e.g. the chops in
+ * a small chops platter. Everything else on a dish is left to the kitchen here.
+ */
+function countingGroups(item: MenuItem) {
+  return (item.option_groups ?? []).filter((g) => g.allows_quantity)
+}
 
 /** The three kinds of job a caterer takes. The deposit maths differs for each. */
 const JOB_KINDS = [
@@ -154,6 +165,8 @@ export function Catering() {
   // The exact dishes picked inside each category, e.g. "Akara & Pap". The
   // deposit still keys on the category, so this is what the caterer reads.
   const [pickedDishes, setPickedDishes] = useState<string[]>([])
+  // How many of each chop, per dish, for dishes that ask. Keyed by dish name.
+  const [dishPicks, setDishPicks] = useState<Record<string, OptionPick[]>>({})
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   // The slugs the caterer has switched on in the admin page. `null` means the
   // list has not arrived yet, so we fall back to showing everything rather
@@ -253,19 +266,47 @@ export function Catering() {
         menuItems.filter((m) => m.category_slug === slug).map((m) => m.name),
       )
       setPickedDishes((prev) => prev.filter((n) => !names.has(n)))
-    }
-  }
+          setDishPicks((prev) => {
+            const next = { ...prev }
+            for (const name of names) delete next[name]
+            return next
+          })
+        }
+      }
 
-  /** Picking a dish also picks its category, because the deposit keys on that. */
-  function togglePickedDish(item: MenuItem) {
-    const on = pickedDishes.includes(item.name)
-    setPickedDishes((prev) =>
-      on ? prev.filter((n) => n !== item.name) : [...prev, item.name],
-    )
-    if (!on && !dishes.includes(item.category_slug)) {
-      setDishes((prev) => [...prev, item.category_slug])
-    }
-  }
+      /** Picking a dish also picks its category, because the deposit keys on that. */
+      function togglePickedDish(item: MenuItem) {
+        const on = pickedDishes.includes(item.name)
+        setPickedDishes((prev) =>
+          on ? prev.filter((n) => n !== item.name) : [...prev, item.name],
+        )
+        if (on) {
+          setDishPicks((prev) => {
+            const next = { ...prev }
+            delete next[item.name]
+            return next
+          })
+        }
+        if (!on && !dishes.includes(item.category_slug)) {
+          setDishes((prev) => [...prev, item.category_slug])
+        }
+      }
+
+      function unpickDish(name: string) {
+        setPickedDishes((prev) => prev.filter((n) => n !== name))
+        setDishPicks((prev) => {
+          const next = { ...prev }
+          delete next[name]
+          return next
+        })
+      }
+
+      /** "Small Chops Platter (3 × Puff-puff, 2 × Samosa)", or just the name. */
+      function dishWithCounts(name: string): string {
+        const item = menuItems.find((m) => m.name === name)
+        const labels = item ? pickLabels(item, dishPicks[name] ?? []) : []
+        return labels.length > 0 ? `${name} (${labels.join(', ')})` : name
+      }
 
   // The dish dropdown closes on an outside click or Escape, like a real select.
   useEffect(() => {
@@ -292,7 +333,7 @@ export function Catering() {
   function closeOnBlank(e: ReactMouseEvent<HTMLDivElement>) {
     if (!dishesOpen) return
     const target = e.target as HTMLElement
-    if (target.closest('.dish-row, .dish-card, .dish-pick__chip, .dish-pick__toggle, .dish-pick__chips')) {
+    if (target.closest('.dish-row, .dish-card, .dish-pick__chip, .dish-pick__toggle, .dish-pick__chips, .catering-picks')) {
       return
     }
     setDishesOpen(false)
@@ -375,6 +416,12 @@ export function Catering() {
     })
   }, [approvedSlugs, menuItems])
 
+  /** Dishes that were picked and that ask how many of each. */
+  const countingDishes = useMemo(
+    () => menuItems.filter((m) => pickedDishes.includes(m.name) && countingGroups(m).length > 0),
+    [menuItems, pickedDishes],
+  )
+
   /** Dishes grouped by category slug, in menu order. */
   const dishesByCategory = useMemo(() => {
     const map = new Map<string, MenuItem[]>()
@@ -439,7 +486,7 @@ export function Catering() {
         dishes,
         other_dishes: otherDishes,
         allergies,
-        picked_dishes: pickedDishes.join(', '),
+        picked_dishes: pickedDishes.map(dishWithCounts).join(', '),
         contact_channel: contactChannel,
         contact_handle: contactHandle,
         job_kind: jobKind,
@@ -823,13 +870,13 @@ export function Catering() {
                         })}
                         {pickedDishes.map((dishName) => (
                           <span className="dish-pick__chip dish-pick__chip--dish" key={dishName}>
-                            <span className="dish-pick__chip-name">{dishName}</span>
+                                                      <span className="dish-pick__chip-name">{dishWithCounts(dishName)}</span>
                             <button
                               type="button"
                               className="dish-pick__chip-x"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setPickedDishes((prev) => prev.filter((n) => n !== dishName))
+                                                              unpickDish(dishName)
                               }}
                               aria-label={`Remove ${dishName}`}
                               title={`Remove ${dishName}`}
@@ -943,6 +990,30 @@ export function Catering() {
                       </div>
                     )}
                   </div>
+                  {countingDishes.length > 0 && (
+                    <div className="catering-picks">
+                      <span className="catering-picks__label">
+                        How many of each?
+                      </span>
+                      {countingDishes.map((dish) => (
+                        <div className="catering-picks__dish" key={dish.id}>
+                          <p className="catering-picks__name">{dish.name}</p>
+                          <OptionPicker
+                            groups={countingGroups(dish)}
+                            picks={dishPicks[dish.name] ?? []}
+                            onChange={(update) =>
+                                                          setDishPicks((prev) => ({
+                                                            ...prev,
+                                                            [dish.name]: update(prev[dish.name] ?? []),
+                                                          }))
+                                                        }
+                            dark
+                            idPrefix={`catering-${dish.id}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {suggestions.length > 0 && (
                     <div className="dish-suggest">
                       <span className="dish-suggest__label">Goes well with</span>
@@ -1206,7 +1277,7 @@ export function Catering() {
               {pickedDishes.length > 0 && (
                 <div>
                   <dt>Dishes picked</dt>
-                  <dd>{pickedDishes.join(', ')}</dd>
+                  <dd>{pickedDishes.map(dishWithCounts).join(', ')}</dd>
                 </div>
               )}
               {otherDishes.trim() && (

@@ -244,6 +244,12 @@
   color: var(--text-inverse-muted);
 }
 
+.summary-list__picks {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--gold-200);
+}
+
 .summary-list em {
   font-style: normal;
   font-size: var(--step--1);

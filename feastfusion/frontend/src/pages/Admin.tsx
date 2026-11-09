@@ -584,7 +584,14 @@ function OptionsEditor({
   function addGroup() {
     setGroups((gs) => [
       ...gs,
-      { name: 'New group', kind: 'single', help: '', is_required: false, options: [] },
+      {
+        name: 'New group',
+        kind: 'single',
+        help: '',
+        is_required: false,
+        allows_quantity: false,
+        options: [],
+      },
     ])
     setSaved(false)
   }
@@ -658,10 +665,25 @@ function OptionsEditor({
               />
               Required
             </label>
+            <label className="cat-check" title="Turns each choice into a how-many stepper">
+              <input
+                type="checkbox"
+                checked={g.allows_quantity}
+                onChange={(e) => patchGroup(gi, { allows_quantity: e.target.checked })}
+              />
+              Ask how many of each
+            </label>
             <button className="admin-menu__del" onClick={() => removeGroup(gi)}>
               Remove group
             </button>
           </div>
+
+          {g.allows_quantity && (
+            <p className="cat-opt-note">
+              Customers will say how many of each choice they want. Put the price of one
+              piece in the price box.
+            </p>
+          )}
 
           {g.options.map((o, oi) => (
             <div key={oi} className="cat-opt-row">
@@ -675,6 +697,14 @@ function OptionsEditor({
                 value={o.price_delta_kobo}
                 onCommit={(k) => patchOption(gi, oi, { price_delta_kobo: k })}
               />
+              <label className="cat-check cat-check--avail" title="Untick to hide this choice today">
+                <input
+                  type="checkbox"
+                  checked={o.is_available}
+                  onChange={(e) => patchOption(gi, oi, { is_available: e.target.checked })}
+                />
+                Available
+              </label>
               <button className="admin-menu__del" onClick={() => removeOption(gi, oi)}>
                 Remove
               </button>
@@ -777,7 +807,8 @@ function toDraft(item: CatalogueItem): OptionGroupIn[] {
     kind: g.kind,
     help: g.help,
     is_required: g.is_required,
-    options: g.options.map((o) => ({
+        allows_quantity: g.allows_quantity,
+        options: g.options.map((o) => ({
       label: o.label,
       price_delta_kobo: o.price_delta_kobo,
       is_default: o.is_default,

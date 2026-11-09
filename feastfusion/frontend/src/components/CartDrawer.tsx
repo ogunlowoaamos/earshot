@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../lib/cart'
 import { naira } from '../lib/api'
+import { pickLabels, picksExtraKobo, picksKey } from '../lib/options'
 import './CartDrawer.css'
 
 export function CartDrawer() {
@@ -57,39 +58,51 @@ export function CartDrawer() {
         ) : (
           <>
             <ul className="cart-drawer__list">
-              {lines.map((line) => (
-                <li key={line.item.id} className="cart-line">
-                  <img src={line.item.image_url} alt="" className="cart-line__img" />
-                  <div className="cart-line__info">
-                    <Link to={`/menu/${line.item.id}`} onClick={close}>
-                      {line.item.name}
-                    </Link>
-                    <span className="cart-line__price">{naira(line.item.price_kobo)}</span>
-                    <div className="qty">
-                      <button
-                        onClick={() => setQty(line.item.id, line.qty - 1)}
-                        aria-label={`Decrease ${line.item.name}`}
-                      >
-                        −
-                      </button>
-                      <span aria-live="polite">{line.qty}</span>
-                      <button
-                        onClick={() => setQty(line.item.id, line.qty + 1)}
-                        aria-label={`Increase ${line.item.name}`}
-                      >
-                        +
-                      </button>
+              {lines.map((line) => {
+                const key = picksKey(line.item.id, line.picks)
+                const choices = pickLabels(line.item, line.picks)
+                const extra = picksExtraKobo(line.item, line.picks)
+                return (
+                  <li key={key} className="cart-line">
+                    <img src={line.item.image_url} alt="" className="cart-line__img" />
+                    <div className="cart-line__info">
+                      <Link to={`/menu/${line.item.id}`} onClick={close}>
+                        {line.item.name}
+                      </Link>
+                      {choices.length > 0 && (
+                        <span className="cart-line__picks">{choices.join(' · ')}</span>
+                      )}
+                      <span className="cart-line__price">
+                        {extra > 0
+                          ? `${naira(line.item.price_kobo)} + ${naira(extra)} of choices`
+                          : naira(line.item.price_kobo)}
+                      </span>
+                      <div className="qty">
+                        <button
+                          onClick={() => setQty(key, line.qty - 1)}
+                          aria-label={`Decrease ${line.item.name}`}
+                        >
+                          −
+                        </button>
+                        <span aria-live="polite">{line.qty}</span>
+                        <button
+                          onClick={() => setQty(key, line.qty + 1)}
+                          aria-label={`Increase ${line.item.name}`}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    className="cart-line__remove"
-                    onClick={() => remove(line.item.id)}
-                    aria-label={`Remove ${line.item.name}`}
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
+                    <button
+                      className="cart-line__remove"
+                      onClick={() => remove(key)}
+                      aria-label={`Remove ${line.item.name}`}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
 
             <footer className="cart-drawer__foot">

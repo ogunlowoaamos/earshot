@@ -828,6 +828,37 @@
   color: var(--ink-500);
 }
 
+/* "How many of each?" — one block per picked dish that asks. */
+.catering-picks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.catering-picks__label {
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--gold-200);
+}
+
+.catering-picks__dish {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.catering-picks__name {
+  margin: 0;
+  font-size: var(--step--1);
+  font-weight: 700;
+  color: var(--text-inverse);
+}
+
 .dish-suggest__chips {
   display: flex;
   flex-wrap: wrap;

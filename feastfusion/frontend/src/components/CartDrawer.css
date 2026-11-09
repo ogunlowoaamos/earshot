@@ -122,6 +122,12 @@
   font-weight: 600;
 }
 
+.cart-line__picks {
+  font-size: var(--step--1);
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
 .qty {
   display: inline-flex;
   align-items: center;

@@ -534,6 +534,29 @@ pub async fn run(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
             .await?;
     }
 
+    // A small chops platter is a pile of separate chops, so the customer picks
+    // which ones and how many of each. This runs once: after that the caterer
+    // owns the setting and a restart must not put it back.
+    let chops_done: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM settings WHERE key = 'chops_count_once'")
+            .fetch_one(pool)
+            .await?;
+
+    if chops_done == 0 {
+        sqlx::query(
+            "UPDATE item_option_groups SET allows_quantity = 1
+             WHERE kind = 'multi'
+               AND menu_item_id IN
+                   (SELECT id FROM menu_items WHERE name = 'Small Chops Platter')",
+        )
+        .execute(pool)
+        .await?;
+
+        sqlx::query("INSERT OR IGNORE INTO settings (key, value) VALUES ('chops_count_once', '1')")
+            .execute(pool)
+            .await?;
+    }
+
     for (index, (event_type, naira, note)) in EVENT_RATES.iter().enumerate() {
         sqlx::query(
             "INSERT OR IGNORE INTO catering_rates (event_type, rate_kobo, note, sort_order)

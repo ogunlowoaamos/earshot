@@ -697,9 +697,23 @@
 
 .cat-opt-row {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   gap: var(--sp-2);
   align-items: center;
+}
+
+.cat-check--avail {
+  white-space: nowrap;
+}
+
+.cat-opt-note {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--gold-veil);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: var(--ink-600);
 }
 
 .cat-opt-row input[type='text'] {

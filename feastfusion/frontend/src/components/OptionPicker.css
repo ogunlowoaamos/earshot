@@ -1,0 +1,273 @@
+/* The choices on a dish: "Pick one" chips, and how-many steppers for groups
+   that count pieces such as the chops in a small chops platter. */
+
+.opts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.opts__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.opts__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.opts__name {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-700);
+}
+
+.opts__rule {
+  flex: none;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ink-400);
+}
+
+.opts__rule em {
+  font-style: normal;
+  color: var(--gold-500);
+}
+
+.opts__help {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ink-500);
+}
+
+.opts__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Counting groups read better as full-width rows than as a cloud of chips. */
+.opts__list--count {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--sp-2);
+}
+
+/* ---------------- plain chips: pick one, or pick any ---------------- */
+
+.opt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 34px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--white);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-700);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.opt-chip:hover {
+  border-color: var(--ink-300);
+}
+
+.opt-chip.is-on {
+  border-color: var(--gold-300);
+  background: var(--gold-veil);
+  color: var(--ink-900);
+}
+
+.opt-chip__tick {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font-size: 0.6rem;
+  line-height: 1;
+  color: var(--ink-900);
+}
+
+.opt-chip.is-on .opt-chip__tick {
+  border-color: var(--gold-300);
+  background: var(--gold-200);
+}
+
+.opt-chip__cost {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ink-400);
+}
+
+.opt-chip.is-on .opt-chip__cost {
+  color: var(--gold-500);
+}
+
+/* ---------------- counting rows ---------------- */
+
+.opt-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--white);
+}
+
+.opt-row.is-on {
+  border-color: var(--gold-300);
+  background: var(--gold-veil);
+}
+
+.opt-row__label {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-700);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opt-row__cost {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ink-400);
+}
+
+.opt-row.is-on .opt-row__cost {
+  color: var(--gold-500);
+}
+
+.opt-row__qty {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.opt-row__qty button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--white);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--ink-700);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.opt-row__qty button:hover:not(:disabled) {
+  border-color: var(--ink-300);
+  background: var(--ink-100);
+}
+
+.opt-row__qty button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.opt-row__qty span {
+  min-width: 16px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-900);
+}
+
+/* ---------------- sitting on the always-dark catering card ---------------- */
+
+.opts--dark .opts__name {
+  color: var(--text-inverse);
+}
+
+.opts--dark .opts__rule,
+.opts--dark .opts__help,
+.opts--dark .opt-chip__cost,
+.opts--dark .opt-row__cost {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.opts--dark .opt-chip,
+.opts--dark .opt-row,
+.opts--dark .opt-row__qty button {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-inverse);
+}
+
+.opts--dark .opt-chip:hover,
+.opts--dark .opt-row__qty button:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.opts--dark .opt-chip.is-on,
+.opts--dark .opt-row.is-on {
+  border-color: rgba(224, 172, 51, 0.55);
+  background: rgba(224, 172, 51, 0.16);
+  color: var(--text-inverse);
+}
+
+.opts--dark .opt-chip__tick {
+  border-color: rgba(255, 255, 255, 0.28);
+  color: var(--bg-inverse);
+}
+
+.opts--dark .opt-chip.is-on .opt-chip__tick {
+  border-color: transparent;
+  background: var(--gold-300);
+}
+
+.opts--dark .opt-row__label {
+  color: var(--text-inverse);
+}
+
+.opts--dark .opt-row__qty span {
+  color: var(--text-inverse);
+}
+
+.opts--dark .opt-row.is-on .opt-row__cost,
+.opts--dark .opt-chip.is-on .opt-chip__cost {
+  color: var(--gold-300);
+}
+
+@media (max-width: 560px) {
+  .opt-row {
+    gap: var(--sp-2);
+  }
+
+  .opt-row__cost {
+    display: none;
+  }
+}

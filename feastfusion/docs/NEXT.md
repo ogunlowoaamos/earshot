@@ -31,6 +31,9 @@ A short note so a fresh chat can pick up with no history.
     cards never change height. Tapping the dish name still adds one. − is greyed
     out at zero, + is greyed out at 20 or when the dish is sold out. The card
     keeps a gold edge while it is in the basket. See the note below.
+15. **Dishes can ask "how many of each".** A dish like the Small Chops Platter can
+    ask the customer to pick individual chops and say how many of each. Works on
+    the dish page, the catering page and the admin page. See the note below.
 
 ## The catering page, as it stands
 
@@ -270,6 +273,73 @@ the rule stays as a guard.
 At 900px and below the card becomes a single column, the body gets
 `padding-right: 34px` to clear the arrow, and the arrow stays
 `position: absolute` in the top-right corner so it does not eat a whole row.
+
+## "How many of each" choices (the Small Chops case)
+
+A dish can carry **option groups** — "Portion" (pick one), "Add-ons" (pick
+many). A group can also be switched to **ask how many of each**, which turns
+each choice from a tick-box into a − / count / + stepper. That is what lets the
+Small Chops Platter offer "3 × Extra chicken, 2 × Samosa".
+
+**Backend.** `item_option_groups.allows_quantity` (migration
+`0008_chop_quantities.sql`). `item_options` already had `price_delta_kobo` and
+`is_available`. `POST /api/orders` accepts
+`items[].options: [{ option_id, qty }]` as well as the older flat `option_ids`;
+`merge_picks` folds the two together. `price_options` caps a quantity at 99,
+rejects unavailable choices, rejects a choice that belongs to another dish, and
+still enforces pick-one vs pick-many and required groups.
+
+**One-time seed.** The `allows_quantity` backfill lives in `seed.rs` behind the
+`chops_count_once` settings row, because `db.rs` replays every migration on
+every boot and a plain `UPDATE` would re-fire each time.
+
+**Shared picker.** `components/OptionPicker.tsx` + `OptionPicker.css` is used by
+both the dish page and the catering page. Counting groups render `.opt-row`
+steppers; plain groups render `.opt-chip` tick chips. `dark` swaps it for the
+always-dark catering card (`.opts--dark`).
+
+**`onChange` takes an updater function, not a list.** It is
+`(prev: OptionPick[]) => OptionPick[]`, and the handlers call
+`onChange((prev) => setPickQty(prev, ...))`. The first version passed a list
+computed from the `picks` prop, so three fast taps on + only counted once — the
+second and third read a stale prop. Any new caller must pass a `(prev) => ...`
+handler.
+
+**All the arithmetic lives in `lib/options.ts`:** `pickedQty`, `picksKey`,
+`setPickQty`, `togglePick`, `findOption`, `picksExtraKobo`, `pickLabels`,
+`missingRequiredGroup`, `defaultPicks`. A basket line's identity is
+`picksKey(item.id, picks)` — `"15|3514x1,3517x3"`, sorted by option id — so the
+same dish with different chops is a different basket line.
+
+**Dish page.** `ItemDetail.tsx` seeds `defaultPicks` on load so a required group
+starts answered, renders `<OptionPicker>` in `.detail__options`, and disables
+Add / Buy-now with the label "Choose a Portion" while `stillToAnswer`. The total
+becomes `unit × qty` plus `picksExtraKobo`, with a `.detail__total-note`
+breakdown line ("₦4,000 + ₦1,500 of choices") only when the choices cost extra.
+
+**Catering page.** `Catering.tsx` keeps `dishPicks` per dish name. Only counting
+groups are shown there, below the dish dropdown in `.catering-picks`, because
+the catering flow is quote-based and never prices anything. The counts are
+folded into plain text — `Small Chops Platter (3 × Extra chicken)` — for the
+chip, the review panel and the submitted `picked_dishes`, via
+`dishWithCounts()`. `closeOnBlank` ignores clicks inside `.catering-picks` so
+the dropdown does not close while the customer is counting.
+
+**Admin page.** The Catalogue tab's `Options` editor has an "Ask how many of
+each" checkbox per group, with a `.cat-opt-note` explaining it, and an
+"Available" checkbox per choice. Unticking Available hides that chop from the
+customer picker. The `.cat-opt-row` grid is four columns.
+
+**Verified live:** dish page, catering step 2 and the admin editor. A temporary
+₦500 price on "Extra chicken" made the dish page show ₦5,500 and the server
+store `unit_price_kobo: 550000` with `options: ["Regular", "3 × Extra chicken",
+"Extra fish"]`; the price was set back to ₦0 afterwards.
+
+**Open questions for the user.** Every choice in the catalogue is priced at ₦0,
+so counts never change the total today — the caterer can type a price per piece
+in the admin if they want that. And the chop list is the caterer's own wording
+("Extra chicken", "Extra beef"…) rather than the real chops named in the dish
+description (puff-puff, samosa, spring rolls, peppered gizzard, chin chin).
 
 ## Not finished
 

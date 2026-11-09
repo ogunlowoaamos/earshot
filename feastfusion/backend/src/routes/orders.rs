@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::{
     error::{AppError, AppResult},
-    models::{NewOrder, Order, OrderLine, OrderRow},
+    models::{NewOrder, Order, OrderLine, OrderRow, PickedOptionIn},
     notify, AppState,
 };
 
@@ -36,28 +36,54 @@ pub(crate) fn split_options(text: &str) -> Vec<String> {
         .collect()
 }
 
+/// One choice with how many of it were asked for. Groups that count pieces can
+/// hold more than one; everything else stays at one.
+type Pick = (i64, i64);
+
+/// The order form sends ids for a plain choice and `{option_id, qty}` when the
+/// group counts pieces. Both are folded into one list here so the rest of the
+/// pricing does not care which shape arrived.
+pub(crate) fn merge_picks(ids: &[i64], counted: &[PickedOptionIn]) -> Vec<Pick> {
+    let mut merged: Vec<Pick> = Vec::new();
+
+    for id in ids {
+        if !merged.iter().any(|(existing, _)| existing == id) {
+            merged.push((*id, 1));
+        }
+    }
+
+    for pick in counted {
+        let qty = pick.qty.max(1);
+        match merged
+            .iter_mut()
+            .find(|(existing, _)| *existing == pick.option_id)
+        {
+            Some(slot) => slot.1 = slot.1.max(qty),
+            None => merged.push((pick.option_id, qty)),
+        }
+    }
+
+    merged
+}
+
 /// Checks the choices a customer picked against what the caterer actually
 /// offers, and returns the extra cost plus the labels for the receipt.
 async fn price_options(
     conn: &mut sqlx::SqliteConnection,
     item_id: i64,
     item_name: &str,
-    picked: &[i64],
+    picks: &[Pick],
 ) -> AppResult<(i64, String)> {
-    let groups = sqlx::query_as::<_, (i64, String, String, bool)>(
-        "SELECT id, name, kind, is_required FROM item_option_groups
+    let groups = sqlx::query_as::<_, (i64, String, String, bool, bool)>(
+        "SELECT id, name, kind, is_required, allows_quantity FROM item_option_groups
          WHERE menu_item_id = ? ORDER BY sort_order, id",
     )
     .bind(item_id)
     .fetch_all(&mut *conn)
     .await?;
 
-    let mut chosen: Vec<i64> = picked.to_vec();
-    chosen.sort_unstable();
-    chosen.dedup();
-
     if groups.is_empty() {
-        if chosen.is_empty() {
+        if picks.is_empty() {
             return Ok((0, String::new()));
         }
         return Err(AppError::BadRequest(format!(
@@ -69,7 +95,7 @@ async fn price_options(
     let mut labels: Vec<String> = Vec::new();
     let mut used: Vec<i64> = Vec::new();
 
-    for (group_id, group_name, kind, is_required) in &groups {
+    for (group_id, group_name, kind, is_required, allows_quantity) in &groups {
         let options = sqlx::query_as::<_, (i64, String, i64, bool)>(
             "SELECT id, label, price_delta_kobo, is_available FROM item_options
              WHERE group_id = ? ORDER BY sort_order, id",
@@ -80,18 +106,24 @@ async fn price_options(
 
         let mut in_group = 0;
         for (option_id, label, price_delta_kobo, is_available) in options {
-            if !chosen.contains(&option_id) {
+            let Some(&(_, asked)) = picks.iter().find(|(id, _)| *id == option_id) else {
                 continue;
-            }
+            };
             if !is_available {
                 return Err(AppError::BadRequest(format!(
                     "{label} is not available right now."
                 )));
             }
+            // A count only means something in a group that counts pieces.
+            let qty = if *allows_quantity { asked.clamp(1, 99) } else { 1 };
             in_group += 1;
             used.push(option_id);
-            extra_kobo += price_delta_kobo;
-            labels.push(label);
+            extra_kobo += price_delta_kobo * qty;
+            labels.push(if qty > 1 {
+                format!("{qty} × {label}")
+            } else {
+                label
+            });
         }
 
         if kind.as_str() == "single" && in_group > 1 {
@@ -106,7 +138,7 @@ async fn price_options(
         }
     }
 
-    if used.len() != chosen.len() {
+    if used.len() != picks.len() {
         return Err(AppError::BadRequest(format!(
             "One of the choices for {item_name} is no longer offered."
         )));
@@ -273,8 +305,9 @@ pub async fn create_order(
             )));
         }
 
+        let picks = merge_picks(&line.option_ids, &line.options);
         let (extra_kobo, options_text) =
-            price_options(&mut tx, id, &item_name, &line.option_ids).await?;
+            price_options(&mut tx, id, &item_name, &picks).await?;
 
         let unit_price_kobo = price_kobo + extra_kobo;
         let note = line

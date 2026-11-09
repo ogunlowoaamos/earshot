@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { api, naira, type MenuItem } from '../lib/api'
+import { api, naira, type MenuItem, type OptionPick } from '../lib/api'
 import { useCart } from '../lib/cart'
+import {
+  defaultPicks,
+  missingRequiredGroup,
+  picksExtraKobo,
+  picksKey,
+} from '../lib/options'
+import { OptionPicker } from '../components/OptionPicker'
 import './ItemDetail.css'
 
 type PairGroup = { slug: string; name: string; items: MenuItem[] }
@@ -11,15 +18,28 @@ export function ItemDetail() {
   const [item, setItem] = useState<MenuItem | null>(null)
   const [groups, setGroups] = useState<PairGroup[]>([])
   const [qty, setQty] = useState(1)
+  const [picks, setPicks] = useState<OptionPick[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [peek, setPeek] = useState<{ id: number; x: number; y: number; below: boolean } | null>(null)
-  const { add, open, lines, setQty: setLineQty } = useCart()
+  const { add, open, qtyOf, setQty: setLineQty } = useCart()
   const navigate = useNavigate()
 
-  // How many of a pairing are already in the basket. Zero means the card shows
-  // no stepper at all, so an untouched card stays as small as it was.
-  const qtyOf = (id: number) => lines.find((l) => l.item.id === id)?.qty ?? 0
+  const groupsOnItem = item?.option_groups ?? []
+  const extraKobo = item ? picksExtraKobo(item, picks) : 0
+  const unitKobo = (item?.price_kobo ?? 0) + extraKobo
+  const stillToAnswer = item ? missingRequiredGroup(item, picks) : null
+
+  /** The rail quick-adds, so a dish that insists on a choice takes its first. */
+  function quickPicks(o: MenuItem) {
+    return defaultPicks(o)
+  }
+
+  function addToBasket(then?: () => void) {
+    if (!item || stillToAnswer) return
+    add(item, qty, picks)
+    then?.()
+  }
 
   // The pairings rail scrolls, so the hover panel is positioned against the
   // viewport instead of the card. That keeps it from being clipped.
@@ -50,6 +70,10 @@ export function ItemDetail() {
         if (!alive) return
         const found = items.find((i) => i.id === Number(id)) ?? null
         setItem(found)
+        // Anything the dish insists on starts on its first available choice, so
+        // the basket button is never a dead end. The customer can change it.
+        setPicks(found ? (defaultPicks(found) ?? []) : [])
+        setQty(1)
         if (!found) {
           setError('We could not find that dish.')
           return
@@ -160,6 +184,17 @@ export function ItemDetail() {
                   </section>
                 )}
 
+                {groupsOnItem.length > 0 && (
+                  <div className="detail__options">
+                    <OptionPicker
+                      groups={groupsOnItem}
+                      picks={picks}
+                      onChange={setPicks}
+                      idPrefix={`dish-${item.id}`}
+                    />
+                  </div>
+                )}
+
                 <div className="detail__qty">
                   <span>Quantity</span>
                   <div className="qty qty--lg">
@@ -172,28 +207,37 @@ export function ItemDetail() {
                     </button>
                   </div>
                   <p className="detail__total">
-                    Total <strong>{naira(item.price_kobo * qty)}</strong>
+                    Total <strong>{naira(unitKobo * qty)}</strong>
+                    {extraKobo > 0 && (
+                      <span className="detail__total-note">
+                        {naira(item.price_kobo)} + {naira(extraKobo)} of choices
+                      </span>
+                    )}
                   </p>
                 </div>
+
+                {stillToAnswer && (
+                  <p className="detail__needed" role="status">
+                    Choose a {stillToAnswer} above and we can add it to your basket.
+                  </p>
+                )}
 
                 <div className="detail__actions">
                   <button
                     className="btn btn--primary"
-                    disabled={!item.is_available}
-                    onClick={() => {
-                      add(item, qty)
-                      open()
-                    }}
+                    disabled={!item.is_available || stillToAnswer !== null}
+                    onClick={() => addToBasket(open)}
                   >
-                    {item.is_available ? `Add ${qty} to basket` : 'Sold out today'}
+                    {!item.is_available
+                      ? 'Sold out today'
+                      : stillToAnswer
+                        ? `Choose a ${stillToAnswer}`
+                        : `Add ${qty} to basket`}
                   </button>
                   <button
                     className="btn btn--ghost"
-                    disabled={!item.is_available}
-                    onClick={() => {
-                      add(item, qty)
-                      navigate('/checkout')
-                    }}
+                    disabled={!item.is_available || stillToAnswer !== null}
+                    onClick={() => addToBasket(() => navigate('/checkout'))}
                   >
                     Buy now
                   </button>
@@ -216,7 +260,10 @@ export function ItemDetail() {
                   <h3>{g.name}</h3>
                   <div className="detail__more-grid">
                     {g.items.map((o) => {
-                      const picked = qtyOf(o.id)
+                      const starter = quickPicks(o)
+                      const picked = starter ? qtyOf(o, starter) : 0
+                      const key = starter ? picksKey(o.id, starter) : null
+                      const canAdd = o.is_available && starter !== null
                       return (
                         <div
                           key={o.id}
@@ -234,12 +281,12 @@ export function ItemDetail() {
                             <button
                               type="button"
                               className="related__add"
-                              disabled={!o.is_available}
-                              onClick={() => add(o, 1)}
+                              disabled={!canAdd}
+                              onClick={() => starter && add(o, 1, starter)}
                               aria-label={
-                                o.is_available
-                                  ? `Add ${o.name} to basket, ${naira(o.price_kobo)}`
-                                  : `${o.name} is sold out today`
+                                !o.is_available
+                                  ? `${o.name} is sold out today`
+                                  : `Add ${o.name} to basket, ${naira(o.price_kobo)}`
                               }
                             >
                               <strong>{o.name}</strong>
@@ -250,7 +297,7 @@ export function ItemDetail() {
                               <div className="related__qty">
                                 <button
                                   type="button"
-                                  onClick={() => setLineQty(o.id, picked - 1)}
+                                  onClick={() => key && setLineQty(key, picked - 1)}
                                   disabled={picked === 0}
                                   aria-label={`One less ${o.name}`}
                                 >
@@ -259,12 +306,13 @@ export function ItemDetail() {
                                 <span aria-live="polite">{picked}</span>
                                 <button
                                   type="button"
-                                  onClick={() =>
+                                  onClick={() => {
+                                    if (!starter || !key) return
                                     picked === 0
-                                      ? add(o, 1)
-                                      : setLineQty(o.id, Math.min(20, picked + 1))
-                                  }
-                                  disabled={!o.is_available || picked >= 20}
+                                      ? add(o, 1, starter)
+                                      : setLineQty(key, Math.min(20, picked + 1))
+                                  }}
+                                  disabled={!canAdd || picked >= 20}
                                   aria-label={`One more ${o.name}`}
                                 >
                                   +

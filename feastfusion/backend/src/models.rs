@@ -80,16 +80,10 @@ pub struct OptionGroup {
     pub kind: String,
     pub help: String,
     pub is_required: bool,
+    /// True when the group counts pieces, so each choice gets its own how-many
+    /// stepper and its price is charged per piece.
+    pub allows_quantity: bool,
     pub options: Vec<DishOption>,
-}
-
-#[derive(Debug, sqlx::FromRow)]
-pub struct OptionGroupRow {
-    pub id: i64,
-    pub name: String,
-    pub kind: String,
-    pub help: String,
-    pub is_required: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -320,9 +314,21 @@ pub struct OrderLineIn {
     /// Ids of the choices picked on the dish page. Priced by the server.
     #[serde(default)]
     pub option_ids: Vec<i64>,
+    /// The same choices with a count each, for groups that ask "how many".
+    /// Older clients only send `option_ids`, so both shapes are accepted.
+    #[serde(default)]
+    pub options: Vec<PickedOptionIn>,
     /// The customer's own words for this line, for example a cake message.
     #[serde(default)]
     pub note: Option<String>,
+}
+
+/// One choice the customer picked, and how many of it they want.
+#[derive(Debug, Deserialize)]
+pub struct PickedOptionIn {
+    pub option_id: i64,
+    #[serde(default)]
+    pub qty: i64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -448,6 +454,8 @@ pub struct OptionGroupIn {
     pub help: String,
     #[serde(default)]
     pub is_required: bool,
+    #[serde(default)]
+    pub allows_quantity: bool,
     #[serde(default)]
     pub options: Vec<OptionIn>,
 }

@@ -238,6 +238,32 @@
   margin-left: var(--sp-1);
 }
 
+.detail__total-note {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--step--1);
+  color: var(--ink-400);
+}
+
+/* Choices live between the description and the quantity, so the order the
+   customer reads things matches the order they decide them. */
+.detail__options {
+  width: 100%;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border);
+}
+
+.detail__needed {
+  width: 100%;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--gold-veil);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  color: var(--ink-700);
+}
+
 .detail__facts {
   list-style: none;
   margin: 0;

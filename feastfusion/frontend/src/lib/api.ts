@@ -19,6 +19,8 @@ export type MenuItem = {
   is_featured: boolean
   tags: string[]
   ingredients: string[]
+  /** Sent by the menu endpoint, absent on items loaded from the basket. */
+  option_groups?: OptionGroup[]
 }
 
 export type DishOption = {
@@ -36,8 +38,16 @@ export type OptionGroup = {
   kind: 'single' | 'multi'
   help: string
   is_required: boolean
+  /** True when the group counts pieces, so each choice gets its own how-many stepper. */
+  allows_quantity: boolean
   sort_order: number
   options: DishOption[]
+}
+
+/** One choice the customer made, and how many of it they want. */
+export type OptionPick = {
+  option_id: number
+  qty: number
 }
 
 export type CatalogueItem = MenuItem & {
@@ -68,12 +78,15 @@ export type OptionGroupIn = {
   kind: 'single' | 'multi'
   help: string
   is_required: boolean
+  allows_quantity: boolean
   options: OptionIn[]
 }
 
 export type CartLine = {
   item: MenuItem
   qty: number
+  /** What was picked on the dish page. Empty for a plain dish. */
+  picks: OptionPick[]
 }
 
 export type OrderType = 'delivery' | 'pickup'
@@ -89,7 +102,7 @@ export type OrderPayload = {
   delivery_state: string | null
   notes: string | null
   payment_method: PaymentMethod
-  items: { menu_item_id: number; qty: number }[]
+  items: { menu_item_id: number; qty: number; options: OptionPick[] }[]
 }
 
 export type Order = {

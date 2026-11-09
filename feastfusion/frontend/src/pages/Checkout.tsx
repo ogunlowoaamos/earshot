@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api, naira, type OrderType, type PaymentMethod, type Settings, type DeliveryZone } from '../lib/api'
 import { useCart } from '../lib/cart'
+import { pickLabels, picksExtraKobo, picksKey } from '../lib/options'
 import './Checkout.css'
 
 export function Checkout() {
@@ -78,7 +79,11 @@ export function Checkout() {
         delivery_state: orderType === 'delivery' ? deliveryState : null,
         notes: form.notes.trim() || null,
         payment_method: payment,
-        items: lines.map((l) => ({ menu_item_id: l.item.id, qty: l.qty })),
+        items: lines.map((l) => ({
+          menu_item_id: l.item.id,
+          qty: l.qty,
+          options: l.picks,
+        })),
       })
       clear()
       navigate(`/order/${order.reference}`)
@@ -301,18 +306,25 @@ export function Checkout() {
             <h2>Order summary</h2>
 
             <ul className="summary-list">
-              {lines.map((l) => (
-                <li key={l.item.id}>
-                  <img src={l.item.image_url} alt="" />
-                  <div>
-                    <strong>{l.item.name}</strong>
-                    <span>
-                      {l.qty} × {naira(l.item.price_kobo)}
-                    </span>
-                  </div>
-                  <em>{naira(l.qty * l.item.price_kobo)}</em>
-                </li>
-              ))}
+              {lines.map((l) => {
+                const extra = picksExtraKobo(l.item, l.picks)
+                const choices = pickLabels(l.item, l.picks)
+                return (
+                  <li key={picksKey(l.item.id, l.picks)}>
+                    <img src={l.item.image_url} alt="" />
+                    <div>
+                      <strong>{l.item.name}</strong>
+                      {choices.length > 0 && (
+                        <span className="summary-list__picks">{choices.join(' · ')}</span>
+                      )}
+                      <span>
+                        {l.qty} × {naira(l.item.price_kobo + extra)}
+                      </span>
+                    </div>
+                    <em>{naira(l.qty * (l.item.price_kobo + extra))}</em>
+                  </li>
+                )
+              })}
             </ul>
 
             <dl className="summary-totals">
