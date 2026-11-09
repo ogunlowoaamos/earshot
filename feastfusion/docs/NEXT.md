@@ -136,6 +136,18 @@ validate. `to24Hour()` in `Catering.tsx` turns the three picks into the `HH:MM`
 the server stores, and the `.time-pick` grid in `Catering.css` lays them out in
 three equal columns.
 
+**The dish list is a dropdown.** The 17 dish categories used to be a long
+always-open list that pushed step 2 down the page. They now live inside
+`.dish-pick__menu`, which only renders while `dishesOpen` is true. The closed
+state is a `.dish-pick__trigger` button showing the chosen dish names joined by
+commas (or "Choose the dishes" when nothing is picked) plus a gold
+`.dish-pick__count` badge with how many are selected, so the answer is readable
+without opening it. The menu is absolutely positioned under the trigger,
+`max-height: 320px` with its own scroll, and closes on an outside `mousedown` or
+`Escape` (a `useEffect` watching `dishPickRef`). The "Goes well with" suggestion
+chips and the "Switch on as many as you need." hint stay outside the dropdown so
+they are always visible.
+
 **Right column — the live summary.** Top to bottom:
 
 1. **Your request so far** — a dark card listing only the things filled in so

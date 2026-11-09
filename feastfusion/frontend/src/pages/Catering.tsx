@@ -143,6 +143,9 @@ export function Catering() {
   const [guestCount, setGuestCount] = useState('50')
   const [dishes, setDishes] = useState<string[]>(['rice-grains', 'grills'])
   const [otherDishes, setOtherDishes] = useState('')
+  // The 17 categories live in a dropdown so step 2 stays short.
+  const [dishesOpen, setDishesOpen] = useState(false)
+  const dishPickRef = useRef<HTMLDivElement>(null)
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -228,6 +231,23 @@ export function Catering() {
       prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
     )
   }
+
+  // The dish dropdown closes on an outside click or Escape, like a real select.
+  useEffect(() => {
+    if (!dishesOpen) return
+    function onDown(e: MouseEvent) {
+      if (!dishPickRef.current?.contains(e.target as Node)) setDishesOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setDishesOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [dishesOpen])
 
   /** Leaving "Something else" drops the two follow-up answers with it. */
   function pickJobKind(next: JobKind) {
@@ -638,35 +658,63 @@ export function Catering() {
                   <span className="field__label" id="dishes-label">
                     Which dishes?
                   </span>
-                  <ul className="dish-list" aria-labelledby="dishes-label">
-                    {DISH_CATEGORIES.map((c) => {
-                      const on = dishes.includes(c.slug);
-                      return (
-                        <li key={c.slug}>
-                          <label className={`dish-row ${on ? 'is-active' : ''}`}>
-                            <input
-                              type="checkbox"
-                              checked={on}
-                              onChange={() => toggleDish(c.slug)}
-                              className="sr-only"
-                            />
-                            <span className="dish-row__tick" aria-hidden="true">
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
-                                <path
-                                  d="m5 13 4 4L19 7"
-                                  stroke="currentColor"
-                                  strokeWidth="3.2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </span>
-                            <span className="dish-row__name">{c.label}</span>
-                          </label>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  <div className="dish-pick" ref={dishPickRef}>
+                    <button
+                      type="button"
+                      className={`dish-pick__trigger${dishesOpen ? ' is-open' : ''}`}
+                      aria-expanded={dishesOpen}
+                      aria-controls="dish-pick-menu"
+                      aria-labelledby="dishes-label"
+                      onClick={() => setDishesOpen((v) => !v)}
+                    >
+                      <span className="dish-pick__value">
+                        {dishLabels.length > 0 ? dishLabels.join(', ') : 'Choose the dishes'}
+                      </span>
+                      <span className="dish-pick__count" aria-hidden="true">
+                        {dishes.length}
+                      </span>
+                      <span className="dish-pick__chev" aria-hidden="true" />
+                    </button>
+
+                    {dishesOpen && (
+                      <div
+                        className="dish-pick__menu"
+                        id="dish-pick-menu"
+                        role="group"
+                        aria-labelledby="dishes-label"
+                      >
+                        <ul className="dish-list">
+                          {DISH_CATEGORIES.map((c) => {
+                            const on = dishes.includes(c.slug);
+                            return (
+                              <li key={c.slug}>
+                                <label className={`dish-row ${on ? 'is-active' : ''}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={on}
+                                    onChange={() => toggleDish(c.slug)}
+                                    className="sr-only"
+                                  />
+                                  <span className="dish-row__tick" aria-hidden="true">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                                      <path
+                                        d="m5 13 4 4L19 7"
+                                        stroke="currentColor"
+                                        strokeWidth="3.2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                    </svg>
+                                  </span>
+                                  <span className="dish-row__name">{c.label}</span>
+                                </label>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                   {suggestions.length > 0 && (
                     <div className="dish-suggest">
                       <span className="dish-suggest__label">Goes well with</span>
