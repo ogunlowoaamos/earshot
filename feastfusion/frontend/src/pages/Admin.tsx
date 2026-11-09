@@ -1131,6 +1131,14 @@ function CateringPanel({ token }: { token: string }) {
               <span className="admin-label">Notes</span>
               <p>{r.details ?? '-'}</p>
             </div>
+            <div>
+              <span className="admin-label">Allergies</span>
+              <p>{r.allergies || 'None given'}</p>
+            </div>
+            <div>
+              <span className="admin-label">Dishes picked</span>
+              <p>{r.picked_dishes || 'Category only'}</p>
+            </div>
           </div>
         </article>
       ))}

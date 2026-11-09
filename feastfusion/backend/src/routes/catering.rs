@@ -12,7 +12,7 @@ const CATERING_COLUMNS: &str = "
     id, reference, customer_name, customer_phone, customer_email, event_date,
     event_time, guest_count, event_type, location, budget_kobo, details, deposit_kobo,
     deposit_status, proof_url, status, created_at, state, lga, street_address,
-    dishes, other_dishes, contact_channel, contact_handle, job_kind, deposit_reason
+    dishes, other_dishes, allergies, picked_dishes, contact_channel, contact_handle, job_kind, deposit_reason
 ";
 
 /// Public: lets the form show the deposit before the customer submits.
@@ -127,8 +127,8 @@ pub async fn create_catering(
             (reference, customer_name, customer_phone, customer_email, event_type,
              event_date, event_time, guest_count, location, budget_kobo, details, deposit_kobo,
              deposit_status, status, state, lga, street_address, dishes,
-             other_dishes, contact_channel, contact_handle, job_kind, deposit_reason)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+             other_dishes, allergies, picked_dishes, contact_channel, contact_handle, job_kind, deposit_reason)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&reference)
     .bind(name)
@@ -147,6 +147,8 @@ pub async fn create_catering(
     .bind(street)
     .bind(payload.dishes.join(", "))
     .bind(payload.other_dishes.trim())
+    .bind(payload.allergies.trim())
+    .bind(payload.picked_dishes.trim())
     .bind(contact_channel)
     .bind(contact_handle)
     .bind(job_kind)

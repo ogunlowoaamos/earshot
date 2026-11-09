@@ -575,6 +575,14 @@
   white-space: nowrap;
 }
 
+/* A dish picked inside a category reads a little quieter than the category
+   chip, so the two kinds are easy to tell apart. */
+.dish-pick__chip--dish {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-inverse);
+}
+
 .dish-pick__chip-x {
   display: grid;
   flex: none;
@@ -655,7 +663,7 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  max-height: 320px;
+  max-height: 420px;
   overflow-y: auto;
   padding: var(--sp-2);
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -664,15 +672,85 @@
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
 
-/* 17 categories in one column was 900px of scrolling. Two columns of compact
-   toggles halves it and still reads as a list. */
+/* 17 categories in one column was 900px of scrolling. Each category is now a
+   row: the category toggle on the left, its real dishes as small cards on the
+   right, so you can pick "Akara & Pap" rather than just "Breakfast". */
 .dish-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-2);
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.dish-cat {
+  display: grid;
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sp-2);
+}
+
+.dish-cat__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+/* Small cards, one per dish. */
+.dish-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  min-height: 26px;
+  padding: 0 var(--sp-2);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-inverse);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.dish-card:hover {
+  border-color: var(--gold-300);
+  color: var(--gold-100);
+}
+
+.dish-card__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dish-card__tick {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  border-radius: var(--r-full);
+  background: var(--gold-300);
+  color: var(--bg-inverse);
+}
+
+.dish-card.is-on {
+  border-color: var(--gold-300);
+  background: rgba(217, 162, 39, 0.16);
+  color: var(--gold-100);
+}
+
+.dish-card:focus-visible {
+  outline: 2px solid var(--gold-300);
+  outline-offset: 1px;
 }
 
 .dish-row {

@@ -136,6 +136,8 @@ export type CateringRequest = {
   street_address: string
   dishes: string
   other_dishes: string
+  allergies: string
+  picked_dishes: string
   contact_channel: string
   contact_handle: string
   job_kind: string

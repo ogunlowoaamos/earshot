@@ -150,17 +150,36 @@ dish** and does not open the menu. Clicking anywhere else in the chips area
 opens the menu. With nothing picked the row shows `.dish-pick__placeholder`
 "Choose the dishes".
 
-The menu is absolutely positioned under the control, `max-height: 320px` with
+The menu is absolutely positioned under the control, `max-height: 420px` with
 its own scroll, and closes on an outside `mousedown` or `Escape` (a `useEffect`
 watching `dishPickRef`). The "Goes well with" suggestion chips and the "Switch
 on as many as you need." hint stay outside the dropdown so they are always
 visible.
 
+**Inside the menu, each category shows its real dishes as small cards.** A
+category row is a `.dish-cat` two-column grid: the category checkbox on the
+left, and on the right a `.dish-cat__items` wrap of `.dish-card` buttons — one
+per dish in that category, 8px radius, 0.7rem, gold when picked. The dish names
+come from `api.menu()`, grouped by `category_slug` in the `dishesByCategory`
+memo. Categories with no dishes yet simply show no cards.
+
+Picking a dish calls `togglePickedDish(item)`, which adds the dish name to
+`pickedDishes` **and** switches its category on, because the deposit is priced
+on category slugs, not dish names. Picked dishes also appear as quieter
+`.dish-pick__chip--dish` pills in the control row, each removable on its own.
+Switching a category off drops that category's dish names too, so the two lists
+cannot drift apart.
+
+**Allergies.** Step 2 ends with "Any allergies we should know about?" — an
+optional 2-row textarea. It is stored in the `allergies` column, shown in the
+admin request card, and included in the notification text. The live summary
+grows an "Allergies" row only when something is typed.
+
 **Right column — the live summary.** Top to bottom:
 
 1. **Your request so far** — a dark card listing only the things filled in so
-   far: job, occasion, guests, date, dishes, extra dishes, venue, how to reach
-   you, notes. Empty rows are hidden.
+   far: job, occasion, guests, date, time, dishes, dishes picked, extra dishes,
+   allergies, venue, how to reach you, notes. Empty rows are hidden.
 2. **How the deposit is worked out** — a dark espresso card (`--bg-inverse`,
    which is `#14100c` in the light theme) with a gold heading, the price lines,
    the total, and the plain-English reason underneath the total.

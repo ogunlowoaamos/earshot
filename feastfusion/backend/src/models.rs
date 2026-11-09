@@ -222,6 +222,8 @@ pub struct CateringRequest {
     pub street_address: String,
     pub dishes: String,
     pub other_dishes: String,
+    pub allergies: String,
+    pub picked_dishes: String,
     pub contact_channel: String,
     pub contact_handle: String,
     pub job_kind: String,
@@ -366,6 +368,10 @@ pub struct NewCatering {
     pub dishes: Vec<String>,
     #[serde(default)]
     pub other_dishes: String,
+    #[serde(default)]
+    pub allergies: String,
+    #[serde(default)]
+    pub picked_dishes: String,
     #[serde(default)]
     pub contact_channel: String,
     #[serde(default)]

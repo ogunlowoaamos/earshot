@@ -90,6 +90,12 @@ pub fn catering_text(request: &CateringRequest) -> String {
     if !request.other_dishes.is_empty() {
         lines.push(format!("Also wants: {}", request.other_dishes));
     }
+    if !request.allergies.is_empty() {
+        lines.push(format!("Allergies: {}", request.allergies));
+    }
+    if !request.picked_dishes.is_empty() {
+        lines.push(format!("Dishes picked: {}", request.picked_dishes));
+    }
 
     lines.push(format!("Deposit: {}", naira(request.deposit_kobo)));
     if !request.deposit_reason.is_empty() {

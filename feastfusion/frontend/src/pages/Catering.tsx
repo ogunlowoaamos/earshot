@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, naira, type CateringRequest, type Pairing, type Quote } from '../lib/api'
+import {
+  api,
+  naira,
+  type CateringRequest,
+  type MenuItem,
+  type Pairing,
+  type Quote,
+} from '../lib/api'
 import { STATES, areasFor } from '../lib/states'
 import './Catering.css'
 
@@ -143,6 +150,11 @@ export function Catering() {
   const [guestCount, setGuestCount] = useState('50')
   const [dishes, setDishes] = useState<string[]>(['rice-grains', 'grills'])
   const [otherDishes, setOtherDishes] = useState('')
+  const [allergies, setAllergies] = useState('')
+  // The exact dishes picked inside each category, e.g. "Akara & Pap". The
+  // deposit still keys on the category, so this is what the caterer reads.
+  const [pickedDishes, setPickedDishes] = useState<string[]>([])
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   // The 17 categories live in a dropdown so step 2 stays short.
   const [dishesOpen, setDishesOpen] = useState(false)
   const dishPickRef = useRef<HTMLDivElement>(null)
@@ -230,6 +242,24 @@ export function Catering() {
     setDishes((prev) =>
       prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
     )
+    // Dropping a category drops the dishes picked inside it too.
+    if (dishes.includes(slug)) {
+      const names = new Set(
+        menuItems.filter((m) => m.category_slug === slug).map((m) => m.name),
+      )
+      setPickedDishes((prev) => prev.filter((n) => !names.has(n)))
+    }
+  }
+
+  /** Picking a dish also picks its category, because the deposit keys on that. */
+  function togglePickedDish(item: MenuItem) {
+    const on = pickedDishes.includes(item.name)
+    setPickedDishes((prev) =>
+      on ? prev.filter((n) => n !== item.name) : [...prev, item.name],
+    )
+    if (!on && !dishes.includes(item.category_slug)) {
+      setDishes((prev) => [...prev, item.category_slug])
+    }
   }
 
   // The dish dropdown closes on an outside click or Escape, like a real select.
@@ -283,6 +313,26 @@ export function Catering() {
       .catch(() => setPairings([]))
   }, [])
 
+  // The real dishes inside each category, so people can pick "Akara & Pap"
+  // rather than just "Breakfast". Read from the menu, never hardcoded.
+  useEffect(() => {
+    api
+      .menu()
+      .then(setMenuItems)
+      .catch(() => setMenuItems([]))
+  }, [])
+
+  /** Dishes grouped by category slug, in menu order. */
+  const dishesByCategory = useMemo(() => {
+    const map = new Map<string, MenuItem[]>()
+    for (const item of menuItems) {
+      const list = map.get(item.category_slug)
+      if (list) list.push(item)
+      else map.set(item.category_slug, [item])
+    }
+    return map
+  }, [menuItems])
+
   const suggestions = useMemo(() => {
     const chosen = new Set(dishes)
     const seen = new Set<string>()
@@ -335,6 +385,8 @@ export function Catering() {
         street_address: street,
         dishes,
         other_dishes: otherDishes,
+        allergies,
+        picked_dishes: pickedDishes.join(', '),
         contact_channel: contactChannel,
         contact_handle: contactHandle,
         job_kind: jobKind,
@@ -701,6 +753,36 @@ export function Catering() {
                             </span>
                           )
                         })}
+                        {pickedDishes.map((dishName) => (
+                          <span className="dish-pick__chip dish-pick__chip--dish" key={dishName}>
+                            <span className="dish-pick__chip-name">{dishName}</span>
+                            <button
+                              type="button"
+                              className="dish-pick__chip-x"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPickedDishes((prev) => prev.filter((n) => n !== dishName))
+                              }}
+                              aria-label={`Remove ${dishName}`}
+                              title={`Remove ${dishName}`}
+                            >
+                              <svg
+                                width="9"
+                                height="9"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M6 6l12 12M18 6L6 18"
+                                  stroke="currentColor"
+                                  strokeWidth="3.2"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                            </button>
+                          </span>
+                        ))}
                       </div>
                       <button
                         type="button"
@@ -727,8 +809,9 @@ export function Catering() {
                         <ul className="dish-list">
                           {DISH_CATEGORIES.map((c) => {
                             const on = dishes.includes(c.slug);
+                            const items = dishesByCategory.get(c.slug) ?? [];
                             return (
-                              <li key={c.slug}>
+                              <li key={c.slug} className="dish-cat">
                                 <label className={`dish-row ${on ? 'is-active' : ''}`}>
                                   <input
                                     type="checkbox"
@@ -749,6 +832,42 @@ export function Catering() {
                                   </span>
                                   <span className="dish-row__name">{c.label}</span>
                                 </label>
+                                {items.length > 0 && (
+                                  <div className="dish-cat__items">
+                                    {items.map((item) => {
+                                      const picked = pickedDishes.includes(item.name);
+                                      return (
+                                        <button
+                                          key={item.id}
+                                          type="button"
+                                          className={`dish-card${picked ? ' is-on' : ''}`}
+                                          aria-pressed={picked}
+                                          onClick={() => togglePickedDish(item)}
+                                        >
+                                          <span className="dish-card__name">{item.name}</span>
+                                          {picked && (
+                                            <span className="dish-card__tick" aria-hidden="true">
+                                              <svg
+                                                width="9"
+                                                height="9"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                              >
+                                                <path
+                                                  d="m5 13 4 4L19 7"
+                                                  stroke="currentColor"
+                                                  strokeWidth="3.6"
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                />
+                                              </svg>
+                                            </span>
+                                          )}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </li>
                             );
                           })}
@@ -788,6 +907,20 @@ export function Catering() {
                   />
                   <span className="field__hint">
                     Optional. Write in anything that is not in the list above.
+                  </span>
+                </div>
+
+                <div className="field">
+                  <label htmlFor="allergies">Any allergies we should know about?</label>
+                  <textarea
+                    id="allergies"
+                    rows={2}
+                    placeholder="e.g. no peanuts, one guest is dairy-free"
+                    value={allergies}
+                    onChange={(e) => setAllergies(e.target.value)}
+                  />
+                  <span className="field__hint">
+                    Optional. Tell us now and the kitchen will plan around it.
                   </span>
                 </div>
               </div>
@@ -1002,10 +1135,22 @@ export function Catering() {
                 <dt>Dishes</dt>
                 <dd>{dishLabels.length > 0 ? dishLabels.join(', ') : 'None picked yet'}</dd>
               </div>
+              {pickedDishes.length > 0 && (
+                <div>
+                  <dt>Dishes picked</dt>
+                  <dd>{pickedDishes.join(', ')}</dd>
+                </div>
+              )}
               {otherDishes.trim() && (
                 <div>
                   <dt>Also</dt>
                   <dd>{otherDishes.trim()}</dd>
+                </div>
+              )}
+              {allergies.trim() && (
+                <div>
+                  <dt>Allergies</dt>
+                  <dd>{allergies.trim()}</dd>
                 </div>
               )}
               <div>
