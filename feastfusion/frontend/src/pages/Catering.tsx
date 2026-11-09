@@ -119,7 +119,7 @@ function formatTime(value: string) {
 }
 
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1))
-const MINUTES = ['00', '15', '30', '45']
+const MINUTES = Array.from({ length: 59 }, (_, i) => String(i + 1).padStart(2, '0'))
 
 /** Turns the three dropdowns into the "14:30" the server stores. */
 function to24Hour(hour: string, minute: string, meridiem: string) {
@@ -145,7 +145,7 @@ export function Catering() {
   // spinner, which scrolls forever and is hard to use on a phone.
   const [timeHour, setTimeHour] = useState('')
   const [timeMinute, setTimeMinute] = useState('')
-  const [timeMeridiem, setTimeMeridiem] = useState<'' | 'am' | 'pm'>('')
+  const [timeMeridiem, setTimeMeridiem] = useState<'am' | 'pm'>('am')
   const [stateName, setStateName] = useState('FCT Abuja')
   const [lga, setLga] = useState('')
   const [street, setStreet] = useState('')
@@ -558,10 +558,8 @@ export function Catering() {
                           id="event_time_meridiem"
                           aria-label="am or pm"
                           value={timeMeridiem}
-                          onChange={(e) => setTimeMeridiem(e.target.value as '' | 'am' | 'pm')}
-                          required
+                          onChange={(e) => setTimeMeridiem(e.target.value as 'am' | 'pm')}
                         >
-                          <option value="">am/pm</option>
                           <option value="am">am</option>
                           <option value="pm">pm</option>
                         </select>

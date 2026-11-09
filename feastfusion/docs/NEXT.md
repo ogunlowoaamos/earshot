@@ -94,11 +94,13 @@ required by the form and by `create_catering`, which rejects an empty value with
 "What time do you need us?". The summary shows it as "2:30 pm" via `formatTime`,
 and the admin request list appends it after the date.
 
-The time is picked with three short dropdowns — hour (1–12), minutes
-(00/15/30/45) and am/pm — instead of `<input type="time">`. The browser's own
-time spinner scrolls forever and is awkward on a phone. `to24Hour()` in
-`Catering.tsx` turns the three picks into the `HH:MM` the server stores, and the
-`.time-pick` grid in `Catering.css` lays them out in three equal columns.
+The time is picked with three short dropdowns — hour (1–12), minutes (01–59)
+and am/pm — instead of `<input type="time">`. The browser's own time spinner
+scrolls forever and is awkward on a phone. The am/pm dropdown has only the two
+real choices, with `am` selected by default, so there is no empty third state to
+validate. `to24Hour()` in `Catering.tsx` turns the three picks into the `HH:MM`
+the server stores, and the `.time-pick` grid in `Catering.css` lays them out in
+three equal columns.
 
 **Right column — the live summary.** Top to bottom:
 
