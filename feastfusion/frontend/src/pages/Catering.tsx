@@ -65,6 +65,13 @@ const EVENT_TYPES = [
   { value: 'anniversary', label: 'Anniversary' },
 ] as const
 
+/**
+ * "Something else" jobs are usually a private arrangement rather than a party,
+ * so this occasion is offered there and picked for you. It has no per-guest
+ * rate, which is fine: those jobs are quoted by hand anyway.
+ */
+const PRIVATE_OCCASION = { value: 'private', label: 'Private / custom' } as const
+
 /** Dish categories, matching the slugs the backend prices against. */
 // Same names and same order as CATEGORIES in backend/src/catalogue.rs, so the
 // catering picker always reads like the menu chips. Slugs are what the deposit
@@ -225,10 +232,25 @@ export function Catering() {
   /** Leaving "Something else" drops the two follow-up answers with it. */
   function pickJobKind(next: JobKind) {
     setJobKind(next)
-    if (next !== 'custom') {
+    if (next === 'custom') {
+      // A private arrangement is the usual "something else" job, so pick it for
+      // them. The guest count is optional there, so start it blank.
+      setEventType(PRIVATE_OCCASION.value)
+      setGuestCount('')
+    } else {
       setCustomService('')
       setIngredientSource('')
+      // "Private / custom" has no per-guest rate, so it cannot stay selected
+      // once the job is a normal event or a cook-only job.
+      if (eventType === PRIVATE_OCCASION.value) setEventType('birthday')
+      if (!guestCount) setGuestCount('50')
     }
+  }
+
+  /** A normal occasion needs a headcount, so put a starting number back. */
+  function pickOccasion(next: string) {
+    setEventType(next)
+    if (next !== PRIVATE_OCCASION.value && !guestCount) setGuestCount('50')
   }
 
   // The caterer decides what goes with what in the admin page, so this list is
@@ -335,7 +357,10 @@ export function Catering() {
     CUSTOM_SERVICES.find((s) => s.value === customService)?.label ?? ''
   const ingredientSourceLabel =
     INGREDIENT_SOURCES.find((i) => i.value === ingredientSource)?.label ?? ''
-  const eventTypeLabel = EVENT_TYPES.find((t) => t.value === eventType)?.label ?? eventType
+  const eventTypeLabel =
+    (eventType === PRIVATE_OCCASION.value ? PRIVATE_OCCASION.label : '') ||
+    EVENT_TYPES.find((t) => t.value === eventType)?.label ||
+    eventType
   const dishLabels = dishes.map(
     (slug) => DISH_CATEGORIES.find((c) => c.slug === slug)?.label ?? slug,
   )
@@ -345,6 +370,9 @@ export function Catering() {
     ? `${CONTACT_CHANNELS.find((c) => c.value === contactChannel)?.label ?? contactChannel} · ${contactHandle.trim()}`
     : 'Not given yet'
   const eventTime = to24Hour(timeHour, timeMinute, timeMeridiem)
+  // A private arrangement has no fixed headcount, so the guest count is
+  // optional and the summary says so instead of showing "0 people".
+  const isPrivateOccasion = eventType === PRIVATE_OCCASION.value
 
   return (
     <div className="catering-page">
@@ -497,8 +525,11 @@ export function Catering() {
                       <select
                         id="event_type"
                         value={eventType}
-                        onChange={(e) => setEventType(e.target.value)}
+                        onChange={(e) => pickOccasion(e.target.value)}
                       >
+                        {jobKind === 'custom' && (
+                          <option value={PRIVATE_OCCASION.value}>{PRIVATE_OCCASION.label}</option>
+                        )}
                         {EVENT_TYPES.map((t) => (
                           <option key={t.value} value={t.value}>
                             {t.label}
@@ -508,7 +539,10 @@ export function Catering() {
                     </div>
 
                     <div className="field">
-                      <label htmlFor="guests">How many guests?</label>
+                      <label htmlFor="guests">
+                        How many guests?
+                        {isPrivateOccasion && <span className="field__optional"> optional</span>}
+                      </label>
                       <input
                         id="guests"
                         type="number"
@@ -516,8 +550,13 @@ export function Catering() {
                         inputMode="numeric"
                         value={guestCount}
                         onChange={(e) => setGuestCount(e.target.value)}
+                        required={!isPrivateOccasion}
                       />
-                      <span className="field__hint">A rough number is fine for now.</span>
+                      <span className="field__hint">
+                        {isPrivateOccasion
+                          ? 'Leave it blank if you are not sure yet. The caterer will work the number out with you.'
+                          : 'A rough number is fine for now.'}
+                      </span>
                     </div>
 
                     <div className="field">
@@ -854,7 +893,13 @@ export function Catering() {
               </div>
               <div>
                 <dt>Guests</dt>
-                <dd>{guestCount ? `${guestCount} people` : 'Not given yet'}</dd>
+                <dd>
+                  {guestCount
+                    ? `${guestCount} people`
+                    : isPrivateOccasion
+                      ? 'To be worked out'
+                      : 'Not given yet'}
+                </dd>
               </div>
               <div>
                 <dt>Date</dt>

@@ -258,6 +258,12 @@
   color: var(--text-inverse-muted);
 }
 
+/* "optional" sits inside the label, so it must not shout as loud as the label. */
+.catering-dark .field__optional {
+  font-weight: 400;
+  color: var(--text-inverse-muted);
+}
+
 .catering-dark .field select option {
   background: var(--white);
   color: var(--ink-900);

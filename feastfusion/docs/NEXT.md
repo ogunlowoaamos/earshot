@@ -102,6 +102,26 @@ time, and the chosen occasion is sent as `event_type` (it used to be hard-coded
 to `cook_only`). `quote_cook_only` in `backend/src/pricing.rs` ignores
 `event_type`, so the deposit maths is unchanged.
 
+**"Private / custom" is the default occasion for "Something else".** A
+"Something else" job is usually a private arrangement, not a party, so
+`PRIVATE_OCCASION` (`value: 'private'`) is added to the top of the occasion
+dropdown — but only while the job kind is `custom`. Picking "Something else"
+selects it and blanks the guest count; picking any other job kind removes the
+option, resets the occasion to `birthday` if it was private, and puts `50` back
+in the guest count.
+
+While the occasion is private the guest count is **optional**: the label gains a
+muted "optional" suffix (`.field__optional`), the input loses `required`, the
+hint becomes "Leave it blank if you are not sure yet. The caterer will work the
+number out with you.", and the summary row reads "To be worked out" instead of
+"Not given yet". `pickOccasion()` puts `50` back if a normal occasion is chosen
+while the count is still blank.
+
+No backend change was needed: `create_catering` only requires a guest count when
+`job_kind == "event"`, and `quote()` sends `custom` jobs down the
+"caterer will confirm the deposit" path without ever reading `event_type`, so an
+occasion with no per-guest rate is safe.
+
 **The time field.** `event_time` is a new column on `catering_requests`
 (migration `0006_catering_time.sql`, `TEXT NOT NULL DEFAULT ''`). It is
 required by the form and by `create_catering`, which rejects an empty value with
