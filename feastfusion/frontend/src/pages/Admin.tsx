@@ -347,13 +347,18 @@ function MenuPanel({ token }: { token: string }) {
 
   const groups = categories
     .map((c) => ({ cat: c, rows: shown.filter((it) => it.category_slug === c.slug) }))
-    .filter((g) => g.rows.length > 0)
+    // An empty category is only worth a section when the caterer asked for it
+    // by name, otherwise the page fills up with headings that have no dishes.
+    .filter((g) => g.rows.length > 0 || cat === g.cat.slug)
+
+  const onMenu = categories.filter((c) => c.is_approved).length
 
   return (
     <div className="admin-menu">
       <div className="admin-orders__bar">
         <span>
-          {items.length} dishes · {live} live · {unpriced} need a price
+          {items.length} dishes · {live} live · {unpriced} need a price ·{' '}
+          {onMenu} of {categories.length} categories on the customer menu
         </span>
         <button className="btn btn--primary btn--sm" onClick={() => setShowForm((v) => !v)}>
           {showForm ? 'Close' : '+ Add dish'}
@@ -397,6 +402,7 @@ function MenuPanel({ token }: { token: string }) {
           {categories.map((c) => (
             <option key={c.slug} value={c.slug}>
               {c.name}
+              {c.is_approved ? '' : ' (hidden)'}
             </option>
           ))}
         </select>
@@ -416,15 +422,16 @@ function MenuPanel({ token }: { token: string }) {
                   <h3>{c.name}</h3>
                   <span>
                     {rows.length} dishes · {on} switched on
+                    {c.is_approved ? '' : ' · hidden from customers'}
                   </span>
                 </div>
                 <div className="cat-group__bulk">
                   <button
-                    className={`status-btn${c.is_approved ? ' is-active' : ''}`}
+                    className={`status-btn status-btn--menu${c.is_approved ? ' is-active' : ''}`}
                     onClick={() => approve(c.slug, !c.is_approved)}
                     title="Customers only see categories that are on the menu"
                   >
-                    {c.is_approved ? 'On the menu' : 'Hidden'}
+                    {c.is_approved ? 'On the customer menu' : 'Hidden from customers'}
                   </button>
                   <button className="status-btn" onClick={() => bulk(c.slug, true)}>
                     Turn all on
@@ -434,6 +441,13 @@ function MenuPanel({ token }: { token: string }) {
                   </button>
                 </div>
               </div>
+
+              {rows.length === 0 && (
+                <p className="cat-empty">
+                  No dishes in this category yet. Add one with “+ Add dish”, or keep the
+                  category hidden from customers.
+                </p>
+              )}
 
               {rows.map((it) => (
                 <div key={it.id} className="cat-row">

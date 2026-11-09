@@ -218,6 +218,25 @@
   color: var(--on-gold);
 }
 
+/* The one switch that decides whether customers see the whole category, so it
+   reads as a state rather than another action button. */
+.status-btn--menu {
+  min-width: 11.5rem;
+  text-transform: none;
+}
+
+.status-btn--menu.is-active {
+  background: var(--gold-200);
+  border-color: var(--gold-400);
+  color: var(--on-gold);
+}
+
+.status-btn--menu:not(.is-active) {
+  background: transparent;
+  border-style: dashed;
+  color: var(--ink-400);
+}
+
 /* ---------- menu manager ---------- */
 
 .admin-menu__list {

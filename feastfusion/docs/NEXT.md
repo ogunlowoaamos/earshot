@@ -175,6 +175,39 @@ optional 2-row textarea. It is stored in the `allergies` column, shown in the
 admin request card, and included in the notification text. The live summary
 grows an "Allergies" row only when something is typed.
 
+**Only the categories the caterer has switched on are offered.** The picker
+does not use the hardcoded `DISH_CATEGORIES` list directly. An
+`api.categories()` effect stores the approved slugs in `approvedSlugs`
+(`null` until loaded, so the picker shows everything rather than flashing
+empty), and a `visibleCategories` memo filters the list. A second effect drops
+any already-picked category — and its picked dish names — if the caterer hides
+it while the form is open. `GET /api/menu` was also tightened: its `VISIBLE`
+const in `routes/menu.rs` now includes `c.is_approved = 1`, so a hidden
+category's dishes cannot leak through the menu endpoint either. The admin
+catalogue deliberately does not use `VISIBLE`, so the caterer still sees
+everything.
+
+**The dropdown opens on hover.** `onMouseEnter` on the `.dish-pick` wrapper
+opens the menu; `onMouseLeave` waits 140ms before closing, so moving the
+pointer down into the menu does not shut it. `openedByHover` remembers that the
+menu was opened by the pointer, so the first click on the caret keeps it open
+instead of toggling it shut.
+
+**Clicking blank space closes it.** The step-2 card carries
+`onClick={closeOnBlank}`. That handler returns early if the menu is already
+closed, ignores clicks that land on `.dish-row`, `.dish-card`,
+`.dish-pick__chip`, `.dish-pick__toggle` or `.dish-pick__chips`, and otherwise
+closes the menu. So the card's empty area — and the menu's own padding — both
+dismiss it, while picking a dish does not.
+
+**The admin side says the same thing in the same words.** The Catalogue tab's
+top bar now ends with `N of M categories on the customer menu`. Each category
+switch reads "On the customer menu" (solid gold) or "Hidden from customers"
+(dashed outline), the category head line appends `· hidden from customers`, the
+category filter marks hidden ones with ` (hidden)`, and a category with no
+dishes shows a note explaining it can stay hidden. Filtering to an empty
+category by name still shows it, so the caterer can add the first dish.
+
 **Right column — the live summary.** Top to bottom:
 
 1. **Your request so far** — a dark card listing only the things filled in so

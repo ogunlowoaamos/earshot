@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import {
   api,
@@ -155,9 +155,18 @@ export function Catering() {
   // deposit still keys on the category, so this is what the caterer reads.
   const [pickedDishes, setPickedDishes] = useState<string[]>([])
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
-  // The 17 categories live in a dropdown so step 2 stays short.
+  // The slugs the caterer has switched on in the admin page. `null` means the
+  // list has not arrived yet, so we fall back to showing everything rather
+  // than flashing an empty picker.
+  const [approvedSlugs, setApprovedSlugs] = useState<string[] | null>(null)
+  // The categories live in a dropdown so step 2 stays short.
   const [dishesOpen, setDishesOpen] = useState(false)
   const dishPickRef = useRef<HTMLDivElement>(null)
+  const dishHoverTimer = useRef<number | null>(null)
+  // Hover opens the menu, so a click on the caret right after would close it
+  // again. This remembers that hover did the opening, so the first click keeps
+  // it open instead of undoing it.
+  const openedByHover = useRef(false)
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -279,6 +288,20 @@ export function Catering() {
     }
   }, [dishesOpen])
 
+  /**
+   * The open menu sits on top of the card, so its own padding and the gaps
+   * between rows look like blank card. A click there — or anywhere else on the
+   * card that is not a dish control — puts the menu away.
+   */
+  function closeOnBlank(e: ReactMouseEvent<HTMLDivElement>) {
+    if (!dishesOpen) return
+    const target = e.target as HTMLElement
+    if (target.closest('.dish-row, .dish-card, .dish-pick__chip, .dish-pick__toggle, .dish-pick__chips')) {
+      return
+    }
+    setDishesOpen(false)
+  }
+
   /** Leaving "Something else" drops the two follow-up answers with it. */
   function pickJobKind(next: JobKind) {
     setJobKind(next)
@@ -322,6 +345,40 @@ export function Catering() {
       .catch(() => setMenuItems([]))
   }, [])
 
+  // The caterer decides which categories are on the menu. The server only
+  // returns the approved ones, so this is the same list the menu page shows.
+  useEffect(() => {
+    api
+      .categories()
+      .then((rows) => setApprovedSlugs(rows.map((c) => c.slug)))
+      .catch(() => setApprovedSlugs(null))
+  }, [])
+
+  /** Only the categories the caterer has switched on, in the usual order. */
+  const visibleCategories = useMemo(() => {
+    if (!approvedSlugs) return DISH_CATEGORIES
+    const on = new Set(approvedSlugs)
+    return DISH_CATEGORIES.filter((c) => on.has(c.slug))
+  }, [approvedSlugs])
+
+  // A category the caterer has since hidden must not stay picked, or the
+  // customer would be asking for something the kitchen no longer offers.
+  useEffect(() => {
+    if (!approvedSlugs) return
+    const on = new Set(approvedSlugs)
+    setDishes((prev) => {
+      const next = prev.filter((s) => on.has(s))
+      return next.length === prev.length ? prev : next
+    })
+    setPickedDishes((prev) => {
+      const next = prev.filter((name) => {
+        const item = menuItems.find((m) => m.name === name)
+        return !item || on.has(item.category_slug)
+      })
+      return next.length === prev.length ? prev : next
+    })
+  }, [approvedSlugs, menuItems])
+
   /** Dishes grouped by category slug, in menu order. */
   const dishesByCategory = useMemo(() => {
     const map = new Map<string, MenuItem[]>()
@@ -342,14 +399,14 @@ export function Catering() {
       if (!chosen.has(p.category_slug)) continue
       if (chosen.has(p.accompanies_slug)) continue
       if (seen.has(p.accompanies_slug)) continue
-      const match = DISH_CATEGORIES.find((c) => c.slug === p.accompanies_slug)
+      const match = visibleCategories.find((c) => c.slug === p.accompanies_slug)
       if (!match) continue
       seen.add(p.accompanies_slug)
       out.push({ slug: match.slug, label: match.label })
     }
 
     return out
-  }, [pairings, dishes])
+  }, [pairings, dishes, visibleCategories])
 
   function onStateChange(next: string) {
     setStateName(next)
@@ -705,12 +762,29 @@ export function Catering() {
               <div
                 id="catering-dishes-card"
                 className={`catering-step__card catering-dark${openSteps.includes('catering-dishes') ? '' : ' is-closed'}`}
+                onClick={closeOnBlank}
               >
                 <div className="field">
                   <span className="field__label" id="dishes-label">
                     Which dishes?
                   </span>
-                  <div className="dish-pick" ref={dishPickRef}>
+                  <div
+                    className="dish-pick"
+                    ref={dishPickRef}
+                    onMouseEnter={() => {
+                      if (dishHoverTimer.current) window.clearTimeout(dishHoverTimer.current)
+                      if (!dishesOpen) openedByHover.current = true
+                      setDishesOpen(true)
+                    }}
+                    onMouseLeave={() => {
+                      if (dishHoverTimer.current) window.clearTimeout(dishHoverTimer.current)
+                      openedByHover.current = false
+                      dishHoverTimer.current = window.setTimeout(
+                        () => setDishesOpen(false),
+                        140,
+                      )
+                    }}
+                  >
                     <div className={`dish-pick__control${dishesOpen ? ' is-open' : ''}`}>
                       <div
                         className="dish-pick__chips"
@@ -790,7 +864,14 @@ export function Catering() {
                         aria-expanded={dishesOpen}
                         aria-controls="dish-pick-menu"
                         aria-labelledby="dishes-label"
-                        onClick={() => setDishesOpen((v) => !v)}
+                        onClick={() => {
+                          if (openedByHover.current) {
+                            openedByHover.current = false
+                            setDishesOpen(true)
+                            return
+                          }
+                          setDishesOpen((v) => !v)
+                        }}
                       >
                         <span className="dish-pick__count" aria-hidden="true">
                           {dishes.length}
@@ -807,7 +888,7 @@ export function Catering() {
                         aria-labelledby="dishes-label"
                       >
                         <ul className="dish-list">
-                          {DISH_CATEGORIES.map((c) => {
+                          {visibleCategories.map((c) => {
                             const on = dishes.includes(c.slug);
                             const items = dishesByCategory.get(c.slug) ?? [];
                             return (

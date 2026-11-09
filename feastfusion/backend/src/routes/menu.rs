@@ -17,9 +17,12 @@ pub(crate) const MENU_SELECT: &str = "
     JOIN categories c ON c.id = m.category_id
 ";
 
-/// A dish reaches the customer only when the caterer switched it on AND put a
-/// price on it. A switched-on dish with no price would otherwise sell for zero.
-pub(crate) const VISIBLE: &str = "m.is_available = 1 AND m.price_kobo > 0";
+/// A dish reaches the customer only when the caterer switched it on, put a
+/// price on it, and left its category on the customer menu. A switched-on dish
+/// with no price would otherwise sell for zero, and a dish in a hidden category
+/// would leak a section the caterer has not finished.
+pub(crate) const VISIBLE: &str =
+    "m.is_available = 1 AND m.price_kobo > 0 AND c.is_approved = 1";
 
 pub async fn list_categories(State(state): State<AppState>) -> AppResult<Json<Vec<Category>>> {
     // Only the categories the caterer has approved. A category that is still
