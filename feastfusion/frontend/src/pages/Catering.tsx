@@ -118,6 +118,16 @@ function formatTime(value: string) {
   return date.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
+const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1))
+const MINUTES = ['00', '15', '30', '45']
+
+/** Turns the three dropdowns into the "14:30" the server stores. */
+function to24Hour(hour: string, minute: string, meridiem: string) {
+  if (!hour || !minute || !meridiem) return ''
+  const h = Number(hour) % 12 + (meridiem === 'pm' ? 12 : 0)
+  return `${String(h).padStart(2, '0')}:${minute}`
+}
+
 export function Catering() {
   const [jobKind, setJobKind] = useState<JobKind>('event')
   const [customService, setCustomService] = useState<CustomService | ''>('')
@@ -131,7 +141,11 @@ export function Catering() {
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [eventDate, setEventDate] = useState('')
-  const [eventTime, setEventTime] = useState('')
+  // The time is picked as three short dropdowns instead of the browser's
+  // spinner, which scrolls forever and is hard to use on a phone.
+  const [timeHour, setTimeHour] = useState('')
+  const [timeMinute, setTimeMinute] = useState('')
+  const [timeMeridiem, setTimeMeridiem] = useState<'' | 'am' | 'pm'>('')
   const [stateName, setStateName] = useState('FCT Abuja')
   const [lga, setLga] = useState('')
   const [street, setStreet] = useState('')
@@ -322,6 +336,7 @@ export function Catering() {
   const contactLine = contactHandle.trim()
     ? `${CONTACT_CHANNELS.find((c) => c.value === contactChannel)?.label ?? contactChannel} · ${contactHandle.trim()}`
     : 'Not given yet'
+  const eventTime = to24Hour(timeHour, timeMinute, timeMeridiem)
 
   return (
     <div className="catering-page">
@@ -509,14 +524,48 @@ export function Catering() {
                     </div>
 
                     <div className="field">
-                      <label htmlFor="event_time">What time?</label>
-                      <input
-                        id="event_time"
-                        type="time"
-                        value={eventTime}
-                        onChange={(e) => setEventTime(e.target.value)}
-                        required
-                      />
+                      <label htmlFor="event_time_hour">What time?</label>
+                      <div className="time-pick">
+                        <select
+                          id="event_time_hour"
+                          aria-label="Hour"
+                          value={timeHour}
+                          onChange={(e) => setTimeHour(e.target.value)}
+                          required
+                        >
+                          <option value="">Hour</option>
+                          {HOURS.map((h) => (
+                            <option key={h} value={h}>
+                              {h}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          id="event_time_minute"
+                          aria-label="Minutes"
+                          value={timeMinute}
+                          onChange={(e) => setTimeMinute(e.target.value)}
+                          required
+                        >
+                          <option value="">Min</option>
+                          {MINUTES.map((m) => (
+                            <option key={m} value={m}>
+                              {m}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          id="event_time_meridiem"
+                          aria-label="am or pm"
+                          value={timeMeridiem}
+                          onChange={(e) => setTimeMeridiem(e.target.value as '' | 'am' | 'pm')}
+                          required
+                        >
+                          <option value="">am/pm</option>
+                          <option value="am">am</option>
+                          <option value="pm">pm</option>
+                        </select>
+                      </div>
                       <span className="field__hint">The time the food should be ready.</span>
                     </div>
                   </div>

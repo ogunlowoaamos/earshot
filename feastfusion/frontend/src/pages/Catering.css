@@ -244,6 +244,21 @@
   color: var(--ink-900);
 }
 
+/* Hour / minutes / am-pm sit side by side so the time is three short picks
+   instead of one long scrolling spinner. */
+.time-pick {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--sp-2);
+}
+
+.time-pick select {
+  width: 100%;
+  padding-left: 0.7rem;
+  padding-right: 1.9rem;
+  background-position: right 0.6rem center;
+}
+
 /* Choice cards on the dark surface. */
 .catering-dark .choice {
   border-color: rgba(255, 255, 255, 0.16);
