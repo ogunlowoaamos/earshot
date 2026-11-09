@@ -162,11 +162,7 @@ export function Catering() {
   // The categories live in a dropdown so step 2 stays short.
   const [dishesOpen, setDishesOpen] = useState(false)
   const dishPickRef = useRef<HTMLDivElement>(null)
-  const dishHoverTimer = useRef<number | null>(null)
-  // Hover opens the menu, so a click on the caret right after would close it
-  // again. This remembers that hover did the opening, so the first click keeps
-  // it open instead of undoing it.
-  const openedByHover = useRef(false)
+    const dishHoverTimer = useRef<number | null>(null)
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -772,23 +768,21 @@ export function Catering() {
                     className="dish-pick"
                     ref={dishPickRef}
                     onMouseEnter={() => {
-                      if (dishHoverTimer.current) window.clearTimeout(dishHoverTimer.current)
-                      if (!dishesOpen) openedByHover.current = true
-                      setDishesOpen(true)
-                    }}
-                    onMouseLeave={() => {
-                      if (dishHoverTimer.current) window.clearTimeout(dishHoverTimer.current)
-                      openedByHover.current = false
-                      dishHoverTimer.current = window.setTimeout(
-                        () => setDishesOpen(false),
-                        140,
-                      )
-                    }}
+                                          if (dishHoverTimer.current) window.clearTimeout(dishHoverTimer.current)
+                                          setDishesOpen(true)
+                                        }}
+                                        onMouseLeave={() => {
+                                          if (dishHoverTimer.current) window.clearTimeout(dishHoverTimer.current)
+                                          dishHoverTimer.current = window.setTimeout(
+                                            () => setDishesOpen(false),
+                                            140,
+                                          )
+                                        }}
                   >
                     <div className={`dish-pick__control${dishesOpen ? ' is-open' : ''}`}>
                       <div
                         className="dish-pick__chips"
-                        onClick={() => setDishesOpen(true)}
+                        onClick={() => setDishesOpen((v) => !v)}
                       >
                         {dishes.length === 0 && (
                           <span className="dish-pick__placeholder">Choose the dishes</span>
@@ -864,14 +858,7 @@ export function Catering() {
                         aria-expanded={dishesOpen}
                         aria-controls="dish-pick-menu"
                         aria-labelledby="dishes-label"
-                        onClick={() => {
-                          if (openedByHover.current) {
-                            openedByHover.current = false
-                            setDishesOpen(true)
-                            return
-                          }
-                          setDishesOpen((v) => !v)
-                        }}
+                        onClick={() => setDishesOpen((v) => !v)}
                       >
                         <span className="dish-pick__count" aria-hidden="true">
                           {dishes.length}

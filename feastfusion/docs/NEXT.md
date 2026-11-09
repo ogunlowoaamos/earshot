@@ -192,11 +192,17 @@ category's dishes cannot leak through the menu endpoint either. The admin
 catalogue deliberately does not use `VISIBLE`, so the caterer still sees
 everything.
 
-**The dropdown opens on hover.** `onMouseEnter` on the `.dish-pick` wrapper
-opens the menu; `onMouseLeave` waits 140ms before closing, so moving the
-pointer down into the menu does not shut it. `openedByHover` remembers that the
-menu was opened by the pointer, so the first click on the caret keeps it open
-instead of toggling it shut.
+**The dropdown opens on hover and closes on click.** `onMouseEnter` on the
+`.dish-pick` wrapper opens the menu; `onMouseLeave` waits 140ms before closing,
+so moving the pointer down into the menu does not shut it. Both the chips area
+and the caret are plain toggles, so a click while it is open puts it away even
+though the pointer is still hovering. There is no "opened by hover" guard any
+more — that guard existed to stop the first click undoing the hover, which is
+exactly the behaviour people wanted the click to do.
+
+Because the menu is `position: absolute`, closing it does not change the card's
+height, so the pointer stays inside `.dish-pick` and the menu does not
+immediately re-open itself.
 
 **Clicking blank space closes it.** The step-2 card carries
 `onClick={closeOnBlank}`. That handler returns early if the menu is already
