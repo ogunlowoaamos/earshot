@@ -520,38 +520,105 @@
   position: relative;
 }
 
-.dish-pick__trigger {
+/* The trigger and the little clear × share one row. The × is a sibling, not a
+   child, because a button cannot live inside another button. */
+.dish-pick__control {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  width: 100%;
+  gap: var(--sp-1);
   min-height: 38px;
-  padding: 0.45rem 0.65rem;
+  padding: 0.3rem 0.35rem 0.3rem 0.4rem;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--r-sm);
   background: rgba(255, 255, 255, 0.06);
-  color: var(--text-inverse);
-  font-size: var(--step--1);
-  text-align: left;
-  cursor: pointer;
   transition: border-color var(--dur-fast) var(--ease-out);
 }
 
-.dish-pick__trigger:hover {
+.dish-pick__control:hover,
+.dish-pick__control.is-open {
   border-color: var(--gold-300);
 }
 
-.dish-pick__trigger:focus-visible {
-  outline: 2px solid var(--gold-300);
-  outline-offset: 2px;
+/* The picked dishes are chips, so each one can be taken off on its own. */
+.dish-pick__chips {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+  cursor: pointer;
 }
 
-.dish-pick__value {
-  flex: 1 1 auto;
-  min-width: 0;
+.dish-pick__placeholder {
+  padding: 0.15rem 0.25rem;
+  color: var(--text-inverse-muted);
+  font-size: var(--step--1);
+}
+
+.dish-pick__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  padding: 0.1rem 0.15rem 0.1rem 0.45rem;
+  border: 1px solid rgba(217, 162, 39, 0.45);
+  border-radius: var(--r-full);
+  background: rgba(217, 162, 39, 0.16);
+  color: var(--gold-100);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.dish-pick__chip-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.dish-pick__chip-x {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.75;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+.dish-pick__chip-x:hover {
+  background: rgba(217, 162, 39, 0.4);
+  opacity: 1;
+}
+
+.dish-pick__chip-x:focus-visible {
+  outline: 2px solid var(--gold-300);
+  outline-offset: 1px;
+}
+
+.dish-pick__toggle {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.2rem 0.3rem;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-inverse);
+  cursor: pointer;
+}
+
+.dish-pick__toggle:focus-visible {
+  outline: 2px solid var(--gold-300);
+  outline-offset: 2px;
 }
 
 .dish-pick__count {
@@ -578,7 +645,7 @@
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
-.dish-pick__trigger.is-open .dish-pick__chev {
+.dish-pick__control.is-open .dish-pick__chev {
   transform: rotate(-135deg) translate(-2px, -2px);
 }
 

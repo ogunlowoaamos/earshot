@@ -659,22 +659,63 @@ export function Catering() {
                     Which dishes?
                   </span>
                   <div className="dish-pick" ref={dishPickRef}>
-                    <button
-                      type="button"
-                      className={`dish-pick__trigger${dishesOpen ? ' is-open' : ''}`}
-                      aria-expanded={dishesOpen}
-                      aria-controls="dish-pick-menu"
-                      aria-labelledby="dishes-label"
-                      onClick={() => setDishesOpen((v) => !v)}
-                    >
-                      <span className="dish-pick__value">
-                        {dishLabels.length > 0 ? dishLabels.join(', ') : 'Choose the dishes'}
-                      </span>
-                      <span className="dish-pick__count" aria-hidden="true">
-                        {dishes.length}
-                      </span>
-                      <span className="dish-pick__chev" aria-hidden="true" />
-                    </button>
+                    <div className={`dish-pick__control${dishesOpen ? ' is-open' : ''}`}>
+                      <div
+                        className="dish-pick__chips"
+                        onClick={() => setDishesOpen(true)}
+                      >
+                        {dishes.length === 0 && (
+                          <span className="dish-pick__placeholder">Choose the dishes</span>
+                        )}
+                        {dishes.map((slug) => {
+                          const label =
+                            DISH_CATEGORIES.find((c) => c.slug === slug)?.label ?? slug
+                          return (
+                            <span className="dish-pick__chip" key={slug}>
+                              <span className="dish-pick__chip-name">{label}</span>
+                              <button
+                                type="button"
+                                className="dish-pick__chip-x"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toggleDish(slug)
+                                }}
+                                aria-label={`Remove ${label}`}
+                                title={`Remove ${label}`}
+                              >
+                                <svg
+                                  width="9"
+                                  height="9"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    d="M6 6l12 12M18 6L6 18"
+                                    stroke="currentColor"
+                                    strokeWidth="3.2"
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                              </button>
+                            </span>
+                          )
+                        })}
+                      </div>
+                      <button
+                        type="button"
+                        className="dish-pick__toggle"
+                        aria-expanded={dishesOpen}
+                        aria-controls="dish-pick-menu"
+                        aria-labelledby="dishes-label"
+                        onClick={() => setDishesOpen((v) => !v)}
+                      >
+                        <span className="dish-pick__count" aria-hidden="true">
+                          {dishes.length}
+                        </span>
+                        <span className="dish-pick__chev" aria-hidden="true" />
+                      </button>
+                    </div>
 
                     {dishesOpen && (
                       <div
