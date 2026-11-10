@@ -1464,11 +1464,6 @@ function NewItemForm({
             title="What should this dish ask?"
             hint="Switch on the questions customers should answer. You can change these later."
           />
-
-          {error && <p className="form-error">{error}</p>}
-          <button className="btn btn--primary" type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Save item'}
-          </button>
         </div>
 
         <aside className="admin-new__preview" aria-label="Live preview">
@@ -1485,6 +1480,13 @@ function NewItemForm({
             categoryName={categoryName}
           />
         </aside>
+      </div>
+
+      <div className="admin-new__foot">
+        {error && <p className="form-error">{error}</p>}
+        <button className="btn btn--primary" type="submit" disabled={busy}>
+          {busy ? 'Saving…' : 'Save item'}
+        </button>
       </div>
     </form>
   )

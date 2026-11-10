@@ -645,19 +645,41 @@ before saving.
   group ("Choices come from the small-chops list.")
 
 **How it is laid out.** `.admin-new__cols` is a two-column grid: the fields
-take whatever is left, the preview is a fixed 420px. The preview is
-`position: sticky` at `top: calc(var(--header-h) + var(--sp-3))`, so it stays
-in view while the form scrolls past it. Below 1100px the grid becomes one
-column and the preview drops underneath the form at full width.
+take whatever is left, the preview is a fixed 420px.
 
 The four-column field row now starts at 1500px instead of 1200px, because the
 preview takes 420px of the width first.
 
+**The form is pinned, not the preview.** The whole form is
+`position: sticky` at `top: calc(var(--header-h) + var(--sp-3))` with
+`max-height: calc(100vh - var(--header-h) - var(--sp-5))`, so it stays put
+under the header while the page behind it scrolls, and it never grows taller
+than the window. Inside it, `.admin-new__fields` and `.admin-new__preview`
+each get `min-height: 0; overflow-y: auto`, so the boxes and the picture
+scroll on their own instead of dragging the form out of view. Both need
+`min-height: 0` on `.admin-new__cols` too, or the inner scrolling does not
+engage.
+
+The error message and the Save button live in `.admin-new__foot`, a row
+*below* the two scrolling columns, so Save is always reachable without
+scrolling the form.
+
+`.dish-preview__media` is capped at `max-height: 200px`. At 420px wide a 4/3
+picture is 315px tall, which on a short screen ate almost the whole card and
+left a sliver for the words.
+
+Below 1100px the grid becomes one column, the preview drops underneath at
+full width, and `.admin-new` goes back to `position: static` with no height
+cap — on a narrow screen the form scrolls with the page like any other block.
+
 **Verified live:** at 1920 the fields are 1392px and the preview 420px, side
-by side. At 1366 the fields are 838px and the preview 420px, still side by
-side. At 900 the preview drops underneath at 808px wide. Name, price and the
-switched-on groups all update as the form is filled, in both themes, with no
-horizontal overflow at any of the three widths.
+by side; the form is 797px tall and sits at `y:64` both before and after
+scrolling the page 1000px. At 1366 the fields are 838px and the preview
+420px; the form is 573px tall, stays at `y:64`, and the fields column scrolls
+inside itself (`scrollHeight 683` in a `472` box). At 900 the form is static
+and 1378px tall, with the preview underneath at 808px wide. Name, price and
+the switched-on groups all update as the form is filled, in both themes, with
+no horizontal overflow at any of the three widths.
 
 ## Not finished
 

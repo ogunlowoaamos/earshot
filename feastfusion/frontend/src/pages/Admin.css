@@ -316,24 +316,32 @@
   background: rgba(179, 52, 31, 0.08);
 }
 
+/* The form is its own work surface: it pins under the header and scrolls
+   inside itself, so the page behind it never drags it out of view. */
 .admin-new {
+  position: sticky;
+  top: calc(var(--header-h) + var(--sp-3));
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
+  max-height: calc(100vh - var(--header-h) - var(--sp-5));
   padding: var(--sp-4);
   background: var(--cream);
   border: 1px dashed var(--border-strong);
   border-radius: var(--r-lg);
   margin-bottom: var(--sp-4);
+  overflow: hidden;
 }
 
-/* Fields on the left, a live picture of the dish on the right. The preview
-   sticks so it stays in view while the caterer works down a long form. */
+/* Fields on the left, a live picture of the dish on the right. Both columns
+   scroll on their own, so the preview never leaves the screen. */
 .admin-new__cols {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
   gap: var(--sp-4);
-  align-items: start;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 .admin-new__fields {
@@ -341,15 +349,18 @@
   flex-direction: column;
   gap: var(--sp-3);
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: var(--sp-2);
 }
 
 .admin-new__preview {
-  position: sticky;
-  top: calc(var(--header-h) + var(--sp-3));
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .admin-new__preview-label {
@@ -360,15 +371,39 @@
   color: var(--text-muted);
 }
 
+/* The save button sits outside the scrolling columns so it is always
+   reachable without scrolling the form. */
+.admin-new__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+
+.admin-new__foot .form-error {
+  margin: 0;
+}
+
 /* Below this the two columns would each be too narrow to be useful, so the
-   preview drops underneath the form instead. */
+   preview drops underneath the form and the whole thing scrolls with the
+   page again. */
 @media (max-width: 1100px) {
+  .admin-new {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
   .admin-new__cols {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .admin-new__fields,
   .admin-new__preview {
-    position: static;
+    overflow: visible;
+    padding-right: 0;
   }
 }
 
@@ -382,7 +417,6 @@
   border-radius: var(--r-lg);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
-  max-height: calc(100vh - var(--header-h) - var(--sp-7));
 }
 
 .dish-preview__media {
@@ -391,6 +425,9 @@
   align-items: center;
   justify-content: center;
   aspect-ratio: 4 / 3;
+  /* On a short screen the picture would eat the whole card, so it is capped
+     and the words underneath keep room to breathe. */
+  max-height: 200px;
   background: var(--ink-100);
   flex: 0 0 auto;
 }
