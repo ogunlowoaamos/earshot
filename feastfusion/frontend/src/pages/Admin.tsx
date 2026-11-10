@@ -1261,53 +1261,57 @@ function NewItemForm({
         <div className="field">
           <label>Tags</label>
           <TagBox value={tags} onChange={setTags} suggestions={tagList} />
-          <span className="field__hint">
-            Pick from the list or type a new one and press Enter.
-          </span>
+          <span className="field__hint">Pick from the list or type a new one.</span>
         </div>
 
         <div className="field panel__full">
           <label>Media</label>
           <div className="media">
-            <div className="media__row">
-              <span className="media__label">Image URL</span>
-              <input
-                value={form.image_url}
-                onChange={(e) => set('image_url', e.target.value)}
-                placeholder="https://…"
-              />
+            <div className="media__col">
+              <span className="media__label">Picture</span>
+              <div className="media__pick">
+                <input
+                  value={form.image_url}
+                  onChange={(e) => set('image_url', e.target.value)}
+                  placeholder="Paste a link, or upload →"
+                />
+                <label className="media__btn">
+                  {uploading === 'image' ? 'Uploading…' : 'Upload'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => upload('image', e.target.files?.[0])}
+                  />
+                </label>
+              </div>
             </div>
-            <div className="media__row">
-              <span className="media__label">Or upload a picture</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => upload('image', e.target.files?.[0])}
-              />
-              {uploading === 'image' && <span className="media__note">Uploading…</span>}
+            <div className="media__col">
+              <span className="media__label">Video (optional)</span>
+              <div className="media__pick">
+                <input
+                  value={form.video_url}
+                  onChange={(e) => set('video_url', e.target.value)}
+                  placeholder="Paste a link, or upload →"
+                />
+                <label className="media__btn">
+                  {uploading === 'video' ? 'Uploading…' : 'Upload'}
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => upload('video', e.target.files?.[0])}
+                  />
+                </label>
+              </div>
             </div>
-            <div className="media__row">
-              <span className="media__label">Video URL</span>
-              <input
-                value={form.video_url}
-                onChange={(e) => set('video_url', e.target.value)}
-                placeholder="https://… (optional)"
-              />
-            </div>
-            <div className="media__row">
-              <span className="media__label">Or upload a video</span>
-              <input
-                type="file"
-                accept="video/*"
-                onChange={(e) => upload('video', e.target.files?.[0])}
-              />
-              {uploading === 'video' && <span className="media__note">Uploading…</span>}
-            </div>
-            {form.image_url && (
-              <img className="media__preview" src={form.image_url} alt="Dish preview" />
-            )}
-            {form.video_url && (
-              <video className="media__preview" src={form.video_url} controls muted />
+            {(form.image_url || form.video_url) && (
+              <div className="media__previews">
+                {form.image_url && (
+                  <img className="media__preview" src={form.image_url} alt="Dish preview" />
+                )}
+                {form.video_url && (
+                  <video className="media__preview" src={form.video_url} controls muted />
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -1329,8 +1333,7 @@ function NewItemForm({
             placeholder={'Long grain rice\nTomato and pepper base\nChicken stock'}
           />
           <span className="field__hint">
-            One per line, or separated by commas — either is fine. Customers see this when they open
-            the dish. Leave it blank if you would rather not list them.
+            One per line, or separated by commas. Leave blank to skip.
           </span>
         </div>
       </div>
@@ -1340,7 +1343,7 @@ function NewItemForm({
         groups={groups}
         onToggle={toggleLibraryGroup}
         title="What should this dish ask?"
-        hint="Switch on the questions customers should answer for this dish. You can change them later from the dish's Options button."
+        hint="Switch on the questions customers should answer. You can change these later."
       />
 
       {error && <p className="form-error">{error}</p>}

@@ -548,9 +548,8 @@ A new `TagBox` component draws the chips, filters the suggestion list as the
 caterer types, commits on Enter or comma, and removes on Backspace or the ×.
 The Category field has a "+ Add a new category" link that swaps in an inline
 input; adding one calls the endpoint, appends it to `MenuPanel`'s list through
-the new `onCategoryAdded` prop, and selects it. The Media block has four rows —
-image URL, image upload, video URL, video upload — plus a live preview of
-whichever is set. Ingredients are split on `/[\n,]/`, so both styles work.
+the new `onCategoryAdded` prop, and selects it. Ingredients are split on
+`/[\n,]/`, so both styles work.
 
 **Verified live:** the library returns 19 groups ending in Centilitre (CL) and
 Litres; `/api/admin/tags` returns 57 tags; a category was created (and a
@@ -566,6 +565,44 @@ all removed afterwards.
 **Open questions for the user.** Should a new category start hidden instead of
 live? Should the tag list stay limited to tags already in use, or should the
 caterer be able to curate it? What video size cap is acceptable — 60MB today.
+
+## The Add item form, made compact
+
+The form was 1073px tall, which meant scrolling past it to reach the Save
+button. It is now **740px** — 333px shorter, about a third — without losing a
+single field.
+
+**The media block was the main offender.** It used to be four stacked rows
+(image URL, image upload, video URL, video upload), 235px tall. It is now two
+columns — Picture and Video — with the link box and the upload button sharing
+one line each, so it is **83px**. The file input is still a real
+`<input type="file">`, just made invisible inside a `.media__btn` label, so
+clicking the label opens the picker exactly as before. The button text doubles
+as the progress note ("Uploading…"), which removed the separate `.media__note`
+span.
+
+**Everything else was tightened, scoped to `.admin-new` only** so no other form
+on the site changed:
+
+| What | Before | After |
+| --- | --- | --- |
+| Form gap | `--sp-4` (1rem) | `--sp-3` (0.75rem) |
+| Form padding | `clamp(1rem, 3vw, 1.5rem)` | `--sp-4` (1rem) |
+| Field gap | `--sp-2` (0.5rem) | `0.3rem` |
+| Input padding | `0.8rem 1rem` | `0.5rem 0.65rem` |
+| Textarea height | 96px | 72px |
+| Hint text | `--step--1` | `0.72rem` |
+| Switchboard padding | `--sp-3` | `--sp-2 --sp-3` |
+| Switch chip | `0.35rem 0.6rem`, 0.72rem | `0.22rem 0.5rem`, 0.68rem |
+| Tag box | `min-height: 2.6rem` | `min-height: 2.1rem` |
+
+The three long hint sentences were also shortened to one line each, which is
+what let the field gaps close up.
+
+**Verified live:** the form measures 740px in both themes, the two media
+columns sit side by side (same `y`, 613px each), no horizontal overflow, and a
+real file upload through the new hidden input still fills the URL box and draws
+the preview. The test upload was deleted afterwards.
 
 ## Not finished
 
@@ -615,6 +652,8 @@ their own pricing rules in the Rust backend, instead of being folded into
 - **`POST /api/orders` requires `payment_method`** and `delivery_state` (not `state`). Active delivery zones are FCT Abuja, Nasarawa and Niger only.
 - **There is no `order_item_options` table.** Picks are one `options_text` string on `order_items`, joined with `" | "`. That is why a typed size is appended to the label rather than stored in its own column.
 - **`POST /api/admin/upload` takes the file in a field named `file`.** It returns `{ url, kind }`; the URL is already the `/uploads/…` path the frontend can store directly.
+- **The Add item form's upload button is a `<label>` wrapping a hidden file input.** Do not "fix" it into a visible `<input type="file">` — that is what made the media block 235px tall. The input is `opacity: 0` and absolutely positioned over the label, so it stays clickable and keyboard-reachable.
+- **`.admin-new` overrides are scoped on purpose.** The compact input padding and 72px textarea live under `.admin-new`, not in `global.css`, because the global `.field` rules are shared with checkout, catering and the admin options editor.
 - **A new category is created approved.** `POST /api/admin/categories` sets `is_approved = 1`, so it shows on the customer menu immediately. Flip it off from the Catalogue tab if that is wrong.
 - **`Stop-Process` is blocked inside a `ForEach-Object` pipeline.** Use a `foreach` loop or a standalone call. The running exe locks `target\debug\feastfusion-api.exe`, so it must be stopped before `cargo build`.
 - **The backend takes longer than 40s to boot.** Poll `/api/menu` with retries; there is no `/api/health`.

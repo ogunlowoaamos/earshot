@@ -303,8 +303,8 @@
 .admin-new {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
-  padding: clamp(var(--sp-4), 3vw, var(--sp-5));
+  gap: var(--sp-3);
+  padding: var(--sp-4);
   background: var(--cream);
   border: 1px dashed var(--border-strong);
   border-radius: var(--r-lg);
@@ -313,6 +313,30 @@
 
 .admin-new .btn {
   align-self: flex-start;
+}
+
+/* The add-item form is long, so it runs tighter than the rest of the site. */
+.admin-new .panel__grid {
+  gap: var(--sp-3);
+}
+
+.admin-new .field {
+  gap: 0.3rem;
+}
+
+.admin-new .field input,
+.admin-new .field select,
+.admin-new .field textarea {
+  padding: 0.5rem 0.65rem;
+}
+
+.admin-new .field textarea {
+  min-height: 4.5rem;
+}
+
+.admin-new .field__hint {
+  font-size: 0.72rem;
+  line-height: 1.35;
 }
 
 /* ---------- add item: category, tags, media ---------- */
@@ -354,10 +378,10 @@
 .tagbox__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.3rem;
   align-items: center;
-  padding: 0.4rem 0.5rem;
-  min-height: 2.6rem;
+  padding: 0.3rem 0.4rem;
+  min-height: 2.1rem;
   background: var(--white);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
@@ -449,46 +473,85 @@
 }
 
 .media {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+.media__col {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.media__row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  align-items: center;
-}
-
-.media__label {
-  flex: 0 0 10rem;
-  font-size: 0.82rem;
-  color: var(--ink-500);
-}
-
-.media__row input[type='text'],
-.media__row input:not([type]) {
-  flex: 1 1 14rem;
+  gap: 0.3rem;
   min-width: 0;
 }
 
-.media__note {
-  font-size: 0.8rem;
-  color: var(--gold-500);
+.media__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-500);
+}
+
+/* The link box and the upload button share one line, so the media block is
+   two rows instead of four. */
+.media__pick {
+  display: flex;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.media__pick input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.media__btn {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--white);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-600);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.media__btn:hover {
+  border-color: var(--gold-300);
+  color: var(--ink-900);
+}
+
+/* The real file input stays in the DOM for the click, but is not drawn. */
+.media__btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.media__previews {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 
 .media__preview {
-  max-width: 15rem;
-  max-height: 11rem;
+  max-width: 8rem;
+  max-height: 5.5rem;
   border-radius: var(--r-sm);
   border: 1px solid var(--border);
   object-fit: cover;
 }
 
 @media (max-width: 640px) {
-  .media__label {
-    flex-basis: 100%;
+  .media {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -840,8 +903,8 @@
 .cat-switchboard {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
+  gap: 0.4rem;
+  padding: var(--sp-2) var(--sp-3);
   border-radius: var(--r-sm);
   background: var(--gold-veil);
   border: 1px solid var(--border-strong);
@@ -850,35 +913,35 @@
 .cat-switchboard__head {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
 }
 
 .cat-switchboard__head strong {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--ink-800);
 }
 
 .cat-switchboard__head span {
-  font-size: 0.7rem;
-  line-height: 1.45;
+  font-size: 0.68rem;
+  line-height: 1.35;
   color: var(--ink-600);
 }
 
 .cat-switchboard__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.3rem;
 }
 
 .cat-switch {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.6rem;
+  gap: 0.3rem;
+  padding: 0.22rem 0.5rem;
   border-radius: 999px;
   border: 1px solid var(--border-strong);
   background: var(--white);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   color: var(--ink-600);
   cursor: pointer;
