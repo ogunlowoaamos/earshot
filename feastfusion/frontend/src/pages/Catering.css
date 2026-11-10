@@ -57,7 +57,7 @@
 .catering-page__body {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
-  gap: clamp(var(--sp-5), 4vw, var(--sp-7));
+  gap: clamp(var(--sp-4), 3vw, var(--sp-6));
   align-items: start;
   padding-top: var(--sp-5);
 }
@@ -65,7 +65,7 @@
 .catering-page__rail {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
   align-self: start;
 }
 
@@ -145,7 +145,7 @@
   flex-direction: column;
   gap: var(--sp-3);
   padding: var(--sp-3);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
   border-radius: 8px;
   background: var(--bg-elevated);
 }
@@ -487,7 +487,7 @@
   gap: var(--sp-3);
   padding: var(--sp-3);
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
   border-radius: 8px;
   box-shadow: var(--shadow-sm);
 }
@@ -908,7 +908,7 @@
   flex-direction: column;
   gap: var(--sp-2);
   padding: var(--sp-3);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
   border-radius: 8px;
   background: var(--bg);
 }
@@ -1029,7 +1029,7 @@
   gap: var(--sp-3);
   padding: var(--sp-8) var(--sp-5);
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
   border-radius: 8px;
 }
 

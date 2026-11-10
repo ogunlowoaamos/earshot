@@ -267,7 +267,7 @@
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
   grid-template-rows: auto auto;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
 }
 
 .way {
@@ -276,8 +276,8 @@
   gap: var(--sp-3);
   padding: clamp(var(--sp-5), 3vw, var(--sp-6));
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  border-radius: var(--r-sm);
   transition:
     transform var(--dur-base) var(--ease-out),
     box-shadow var(--dur-base) var(--ease-out);
@@ -675,7 +675,7 @@
 .voices__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-5);
+  gap: var(--sp-4);
   align-items: start;
 }
 
@@ -686,8 +686,8 @@
   gap: var(--sp-4);
   padding: var(--sp-5);
   background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  border-radius: var(--r-sm);
   box-shadow: var(--shadow-sm);
 }
 

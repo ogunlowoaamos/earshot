@@ -852,6 +852,29 @@ Status buttons 27px tall with 10.5px text, payment dropdown 28px, "Sign out"
 and "Refresh" both 23px tall with 11px text. Orders page 1,761px → 1,651px.
 Two cards per row at 1366 and 1920, no sideways scroll, both themes.
 
+## The cards sit closer together, with a thinner edge
+
+The rate cards on the deposit calculator were 8px apart with a full-strength
+border. They are now 4px apart, the border is a soft hairline (the same colour
+at 55% strength), the corners are 8px instead of 16px, and the padding is
+tighter top and bottom. The page went from 1,733px to 1,577px.
+
+The same treatment was then applied to the customer pages so they match:
+
+- **Menu** — the dish cards are 12px apart instead of 16px, with the soft
+  hairline and 8px corners.
+- **Landing** — the "ways" cards are 12px apart instead of 16px, the
+  testimonials 16px instead of 24px, both with the soft hairline and 8px
+  corners.
+- **Catering** — the step cards, the side panel, the summary and the "done"
+  panel all use the soft hairline. The gap between the form and the side panel
+  is 32px instead of 48px, and the rail gap is 12px instead of 16px.
+
+**Verified live:** rate cards 4px apart, 8px corners, 8px/12px padding, page
+1,733px → 1,577px. Menu cards 12px apart with 8px corners. Landing "ways" 12px
+apart, testimonials 16px apart. Catering side panel 12px gap. No sideways
+scroll on any page, both themes, at 1920 and 1366.
+
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.
@@ -872,6 +895,9 @@ The user wants every page except the landing page to fit the screen like an app.
 | `/checkout` | 1641px | yes, about 740px too tall |
 | `/track` | 900px | no |
 | `/admin` | 900px | no |
+
+The deposit calculator tab is 1,577px tall (it was 2,451px before the compact
+pass).
 
 So `/menu` and `/checkout` are the two pages left to squeeze.
 

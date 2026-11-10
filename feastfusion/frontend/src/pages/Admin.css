@@ -1776,7 +1776,7 @@
 .pricing-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
 }
 
 .pricing-panel__intro {
@@ -1789,7 +1789,7 @@
 .pricing-group {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-2);
+  gap: var(--sp-1);
   align-items: start;
 }
 
@@ -1815,9 +1815,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  padding: var(--sp-3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  padding: var(--sp-2) var(--sp-3);
+  /* A hairline that reads thinner than a full-strength border. */
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  border-radius: var(--r-sm);
   background: var(--bg-elevated);
   min-width: 0;
 }
