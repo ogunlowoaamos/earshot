@@ -168,7 +168,7 @@
 
 .admin-order {
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-lg);
   padding: var(--sp-3);
   display: flex;
@@ -277,7 +277,7 @@
 
 .admin-order__pays select {
   padding: 0.25rem 2rem 0.25rem 0.5rem;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   border-radius: var(--r-sm);
   background-color: var(--white);
   font-size: 0.7rem;
@@ -316,7 +316,7 @@
 .status-btn {
   padding: 0.4rem 0.8rem;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   background: var(--white);
   font-size: 0.72rem;
   font-weight: 600;
@@ -372,7 +372,7 @@
   align-items: center;
   padding: var(--sp-3);
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-md);
 }
 
@@ -431,7 +431,7 @@
   max-height: calc(100vh - var(--header-h) - var(--sp-5));
   padding: var(--sp-4);
   background: var(--cream);
-  border: 1px dashed var(--border-strong);
+  border: 1px dashed var(--border-hair-strong);
   border-radius: var(--r-lg);
   margin-bottom: var(--sp-4);
   overflow: hidden;
@@ -517,7 +517,7 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-lg);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -781,7 +781,7 @@
   padding: 0.3rem 0.4rem;
   min-height: 2.1rem;
   background: var(--white);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   border-radius: var(--r-sm);
 }
 
@@ -847,7 +847,7 @@
   padding: 0.25rem;
   list-style: none;
   background: var(--white);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   border-radius: var(--r-sm);
   box-shadow: 0 12px 28px rgba(20, 16, 12, 0.14);
 }
@@ -897,7 +897,7 @@
   display: inline-flex;
   align-items: center;
   padding: 0.5rem 0.7rem;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   border-radius: var(--r-sm);
   background: var(--white);
   font-size: 0.75rem;
@@ -935,7 +935,7 @@
   width: 6.5rem;
   height: 4.5rem;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   background: var(--ink-100);
   overflow: hidden;
 }
@@ -1043,7 +1043,7 @@
   min-width: 0;
   padding: 0.55rem 0.75rem;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   background: var(--white);
   font-size: var(--step--1);
   color: var(--ink-800);
@@ -1053,7 +1053,7 @@
   flex: 0 1 220px;
   padding: 0.55rem 0.75rem;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   background-color: var(--white);
   font-size: var(--step--1);
   color: var(--ink-800);
@@ -1109,7 +1109,7 @@
 .cat-row {
   padding: var(--sp-3);
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-md);
   min-width: 0;
 }
@@ -1206,7 +1206,7 @@
   gap: 2px;
   padding: 0.3rem 0.5rem;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   background: var(--white);
   font-size: 0.72rem;
   color: var(--ink-400);
@@ -1266,7 +1266,7 @@
 }
 
 .pairing {
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-md);
   background: var(--bg-elevated);
   overflow: hidden;
@@ -1343,7 +1343,7 @@
   gap: var(--sp-2);
   min-height: 34px;
   padding: 0 var(--sp-2);
-  border: 1.5px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   border-radius: var(--r-sm);
   background: var(--white);
   font-size: 0.72rem;
@@ -1372,7 +1372,7 @@
   place-items: center;
   width: 16px;
   height: 16px;
-  border: 1.5px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   border-radius: var(--r-full);
   color: transparent;
   transition:
@@ -1413,7 +1413,7 @@
   padding: var(--sp-3);
   border-radius: var(--r-sm);
   background: var(--cream);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
 }
 
 /* The on/off switches for the questions a dish is allowed to ask. */
@@ -1424,7 +1424,7 @@
   padding: var(--sp-2) var(--sp-3);
   border-radius: var(--r-sm);
   background: var(--gold-veil);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
 }
 
 .cat-switchboard__head {
@@ -1456,7 +1456,7 @@
   gap: 0.3rem;
   padding: 0.22rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   background: var(--white);
   font-size: 0.68rem;
   font-weight: 600;
@@ -1510,7 +1510,7 @@
   min-width: 0;
   padding: 0.4rem 0.6rem;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   background: var(--white);
   font-size: 0.75rem;
   font-weight: 600;
@@ -1520,7 +1520,7 @@
 .cat-opt-group__head select {
   padding: 0.4rem 0.6rem;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   background-color: var(--white);
   font-size: 0.75rem;
   color: var(--ink-800);
@@ -1548,7 +1548,7 @@
 .cat-opt-source {
   padding: 0.3rem 0.5rem;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   background: var(--white);
   font-size: 0.7rem;
   color: var(--ink-800);
@@ -1603,7 +1603,7 @@
   min-width: 0;
   padding: 0.35rem 0.55rem;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   background: var(--white);
   font-size: 0.75rem;
   color: var(--ink-800);
@@ -1626,7 +1626,7 @@
   width: 100%;
   min-height: 9rem;
   padding: var(--sp-3);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-sm);
   background-color: var(--surface);
   color: var(--ink-900);
@@ -1713,7 +1713,7 @@
   width: min(400px, 100%);
   padding: clamp(var(--sp-5), 4vw, var(--sp-6));
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-lg);
 }
@@ -1817,7 +1817,7 @@
   gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
   /* A hairline that reads thinner than a full-strength border. */
-  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-sm);
   background: var(--bg-elevated);
   min-width: 0;

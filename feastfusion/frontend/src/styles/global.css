@@ -204,7 +204,7 @@ textarea {
 .btn--ghost {
   background: transparent;
   color: var(--text);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
 }
 
 .btn--ghost:hover {
@@ -252,7 +252,7 @@ textarea {
 
 .card {
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
 }
@@ -276,7 +276,7 @@ textarea {
 .field select,
 .field textarea {
   padding: 0.8rem 1rem;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   border-radius: var(--r-sm);
   background-color: var(--white);
   transition: border-color var(--dur-fast) var(--ease-out);
@@ -325,7 +325,7 @@ textarea {
   .admin-order__pays select::picker(select) {
     margin-top: 6px;
     padding: 6px;
-    border: 1px solid var(--border-strong);
+    border: 1px solid var(--border-hair-strong);
     border-radius: var(--r-sm);
     background: var(--bg-elevated);
     box-shadow: var(--shadow-lg);

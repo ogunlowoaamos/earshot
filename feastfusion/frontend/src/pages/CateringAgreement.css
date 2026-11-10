@@ -21,7 +21,7 @@
   max-width: 820px;
   margin: 0 auto;
   background: var(--white);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-lg);
   padding: clamp(24px, 4.5vw, 64px);
@@ -145,7 +145,7 @@
 .agreement__initial {
   margin-top: var(--sp-4);
   padding-top: var(--sp-4);
-  border-top: 1px dashed var(--border-strong);
+  border-top: 1px dashed var(--border-hair-strong);
   font-weight: 600;
   font-size: var(--step--1);
   display: flex;
@@ -179,7 +179,7 @@
 .agreement__line {
   display: block;
   min-height: 1.35em;
-  border-bottom: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-hair-strong);
 }
 
 .agreement__line--short {
@@ -194,7 +194,7 @@
   display: inline-flex;
   align-items: baseline;
   gap: 0.45em;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   border-radius: 4px;
   padding: 2px 9px;
   font-size: var(--step--1);
@@ -270,7 +270,7 @@
   letter-spacing: 0.08em;
   color: var(--text-muted);
   padding: var(--sp-2);
-  border-bottom: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-hair-strong);
 }
 
 .agreement__table td {

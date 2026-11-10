@@ -52,7 +52,7 @@
   width: 34px;
   height: 34px;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   color: var(--ink-700);
   transition: background-color var(--dur-fast) var(--ease-out);
 }
@@ -133,7 +133,7 @@
   align-items: center;
   gap: var(--sp-1);
   margin-top: 2px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   border-radius: var(--r-sm);
   padding: 2px;
   width: fit-content;

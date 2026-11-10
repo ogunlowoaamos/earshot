@@ -21,7 +21,7 @@
   gap: var(--sp-3);
   flex-wrap: wrap;
   padding-bottom: var(--sp-3);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-hair);
   margin-bottom: var(--sp-4);
 }
 
@@ -47,7 +47,7 @@
 .chip {
   padding: 0.4rem 0.7rem;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   background: var(--white);
   font-size: var(--step--1);
   font-weight: 600;
@@ -74,7 +74,7 @@
   align-items: center;
   gap: var(--sp-2);
   padding: 0.4rem 0.75rem;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   border-radius: var(--r-sm);
   background: var(--white);
   color: var(--ink-400);

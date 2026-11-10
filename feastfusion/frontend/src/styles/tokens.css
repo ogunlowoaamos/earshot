@@ -49,6 +49,10 @@
   --wash-gold-soft: linear-gradient(160deg, var(--gold-100), var(--cream) 70%);
   --border: #e6dccd;
   --border-strong: #d3c4ae;
+  /* A softer edge for cards and controls, so outlines read as hairlines
+     rather than frames. */
+  --border-hair: color-mix(in srgb, var(--border) 55%, transparent);
+  --border-hair-strong: color-mix(in srgb, var(--border-strong) 55%, transparent);
   --accent: var(--gold-300);
   --action: var(--chili-500);
   --action-hover: var(--chili-600);

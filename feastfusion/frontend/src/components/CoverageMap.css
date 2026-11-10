@@ -9,7 +9,7 @@
 .coverage-map__stage {
   position: relative;
   border-radius: var(--r-xl, 1.5rem);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   background:
     radial-gradient(circle at 50% 18%, color-mix(in srgb, var(--gold-300) 16%, transparent), transparent 62%),
     var(--bg-elevated);
@@ -57,7 +57,7 @@
   font-size: var(--step--1);
   color: var(--text-muted);
   background: color-mix(in srgb, var(--bg) 78%, transparent);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   backdrop-filter: blur(6px);
   pointer-events: none;
 }

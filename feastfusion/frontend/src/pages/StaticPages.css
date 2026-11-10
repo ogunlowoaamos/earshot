@@ -119,7 +119,7 @@
   gap: var(--sp-5);
   padding: clamp(var(--sp-4), 3vw, var(--sp-6));
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
 }
@@ -176,7 +176,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 2px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   background: var(--white);
   flex-shrink: 0;
 }

@@ -875,6 +875,37 @@ The same treatment was then applied to the customer pages so they match:
 apart, testimonials 16px apart. Catering side panel 12px gap. No sideways
 scroll on any page, both themes, at 1920 and 1366.
 
+## Every outline is a hairline now
+
+The user kept saying the borders were still too thick. The cards had been
+softened, but the **controls** had not: the category chips and the search box on
+the menu page were still drawn with `--border-strong`, a darker colour than the
+cards used, so they read as heavy frames next to the light card edges.
+
+Rather than repeat the same `color-mix(...)` expression in forty places, there
+are now two tokens in `tokens.css`:
+
+```css
+--border-hair:        color-mix(in srgb, var(--border) 55%, transparent);
+--border-hair-strong: color-mix(in srgb, var(--border-strong) 55%, transparent);
+```
+
+Every outline in the app now points at one of them. That covers the chips, the
+search box, the toolbar rule, the form fields, the ghost buttons, the basket
+drawer, the option picker, the checkout panels, the catering inputs and
+checkboxes, the item detail page, the static pages, the catering agreement, and
+all seventeen admin controls. The few `1.5px` and `2px` outlines were brought
+down to `1px` at the same time, so nothing is thicker than anything else.
+
+One-sided rules (`border-bottom` on a list row, `border-top` on a footer) were
+left alone — those are dividers, not frames, and thinning them makes the page
+look unfinished.
+
+**Verified live:** the idle chip, the search box and the toolbar rule all
+compute to `1px` at 55% strength, in both themes, at 1920 and 1366. The deposit
+calculator is still 1,577px, the Orders tab still 1,651px, and no page scrolls
+sideways.
+
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.

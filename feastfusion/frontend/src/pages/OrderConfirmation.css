@@ -69,7 +69,7 @@
 
 .order-card {
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-lg);
   padding: clamp(var(--sp-4), 3vw, var(--sp-5));
   display: flex;
@@ -189,7 +189,7 @@
   padding: var(--sp-4);
   border-radius: var(--r-md);
   background: var(--cream);
-  border: 1px dashed var(--border-strong);
+  border: 1px dashed var(--border-hair-strong);
 }
 
 .proof-box h3 {

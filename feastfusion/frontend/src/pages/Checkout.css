@@ -42,7 +42,7 @@
 
 .panel {
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hair);
   border-radius: var(--r-lg);
   padding: clamp(var(--sp-4), 3vw, var(--sp-5));
 }
@@ -97,7 +97,7 @@
   flex-direction: column;
   gap: 2px;
   padding: var(--sp-4);
-  border: 1.5px solid var(--border-strong);
+  border: 1px solid var(--border-hair-strong);
   border-radius: var(--r-md);
   background: var(--white);
   cursor: pointer;
@@ -143,7 +143,7 @@
   padding: var(--sp-4);
   border-radius: var(--r-md);
   background: var(--cream);
-  border: 1px dashed var(--border-strong);
+  border: 1px dashed var(--border-hair-strong);
 }
 
 .bank-box__label {
