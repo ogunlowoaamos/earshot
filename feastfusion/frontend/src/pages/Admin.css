@@ -45,6 +45,14 @@
     margin-top var(--dur-base) var(--ease-out);
 }
 
+/* The sign-out button is a utility, not a call to action, so it stays small. */
+.admin__head .btn {
+  min-height: 0;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.7rem;
+  border-radius: var(--r-sm);
+}
+
 /* Once the caterer starts working the title steps back: the eyebrow goes, the
    heading drops to body size and the whole block tightens up, handing roughly
    60px of height back to the list underneath. */
@@ -128,9 +136,18 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
-  font-size: var(--step--1);
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--ink-500);
+}
+
+/* The bar's Refresh button is a utility control, so it matches the small
+   Sign out button rather than the page's full-size buttons. */
+.admin-orders__bar .btn {
+  min-height: 0;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.7rem;
+  border-radius: var(--r-sm);
 }
 
 /* ---------- order card ---------- */
@@ -153,43 +170,46 @@
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  padding: var(--sp-4);
+  padding: var(--sp-3);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   min-width: 0;
 }
 
 .admin-order__top {
   display: flex;
-  align-items: flex-start;
+  align-items: baseline;
   justify-content: space-between;
-  gap: var(--sp-4);
-  padding-bottom: var(--sp-3);
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-2);
   border-bottom: 1px solid var(--border);
 }
 
+/* Reference and date share one line so the card starts lower down. */
 .admin-order__top div:first-child {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sp-2);
+  min-width: 0;
 }
 
 .admin-order__top strong {
   font-family: ui-monospace, monospace;
-  font-size: var(--step-0);
+  font-size: 0.8rem;
   letter-spacing: 0.04em;
   color: var(--ink-900);
 }
 
 .admin-order__top span {
-  font-size: var(--step--1);
+  font-size: 0.7rem;
   color: var(--ink-400);
 }
 
 .admin-order__total {
   font-family: var(--font-display);
-  font-size: var(--step-1);
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--gold-500);
   white-space: nowrap;
@@ -198,14 +218,42 @@
 .admin-order__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-3);
+  gap: 0;
+}
+
+/* Each fact gets its own cell, divided from its neighbours by a hairline so
+   the eye can find one without reading the whole card. */
+.admin-order__grid > div {
+  padding: var(--sp-1) var(--sp-3);
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+
+.admin-order__grid > div:nth-child(odd) {
+  padding-left: 0;
+}
+
+.admin-order__grid > div:nth-child(even) {
+  border-left: 1px solid var(--border);
+}
+
+/* The first row sits directly under the card's own divider, so it needs none. */
+.admin-order__grid > div:nth-child(-n + 2) {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.admin-order__grid .admin-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 1px;
 }
 
 .admin-order__grid p,
 .admin-order__grid li {
-  font-size: var(--step--1);
+  font-size: 0.72rem;
   color: var(--ink-700);
-  line-height: 1.6;
+  line-height: 1.45;
 }
 
 .admin-order__grid ul {
@@ -223,34 +271,46 @@
 .admin-order__pays {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
 }
 
 .admin-order__pays select {
-  padding: 0.4rem 2.4rem 0.4rem 0.6rem;
+  padding: 0.25rem 2rem 0.25rem 0.5rem;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
   background-color: var(--white);
-  font-size: var(--step--1);
+  font-size: 0.7rem;
 }
 
 .admin-order__pays a {
-  font-size: var(--step--1);
+  font-size: 0.7rem;
   color: var(--gold-500);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .admin-order__actions {
-  padding-top: var(--sp-3);
+  padding-top: var(--sp-2);
   border-top: 1px solid var(--border);
 }
 
 .admin-status-row {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
+}
+
+/* Inside an order card the status switches are a compact row, not page buttons. */
+.admin-order .status-btn {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.66rem;
+}
+
+.admin-order .admin-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 1px;
 }
 
 .status-btn {

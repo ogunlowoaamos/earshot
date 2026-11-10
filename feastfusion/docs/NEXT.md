@@ -836,6 +836,22 @@ group heading, the group hint and the first card were all closed up.
 inputs 13px, Save 34px. Deposit calculator page 2,451px → 1,733px. Two cards
 per row at 1920 and 1366, no sideways scroll, both themes.
 
+## The order and catering cards are compact, with lines between the facts
+
+Each card used to be a loose stack of labelled facts. Now the facts sit in a
+two-column grid with a thin line between them, so the eye can find each one
+without extra spacing doing the work. The reference number and the date share
+one line instead of stacking, and the card's own padding and gaps were reduced.
+
+The status buttons inside an order card, the payment dropdown, the small
+uppercase labels and the "Sign out" and "Refresh" buttons were all shrunk to
+match — they are utility controls, not page actions.
+
+**Verified live:** order card 298px → 272px, catering card 311px → 222px.
+Status buttons 27px tall with 10.5px text, payment dropdown 28px, "Sign out"
+and "Refresh" both 23px tall with 11px text. Orders page 1,761px → 1,651px.
+Two cards per row at 1366 and 1920, no sideways scroll, both themes.
+
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.
