@@ -38,6 +38,10 @@ A short note so a fresh chat can pick up with no history.
     "Let them type it", and the customer then gets a box to say the size in their
     own words. 51 dishes are Standard/Custom, 107 keep three tiers, and the
     platter has no Portion at all. See the note below.
+17. **The caterer switches a dish's questions on and off.** The admin has 17
+    ready-made groups (Portion, Swallow, Extras, Toppings, …) shown as on/off
+    chips, both in a dish's Options editor and in the Add dish form, so a new
+    dish can be created with its questions already in place. See the note below.
 
 ## The catering page, as it stands
 
@@ -456,6 +460,56 @@ and a real order `FF-36F04B` came back from `/api/admin/orders` as
 category-specific wording (bowl/pot for soups, stack/party tray for pancakes).
 Should those become uniform? And a Custom portion is priced at ₦0 like Standard
 — should a custom size cost more?
+
+## The caterer decides what a dish asks
+
+The user's ask: "the chef/caterer should determine the content of this part —
+whether it should have portion, swallow, extras all from the admin panel by
+toggling options of what it is permitted." Then, looking at the Add dish form:
+"a well structured '+ add item' is the secret to the main structure of whatever
+shows up."
+
+So the questions a dish asks are now **switches the caterer flips**, not
+templates baked into the code, and a new dish can be born complete.
+
+**The library.** `catalogue.rs` holds `pub const LIBRARY: &[(&str, &GroupSpec)]`
+— 17 ready-made groups: Portion, Swallow, Extras, Add-ons, Protein, Size,
+Pieces, Count, Dips, Toppings, Sides, Dressing, Crust, Fillings, Style,
+Sausage count, Chops. Each is a normal `GroupSpec`, so it carries the same
+`kind` / `is_required` / `allows_quantity` / `free_text` / `source_category_slug`
+fields the editor already understands. `GET /api/admin/group-library` serves
+them (admin only) as `{ groups: [...] }`.
+
+**The switchboard.** `GroupSwitchboard` in `Admin.tsx` draws one on/off chip per
+library entry, with the group's `help` as a tooltip and its choice count as a
+small number. It matches a library entry to a dish's existing group **by name,
+case-insensitive** — that is why the library must never hold two entries with
+the same name. Turning a switch on appends a deep copy of the library group;
+turning it off filters that name out of the draft. Nothing is typed, and the
+group editor below still lets the caterer rename choices or change prices.
+
+**It appears in two places.** Above the group list in the `Options` editor, so
+an existing dish can gain or lose a question; and inside `NewItemForm`, so the
+caterer picks the dish's questions while creating it. `MenuPanel` loads the
+library once with `api.adminGroupLibrary` and passes it to both.
+
+**A new dish arrives complete.** `NewMenuItem` gained
+`#[serde(default)] pub groups: Vec<OptionGroupIn>`, and `create_menu_item`
+writes them through the same `write_groups` helper `save_options` uses (that
+helper was extracted from `save_options` for exactly this). Without `groups` a
+dish still starts plain, so older callers keep working.
+
+**Verified live:** `GET /api/admin/group-library` returns 17 groups; a test dish
+created with Portion + Extras came back with `Portion: 3 choices` and
+`Extras: 6 choices`; `PUT /api/admin/menu/297/options` without Extras left only
+`Portion`; the browser shows 17 chips on Egusi Soup with Portion/Swallow/Extras
+on, flipping Extras off drops it from the group list and flipping it back
+restores it, and the Add dish form shows the same 17 chips with none on. Both
+light and dark themes checked. The test dish was deleted afterwards.
+
+**Open question for the user.** The switches are per dish, so a caterer with 289
+dishes clicks a lot. Should there also be a category-level default (for example
+"every soup gets Portion + Swallow + Extras") that new dishes inherit?
 
 ## Not finished
 

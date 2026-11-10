@@ -336,6 +336,12 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
+  /** The shelf of ready-made groups the dashboard offers as on/off switches. */
+  adminGroupLibrary: (token: string) =>
+    request<{ groups: OptionGroupIn[] }>('/admin/group-library', {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
   adminSaveOptions: (token: string, id: number, groups: OptionGroupIn[]) =>
     request<Catalogue>(`/admin/menu/${id}/options`, {
       method: 'PUT',

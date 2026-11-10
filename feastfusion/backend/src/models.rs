@@ -418,6 +418,11 @@ pub struct NewMenuItem {
     pub tags: Vec<String>,
     #[serde(default)]
     pub ingredients: Vec<String>,
+    /// The questions this dish should ask, chosen on the add form. Saving them
+    /// here means a new dish arrives complete instead of needing a second trip
+    /// to the options editor.
+    #[serde(default)]
+    pub groups: Vec<OptionGroupIn>,
     #[serde(default = "yes")]
     pub is_available: bool,
     #[serde(default)]
@@ -443,7 +448,7 @@ pub struct PatchMenuItem {
 
 /* ---------------- priced choices, saved from the dashboard ---------------- */
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct OptionIn {
     pub label: String,
     #[serde(default)]
@@ -454,7 +459,7 @@ pub struct OptionIn {
     pub is_available: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct OptionGroupIn {
     pub name: String,
     #[serde(default = "single_kind")]

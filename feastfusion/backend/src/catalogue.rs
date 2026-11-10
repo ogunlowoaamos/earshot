@@ -839,6 +839,204 @@ const CHOPS: &[GroupSpec] = &[counted_from(
     "small-chops",
 )];
 
+/* ---------------- the ready-made groups a caterer can switch on ---------------- */
+
+/// The questions a dish is allowed to ask, as a shelf of ready-made groups.
+/// The dashboard draws one switch per entry, so the caterer decides whether a
+/// dish offers a portion, a swallow, extras and so on without typing anything.
+/// Nothing here is forced on a dish: a group only appears once it is switched
+/// on, and switching it off takes it away again.
+const LIB_PORTION: GroupSpec = one(
+    "Portion",
+    "How much goes in the pack",
+    true,
+    &["Regular", "Large", "Family tray"],
+);
+
+const LIB_SWALLOW: GroupSpec = one(
+    "Swallow",
+    "Add a swallow on the side",
+    true,
+    &[
+        "No swallow",
+        "Pounded yam",
+        "Eba",
+        "Amala",
+        "Semo",
+        "Fufu",
+        "Wheat",
+    ],
+);
+
+const LIB_EXTRAS: GroupSpec = many(
+    "Extras",
+    "Pick as many as you want",
+    &[
+        "Extra meat",
+        "Extra fish",
+        "Extra ponmo",
+        "Extra shaki",
+        "Extra stockfish",
+        "Extra pepper",
+    ],
+);
+
+const LIB_ADDONS: GroupSpec = many(
+    "Add-ons",
+    "Pick as many as you want",
+    &[
+        "Extra chicken",
+        "Extra beef",
+        "Extra fish",
+        "Extra ponmo",
+        "Extra egg",
+        "Extra stew",
+    ],
+);
+
+const LIB_PROTEIN: GroupSpec = one(
+    "Protein",
+    "What comes on top",
+    true,
+    &["Chicken", "Beef", "Fish", "Assorted meat", "No protein"],
+);
+
+const LIB_SIZE: GroupSpec = one("Size", "Pick the size", true, &["Small", "Medium", "Large"]);
+
+const LIB_PIECES: GroupSpec = one(
+    "Pieces",
+    "How many pieces in the pack",
+    true,
+    &["6", "12", "20", "30", "50"],
+);
+
+const LIB_COUNT: GroupSpec = one(
+    "Count",
+    "How many in the pack",
+    true,
+    &["1", "6", "12", "20", "30"],
+);
+
+const LIB_DIPS: GroupSpec = many(
+    "Dips",
+    "Pick as many as you want",
+    &["Ketchup", "Mayonnaise", "Pepper sauce", "Cheese sauce"],
+);
+
+const LIB_TOPPINGS: GroupSpec = many(
+    "Toppings",
+    "Pick as many as you want",
+    &[
+        "Extra cheese",
+        "Chicken",
+        "Beef",
+        "Pepperoni",
+        "Sweetcorn",
+        "Onions",
+        "Mushroom",
+        "Pineapple",
+        "Extra pepper",
+    ],
+);
+
+const LIB_SIDES: GroupSpec = many(
+    "Sides",
+    "Pick as many as you want",
+    &[
+        "Pepper sauce",
+        "Extra pepper",
+        "Ketchup",
+        "Onion rings",
+        "Fried plantain",
+    ],
+);
+
+const LIB_DRESSING: GroupSpec = one(
+    "Dressing",
+    "What goes on top",
+    true,
+    &[
+        "Nigerian salad cream blend",
+        "Mayonnaise",
+        "Salad cream",
+        "Vinaigrette",
+        "No dressing",
+    ],
+);
+
+const LIB_CRUST: GroupSpec = one(
+    "Crust",
+    "How the base is baked",
+    true,
+    &["Classic", "Thin", "Stuffed crust"],
+);
+
+const LIB_FILLINGS: GroupSpec = many(
+    "Fillings",
+    "Pick as many as you want",
+    &[
+        "Fried egg",
+        "Sausage",
+        "Bacon",
+        "Shredded beef",
+        "Chicken",
+        "Cheese",
+        "Baked beans",
+    ],
+);
+
+const LIB_STYLE: GroupSpec = one(
+    "Style",
+    "How it is cooked",
+    true,
+    &[
+        "Plain",
+        "Jollof",
+        "Fried",
+        "Stir fry",
+        "Stew",
+        "Egg sauce",
+        "Pepper sauce",
+        "Soup",
+    ],
+);
+
+const LIB_SAUSAGE_COUNT: GroupSpec = one(
+    "Sausage count",
+    "How many sausages to add",
+    true,
+    &["0", "1", "2", "3", "4"],
+);
+
+const LIB_CHOPS: GroupSpec = counted_from(
+    "Chops",
+    "Say how many of each chop you want",
+    true,
+    "small-chops",
+);
+
+/// key, group. The key is stable so the dashboard can remember a switch; the
+/// name is what the customer sees and what the switch matches on.
+pub const LIBRARY: &[(&str, &GroupSpec)] = &[
+    ("portion", &LIB_PORTION),
+    ("swallow", &LIB_SWALLOW),
+    ("extras", &LIB_EXTRAS),
+    ("add-ons", &LIB_ADDONS),
+    ("protein", &LIB_PROTEIN),
+    ("size", &LIB_SIZE),
+    ("pieces", &LIB_PIECES),
+    ("count", &LIB_COUNT),
+    ("dips", &LIB_DIPS),
+    ("toppings", &LIB_TOPPINGS),
+    ("sides", &LIB_SIDES),
+    ("dressing", &LIB_DRESSING),
+    ("crust", &LIB_CRUST),
+    ("fillings", &LIB_FILLINGS),
+    ("style", &LIB_STYLE),
+    ("sausage-count", &LIB_SAUSAGE_COUNT),
+    ("chops", &LIB_CHOPS),
+];
+
 /// Which template of choices a dish gets.
 #[derive(Clone, Copy)]
 pub enum Shape {

@@ -659,6 +659,88 @@
   border: 1px solid var(--border);
 }
 
+/* The on/off switches for the questions a dish is allowed to ask. */
+.cat-switchboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--gold-veil);
+  border: 1px solid var(--border-strong);
+}
+
+.cat-switchboard__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.cat-switchboard__head strong {
+  font-size: 0.78rem;
+  color: var(--ink-800);
+}
+
+.cat-switchboard__head span {
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--ink-600);
+}
+
+.cat-switchboard__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.cat-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--white);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-600);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.cat-switch:hover {
+  border-color: var(--gold-300);
+  color: var(--ink-800);
+}
+
+.cat-switch__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--border-strong);
+  transition: background 0.15s ease;
+}
+
+.cat-switch__count {
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: var(--ink-400);
+}
+
+.cat-switch.is-on {
+  background: var(--gold-200);
+  border-color: var(--gold-400);
+  color: var(--ink-900);
+}
+
+.cat-switch.is-on .cat-switch__dot {
+  background: var(--gold-500);
+}
+
+.cat-switch.is-on .cat-switch__count {
+  color: var(--gold-600);
+}
+
 .cat-opt-group__head {
   display: flex;
   flex-wrap: wrap;

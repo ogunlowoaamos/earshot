@@ -261,6 +261,7 @@ function OrdersPanel({ token }: { token: string }) {
 
 function MenuPanel({ token }: { token: string }) {
   const [data, setData] = useState<Catalogue | null>(null)
+  const [library, setLibrary] = useState<OptionGroupIn[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -279,6 +280,13 @@ function MenuPanel({ token }: { token: string }) {
   }
 
   useEffect(load, [token])
+
+  useEffect(() => {
+    api
+      .adminGroupLibrary(token)
+      .then((r) => setLibrary(r.groups))
+      .catch(() => setLibrary([]))
+  }, [token])
 
   const items = data?.items ?? []
   const categories = data?.categories ?? []
@@ -371,12 +379,16 @@ function MenuPanel({ token }: { token: string }) {
         <NewItemForm
           token={token}
           categories={categories}
+          library={library}
           onCreated={(item) => {
             setData((d) =>
               d
                 ? {
                     ...d,
-                    items: [...d.items, { ...item, sort_order: 0, option_groups: [] }],
+                    items: [
+                      ...d.items,
+                      { ...item, sort_order: 0, option_groups: item.option_groups ?? [] },
+                    ],
                   }
                 : d,
             )
@@ -502,6 +514,7 @@ function MenuPanel({ token }: { token: string }) {
                       item={it}
                       token={token}
                       categories={categories}
+                      library={library}
                       onSaved={setData}
                     />
                   )}
@@ -551,15 +564,68 @@ function PriceInput({ value, onCommit }: { value: number; onCommit: (kobo: numbe
   )
 }
 
+/**
+ * The on/off switches for the questions a dish is allowed to ask. Each switch
+ * is one ready-made group from the backend library; the caterer flips them
+ * instead of typing group names and choices by hand.
+ */
+function GroupSwitchboard({
+  library,
+  groups,
+  onToggle,
+  title = 'What this dish asks',
+  hint = 'Switch a question on to add it, off to take it away. The choices are filled in for you and you can still edit them below.',
+}: {
+  library: OptionGroupIn[]
+  groups: OptionGroupIn[]
+  onToggle: (spec: OptionGroupIn) => void
+  title?: string
+  hint?: string
+}) {
+  if (library.length === 0) return null
+
+  const onNames = new Set(groups.map((g) => g.name.trim().toLowerCase()))
+
+  return (
+    <div className="cat-switchboard">
+      <div className="cat-switchboard__head">
+        <strong>{title}</strong>
+        <span>{hint}</span>
+      </div>
+      <div className="cat-switchboard__chips">
+        {library.map((spec) => {
+          const on = onNames.has(spec.name.trim().toLowerCase())
+          return (
+            <button
+              key={spec.name}
+              type="button"
+              className={`cat-switch${on ? ' is-on' : ''}`}
+              aria-pressed={on}
+              title={spec.help || spec.name}
+              onClick={() => onToggle(spec)}
+            >
+              <span className="cat-switch__dot" aria-hidden="true" />
+              {spec.name}
+              <span className="cat-switch__count">{spec.options.length}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function OptionsEditor({
   item,
   token,
   categories,
+  library,
   onSaved,
 }: {
   item: CatalogueItem
   token: string
   categories: Category[]
+  library: OptionGroupIn[]
   onSaved: (next: Catalogue) => void
 }) {
   const [groups, setGroups] = useState<OptionGroupIn[]>(() => toDraft(item))
@@ -613,6 +679,22 @@ function OptionsEditor({
     setSaved(false)
   }
 
+  /**
+   * Switches one ready-made question on or off. On adds the whole group with
+   * its choices; off takes it away. Nothing is typed, so the caterer decides
+   * what a dish is allowed to ask without touching the group editor.
+   */
+  function toggleLibraryGroup(spec: OptionGroupIn) {
+    setGroups((gs) => {
+      const at = gs.findIndex(
+        (g) => g.name.trim().toLowerCase() === spec.name.trim().toLowerCase(),
+      )
+      if (at >= 0) return gs.filter((_, i) => i !== at)
+      return [...gs, { ...spec, options: spec.options.map((o) => ({ ...o })) }]
+    })
+    setSaved(false)
+  }
+
   function addOption(gi: number) {
     setGroups((gs) =>
       gs.map((g, i) =>
@@ -652,6 +734,8 @@ function OptionsEditor({
 
   return (
     <div className="cat-opts">
+      <GroupSwitchboard library={library} groups={groups} onToggle={toggleLibraryGroup} />
+
       {groups.map((g, gi) => (
         <div key={gi} className="cat-opt-group">
           <div className="cat-opt-group__head">
@@ -897,10 +981,12 @@ function toDraft(item: CatalogueItem): OptionGroupIn[] {
 function NewItemForm({
   token,
   categories,
+  library,
   onCreated,
 }: {
   token: string
   categories: Category[]
+  library: OptionGroupIn[]
   onCreated: (item: MenuItem) => void
 }) {
   const [form, setForm] = useState({
@@ -912,11 +998,22 @@ function NewItemForm({
     tags: '',
     ingredients: '',
   })
+  const [groups, setGroups] = useState<OptionGroupIn[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function set(k: keyof typeof form, v: string) {
     setForm((f) => ({ ...f, [k]: v }))
+  }
+
+  function toggleLibraryGroup(spec: OptionGroupIn) {
+    setGroups((gs) => {
+      const at = gs.findIndex(
+        (g) => g.name.trim().toLowerCase() === spec.name.trim().toLowerCase(),
+      )
+      if (at >= 0) return gs.filter((_, i) => i !== at)
+      return [...gs, { ...spec, options: spec.options.map((o) => ({ ...o })) }]
+    })
   }
 
   async function submit(e: React.FormEvent) {
@@ -940,6 +1037,7 @@ function NewItemForm({
           .split('\n')
           .map((s) => s.trim())
           .filter(Boolean),
+        groups,
       })
       onCreated(item)
     } catch (err) {
@@ -1010,6 +1108,15 @@ function NewItemForm({
           </span>
         </div>
       </div>
+
+      <GroupSwitchboard
+        library={library}
+        groups={groups}
+        onToggle={toggleLibraryGroup}
+        title="What should this dish ask?"
+        hint="Switch on the questions customers should answer for this dish. You can change them later from the dish's Options button."
+      />
+
       {error && <p className="form-error">{error}</p>}
       <button className="btn btn--primary" type="submit" disabled={busy}>
         {busy ? 'Saving…' : 'Save item'}

@@ -72,6 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/admin/pricing/:kind", post(routes::admin::save_rate))
         .route("/admin/menu", post(routes::admin::create_menu_item))
         .route("/admin/catalogue", get(routes::admin::list_catalogue))
+        .route("/admin/group-library", get(routes::admin::group_library))
         .route("/admin/availability", post(routes::admin::set_availability))
         .route(
             "/admin/categories/:slug/approval",

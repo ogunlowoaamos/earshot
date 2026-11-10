@@ -10,8 +10,8 @@ use crate::{
     error::{AppError, AppResult},
     models::{
         BulkAvailability, Catalogue, CategoryApproval, CateringPricing, CateringRequest, Login,
-        MenuItem, NewMenuItem, Order, PatchMenuItem, PatchOrder, SaveIngredients, SaveOptions,
-        SavePairings,
+        MenuItem, NewMenuItem, OptionGroupIn, Order, PatchMenuItem, PatchOrder, SaveIngredients,
+        SaveOptions, SavePairings,
     },
     pricing,
     routes::{catering, menu, orders},
@@ -217,7 +217,24 @@ pub async fn save_options(
     require_admin(&headers)?;
     menu::fetch_item(&state.pool, id).await?;
 
-    let mut tx = state.pool.begin().await?;
+    write_groups(&state.pool, id, &payload.groups).await?;
+
+    // A group that reads its choices from a category is filled in here, so the
+    // dashboard gets the real list back rather than an empty one.
+    menu::sync_derived_groups(&state.pool).await?;
+
+    Ok(Json(menu::fetch_item(&state.pool, id).await?))
+}
+
+/// Writes a dish's whole set of choice groups, replacing whatever was there.
+/// Shared by the options editor and the add-dish form so a dish created with
+/// its questions already chosen is stored exactly like one edited later.
+pub async fn write_groups(
+    pool: &sqlx::SqlitePool,
+    id: i64,
+    groups: &[OptionGroupIn],
+) -> AppResult<()> {
+    let mut tx = pool.begin().await?;
 
     sqlx::query(
         "DELETE FROM item_options WHERE group_id IN
@@ -232,7 +249,7 @@ pub async fn save_options(
         .execute(&mut *tx)
         .await?;
 
-    for (group_index, group) in payload.groups.iter().enumerate() {
+    for (group_index, group) in groups.iter().enumerate() {
         let name = group.name.trim();
         if name.is_empty() {
             continue;
@@ -264,7 +281,7 @@ pub async fn save_options(
         .await?;
 
         // A group filled from a category has no list of its own to save; the
-        // refresh below writes its choices from the catalogue.
+        // refresh after this writes its choices from the catalogue.
         if !group.source_category_slug.trim().is_empty() {
             continue;
         }
@@ -297,12 +314,44 @@ pub async fn save_options(
     }
 
     tx.commit().await?;
+    Ok(())
+}
 
-    // A group that reads its choices from a category is filled in here, so the
-    // dashboard gets the real list back rather than an empty one.
-    menu::sync_derived_groups(&state.pool).await?;
+/// The shelf of ready-made groups the dashboard offers as on/off switches.
+/// Served from the same templates the catalogue seeds from, so a group the
+/// caterer switches on is identical to the one a fresh dish would get.
+pub async fn group_library(headers: HeaderMap) -> AppResult<Json<Value>> {
+    require_admin(&headers)?;
 
-    Ok(Json(menu::fetch_item(&state.pool, id).await?))
+    let groups: Vec<Value> = crate::catalogue::LIBRARY
+        .iter()
+        .map(|(key, spec)| {
+            json!({
+                "key": key,
+                "name": spec.name,
+                "kind": spec.kind,
+                "help": spec.help,
+                "is_required": spec.required,
+                "allows_quantity": spec.allows_quantity,
+                "source_category_slug": spec.source_category,
+                "free_text": spec.free_text,
+                "options": spec
+                    .options
+                    .iter()
+                    .map(|label| {
+                        json!({
+                            "label": label,
+                            "price_delta_kobo": 0,
+                            "is_default": false,
+                            "is_available": true,
+                        })
+                    })
+                    .collect::<Vec<Value>>(),
+            })
+        })
+        .collect();
+
+    Ok(Json(json!({ "groups": groups })))
 }
 
 /// Puts one category on or off the customer menu. The catalogue comes back so
@@ -409,7 +458,16 @@ pub async fn create_menu_item(
     .execute(&state.pool)
     .await?;
 
-    let item = menu::fetch_item(&state.pool, inserted.last_insert_rowid()).await?;
+    let item_id = inserted.last_insert_rowid();
+
+    // The add form can pick the dish's questions up front, so a new dish lands
+    // complete. Without them it starts plain and the caterer adds groups later.
+    if !payload.groups.is_empty() {
+        write_groups(&state.pool, item_id, &payload.groups).await?;
+        menu::sync_derived_groups(&state.pool).await?;
+    }
+
+    let item = menu::fetch_item(&state.pool, item_id).await?;
     Ok((StatusCode::CREATED, Json(item)))
 }
 
