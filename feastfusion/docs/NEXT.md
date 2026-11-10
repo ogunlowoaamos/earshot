@@ -625,6 +625,40 @@ Two follow-on tweaks came with it:
 tall; at 1366 it starts at x:24 and is 661px tall. All five admin tabs report
 no horizontal overflow in both themes.
 
+## The Add item form shows the dish as you type
+
+The form now sits on the left and a live picture of the dish sits on the
+right. Every keystroke updates it, so the caterer sees the finished card
+before saving.
+
+**What the preview shows**, in the same order as the real dish page:
+
+- the picture, or the video if one is set, or a quiet "No picture yet" box
+- the category in small gold capitals, then the tags
+- the dish name, falling back to "Dish name"
+- the price in naira, formatted the same way the shop formats it
+- the description, falling back to a grey hint
+- "What is in it" — the ingredients, one per line
+- "What it asks" — each switched-on group with the same wording the customer
+  sees ("Pick one", "Pick any", "Say how many of each", plus "· needed"),
+  and either the choices with their `+₦` prices, or a note for a derived
+  group ("Choices come from the small-chops list.")
+
+**How it is laid out.** `.admin-new__cols` is a two-column grid: the fields
+take whatever is left, the preview is a fixed 420px. The preview is
+`position: sticky` at `top: calc(var(--header-h) + var(--sp-3))`, so it stays
+in view while the form scrolls past it. Below 1100px the grid becomes one
+column and the preview drops underneath the form at full width.
+
+The four-column field row now starts at 1500px instead of 1200px, because the
+preview takes 420px of the width first.
+
+**Verified live:** at 1920 the fields are 1392px and the preview 420px, side
+by side. At 1366 the fields are 838px and the preview 420px, still side by
+side. At 900 the preview drops underneath at 808px wide. Name, price and the
+switched-on groups all update as the form is filled, in both themes, with no
+horizontal overflow at any of the three widths.
+
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.

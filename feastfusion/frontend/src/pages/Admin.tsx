@@ -1069,6 +1069,115 @@ function TagBox({
   )
 }
 
+/**
+ * A live picture of the dish as the customer will meet it, drawn from the
+ * half-filled form beside it. It is deliberately not the real MenuCard: that
+ * one is a link with an Add button, and neither belongs in a preview.
+ */
+function DishPreview({
+  name,
+  price,
+  description,
+  imageUrl,
+  videoUrl,
+  tags,
+  ingredients,
+  groups,
+  categoryName,
+}: {
+  name: string
+  price: string
+  description: string
+  imageUrl: string
+  videoUrl: string
+  tags: string[]
+  ingredients: string[]
+  groups: OptionGroupIn[]
+  categoryName: string
+}) {
+  const nairaValue = Number(price)
+  const priceKobo = Number.isFinite(nairaValue) ? Math.round(nairaValue * 100) : 0
+
+  return (
+    <div className="dish-preview">
+      <div className="dish-preview__media">
+        {videoUrl ? (
+          <video src={videoUrl} poster={imageUrl} controls muted playsInline />
+        ) : imageUrl ? (
+          <img src={imageUrl} alt="" />
+        ) : (
+          <span className="dish-preview__empty">No picture yet</span>
+        )}
+      </div>
+
+      <div className="dish-preview__body">
+        <div className="dish-preview__meta">
+          <span className="dish-preview__cat">{categoryName || 'No category'}</span>
+          {tags.map((t) => (
+            <span key={t} className="tag">
+              {t}
+            </span>
+          ))}
+        </div>
+
+        <h3 className="dish-preview__name">{name.trim() || 'Dish name'}</h3>
+        <p className="dish-preview__price">{naira(priceKobo)}</p>
+        <p className="dish-preview__desc">
+          {description.trim() || 'The description you type will appear here.'}
+        </p>
+
+        {ingredients.length > 0 && (
+          <div className="dish-preview__block">
+            <h4>What is in it</h4>
+            <ul className="dish-preview__ingredients">
+              {ingredients.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {groups.length > 0 && (
+          <div className="dish-preview__block">
+            <h4>What it asks</h4>
+            {groups.map((g) => (
+              <div className="dish-preview__ask" key={g.name}>
+                <div className="dish-preview__ask-head">
+                  <strong>{g.name}</strong>
+                  <span>
+                    {g.allows_quantity
+                      ? 'Say how many of each'
+                      : g.kind === 'single'
+                        ? 'Pick one'
+                        : 'Pick any'}
+                    {g.is_required && ' · needed'}
+                  </span>
+                </div>
+                {g.source_category_slug ? (
+                  <p className="dish-preview__ask-note">
+                    Choices come from the {g.source_category_slug.replace(/-/g, ' ')} list.
+                  </p>
+                ) : (
+                  <div className="dish-preview__chips">
+                    {g.options.map((o) => (
+                      <span className="dish-preview__chip" key={o.label}>
+                        {o.label}
+                        {o.price_delta_kobo > 0 && (
+                          <em> +{naira(o.price_delta_kobo)}</em>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function NewItemForm({
   token,
   categories,
@@ -1186,170 +1295,197 @@ function NewItemForm({
     }
   }
 
+  const ingredientLines = form.ingredients
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  const categoryName =
+    categories.find((c) => c.slug === form.category_slug)?.name ?? ''
+
   return (
     <form className="admin-new" onSubmit={submit}>
-      <div className="panel__grid">
-        <div className="field">
-          <label>Name</label>
-          <input required value={form.name} onChange={(e) => set('name', e.target.value)} />
-        </div>
-        <div className="field">
-          <label>Price (₦)</label>
-          <input
-            required
-            type="number"
-            min={0}
-            value={form.price}
-            onChange={(e) => set('price', e.target.value)}
-          />
-        </div>
-
-        <div className="field">
-          <label>Category</label>
-          <select value={form.category_slug} onChange={(e) => set('category_slug', e.target.value)}>
-            {categories.map((c) => (
-              <option key={c.id} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          {addingCategory ? (
-            <div className="cat-add">
+      <div className="admin-new__cols">
+        <div className="admin-new__fields">
+          <div className="panel__grid">
+            <div className="field">
+              <label>Name</label>
+              <input required value={form.name} onChange={(e) => set('name', e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Price (₦)</label>
               <input
-                autoFocus
-                value={newCategory}
-                placeholder="New category name"
-                onChange={(e) => setNewCategory(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addCategory()
-                  }
-                  if (e.key === 'Escape') setAddingCategory(false)
-                }}
+                required
+                type="number"
+                min={0}
+                value={form.price}
+                onChange={(e) => set('price', e.target.value)}
               />
-              <button
-                type="button"
-                className="btn btn--sm btn--primary"
-                onClick={addCategory}
-                disabled={categoryBusy || !newCategory.trim()}
-              >
-                {categoryBusy ? 'Adding…' : 'Add'}
-              </button>
-              <button
-                type="button"
-                className="btn btn--sm"
-                onClick={() => {
-                  setAddingCategory(false)
-                  setNewCategory('')
-                }}
-              >
-                Cancel
-              </button>
             </div>
-          ) : (
-            <button
-              type="button"
-              className="cat-add__open"
-              onClick={() => setAddingCategory(true)}
-            >
-              + Add a new category
-            </button>
-          )}
-        </div>
 
-        <div className="field">
-          <label>Tags</label>
-          <TagBox value={tags} onChange={setTags} suggestions={tagList} />
-          <span className="field__hint">Pick from the list or type a new one.</span>
-        </div>
+            <div className="field">
+              <label>Category</label>
+              <select value={form.category_slug} onChange={(e) => set('category_slug', e.target.value)}>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.slug}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              {addingCategory ? (
+                <div className="cat-add">
+                  <input
+                    autoFocus
+                    value={newCategory}
+                    placeholder="New category name"
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addCategory()
+                      }
+                      if (e.key === 'Escape') setAddingCategory(false)
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--primary"
+                    onClick={addCategory}
+                    disabled={categoryBusy || !newCategory.trim()}
+                  >
+                    {categoryBusy ? 'Adding…' : 'Add'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--sm"
+                    onClick={() => {
+                      setAddingCategory(false)
+                      setNewCategory('')
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="cat-add__open"
+                  onClick={() => setAddingCategory(true)}
+                >
+                  + Add a new category
+                </button>
+              )}
+            </div>
 
-        <div className="field panel__full">
-          <label>Media</label>
-          <div className="media">
-            <div className="media__col">
-              <span className="media__label">Picture</span>
-              <div className="media__pick">
-                <input
-                  value={form.image_url}
-                  onChange={(e) => set('image_url', e.target.value)}
-                  placeholder="Paste a link, or upload →"
-                />
-                <label className="media__btn">
-                  {uploading === 'image' ? 'Uploading…' : 'Upload'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => upload('image', e.target.files?.[0])}
-                  />
-                </label>
+            <div className="field">
+              <label>Tags</label>
+              <TagBox value={tags} onChange={setTags} suggestions={tagList} />
+              <span className="field__hint">Pick from the list or type a new one.</span>
+            </div>
+
+            <div className="field panel__full">
+              <label>Media</label>
+              <div className="media">
+                <div className="media__col">
+                  <span className="media__label">Picture</span>
+                  <div className="media__pick">
+                    <input
+                      value={form.image_url}
+                      onChange={(e) => set('image_url', e.target.value)}
+                      placeholder="Paste a link, or upload →"
+                    />
+                    <label className="media__btn">
+                      {uploading === 'image' ? 'Uploading…' : 'Upload'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => upload('image', e.target.files?.[0])}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div className="media__col">
+                  <span className="media__label">Video (optional)</span>
+                  <div className="media__pick">
+                    <input
+                      value={form.video_url}
+                      onChange={(e) => set('video_url', e.target.value)}
+                      placeholder="Paste a link, or upload →"
+                    />
+                    <label className="media__btn">
+                      {uploading === 'video' ? 'Uploading…' : 'Upload'}
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => upload('video', e.target.files?.[0])}
+                      />
+                    </label>
+                  </div>
+                </div>
+                {(form.image_url || form.video_url) && (
+                  <div className="media__previews">
+                    {form.image_url && (
+                      <img className="media__preview" src={form.image_url} alt="Dish preview" />
+                    )}
+                    {form.video_url && (
+                      <video className="media__preview" src={form.video_url} controls muted />
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-            <div className="media__col">
-              <span className="media__label">Video (optional)</span>
-              <div className="media__pick">
-                <input
-                  value={form.video_url}
-                  onChange={(e) => set('video_url', e.target.value)}
-                  placeholder="Paste a link, or upload →"
-                />
-                <label className="media__btn">
-                  {uploading === 'video' ? 'Uploading…' : 'Upload'}
-                  <input
-                    type="file"
-                    accept="video/*"
-                    onChange={(e) => upload('video', e.target.files?.[0])}
-                  />
-                </label>
-              </div>
+
+            <div className="field panel__full">
+              <label>Description</label>
+              <textarea
+                required
+                value={form.description}
+                onChange={(e) => set('description', e.target.value)}
+              />
             </div>
-            {(form.image_url || form.video_url) && (
-              <div className="media__previews">
-                {form.image_url && (
-                  <img className="media__preview" src={form.image_url} alt="Dish preview" />
-                )}
-                {form.video_url && (
-                  <video className="media__preview" src={form.video_url} controls muted />
-                )}
-              </div>
-            )}
+
+            <div className="field panel__full">
+              <label>Ingredients</label>
+              <textarea
+                value={form.ingredients}
+                onChange={(e) => set('ingredients', e.target.value)}
+                placeholder={'Long grain rice\nTomato and pepper base\nChicken stock'}
+              />
+              <span className="field__hint">
+                One per line, or separated by commas. Leave blank to skip.
+              </span>
+            </div>
           </div>
+
+          <GroupSwitchboard
+            library={library}
+            groups={groups}
+            onToggle={toggleLibraryGroup}
+            title="What should this dish ask?"
+            hint="Switch on the questions customers should answer. You can change these later."
+          />
+
+          {error && <p className="form-error">{error}</p>}
+          <button className="btn btn--primary" type="submit" disabled={busy}>
+            {busy ? 'Saving…' : 'Save item'}
+          </button>
         </div>
 
-        <div className="field panel__full">
-          <label>Description</label>
-          <textarea
-            required
-            value={form.description}
-            onChange={(e) => set('description', e.target.value)}
+        <aside className="admin-new__preview" aria-label="Live preview">
+          <span className="admin-new__preview-label">Live preview</span>
+          <DishPreview
+            name={form.name}
+            price={form.price}
+            description={form.description}
+            imageUrl={form.image_url}
+            videoUrl={form.video_url}
+            tags={tags}
+            ingredients={ingredientLines}
+            groups={groups}
+            categoryName={categoryName}
           />
-        </div>
-
-        <div className="field panel__full">
-          <label>Ingredients</label>
-          <textarea
-            value={form.ingredients}
-            onChange={(e) => set('ingredients', e.target.value)}
-            placeholder={'Long grain rice\nTomato and pepper base\nChicken stock'}
-          />
-          <span className="field__hint">
-            One per line, or separated by commas. Leave blank to skip.
-          </span>
-        </div>
+        </aside>
       </div>
-
-      <GroupSwitchboard
-        library={library}
-        groups={groups}
-        onToggle={toggleLibraryGroup}
-        title="What should this dish ask?"
-        hint="Switch on the questions customers should answer. You can change these later."
-      />
-
-      {error && <p className="form-error">{error}</p>}
-      <button className="btn btn--primary" type="submit" disabled={busy}>
-        {busy ? 'Saving…' : 'Save item'}
-      </button>
     </form>
   )
 }

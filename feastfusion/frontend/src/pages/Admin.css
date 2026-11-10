@@ -327,6 +327,201 @@
   margin-bottom: var(--sp-4);
 }
 
+/* Fields on the left, a live picture of the dish on the right. The preview
+   sticks so it stays in view while the caterer works down a long form. */
+.admin-new__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.admin-new__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.admin-new__preview {
+  position: sticky;
+  top: calc(var(--header-h) + var(--sp-3));
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.admin-new__preview-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Below this the two columns would each be too narrow to be useful, so the
+   preview drops underneath the form instead. */
+@media (max-width: 1100px) {
+  .admin-new__cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-new__preview {
+    position: static;
+  }
+}
+
+/* ---------- the live dish preview ---------- */
+
+.dish-preview {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  max-height: calc(100vh - var(--header-h) - var(--sp-7));
+}
+
+.dish-preview__media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  background: var(--ink-100);
+  flex: 0 0 auto;
+}
+
+.dish-preview__media img,
+.dish-preview__media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dish-preview__empty {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.dish-preview__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.dish-preview__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.dish-preview__cat {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold-500);
+}
+
+.dish-preview__name {
+  font-size: var(--step-1);
+  line-height: 1.25;
+}
+
+.dish-preview__price {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 600;
+  color: var(--gold-500);
+}
+
+.dish-preview__desc {
+  font-size: var(--step--1);
+  line-height: 1.55;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+}
+
+.dish-preview__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+
+.dish-preview__block h4 {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dish-preview__ingredients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  font-size: var(--step--1);
+  color: var(--text-muted);
+  list-style: disc;
+  padding-left: 1rem;
+}
+
+.dish-preview__ask {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.dish-preview__ask-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-size: var(--step--1);
+}
+
+.dish-preview__ask-head span {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.dish-preview__ask-note {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.dish-preview__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.dish-preview__chip {
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--r-full);
+  background: var(--ink-100);
+  color: var(--ink-500);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.dish-preview__chip em {
+  font-style: normal;
+  color: var(--gold-500);
+}
+
 .admin-new .btn {
   align-self: flex-start;
 }
@@ -337,8 +532,9 @@
 }
 
 /* The form now spans the window, so give the short fields a row of their own
-   instead of letting two of them stretch a metre wide. */
-@media (min-width: 1200px) {
+   instead of letting two of them stretch a metre wide. The threshold is high
+   because the preview column takes 420px of the width first. */
+@media (min-width: 1500px) {
   .admin-new .panel__grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
