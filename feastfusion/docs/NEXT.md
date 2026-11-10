@@ -822,6 +822,20 @@ about 10px shorter once it has shrunk.
 **Verified live:** head 58px → 34px, tabs 39px, first card starts at 177px
 instead of 197px.
 
+## The deposit calculator's rate cards are compact
+
+Each rate card was tall and roomy. It is now a small card: less padding, a
+tighter gap between the title and the fields, a smaller title, a smaller amount,
+smaller field labels and shorter inputs. The Save button is 34px instead of
+44px. The card is 111px tall instead of about 150px.
+
+The text above the cards was shrunk too, and the gaps between the intro, the
+group heading, the group hint and the first card were all closed up.
+
+**Verified live:** card 111px tall, title 13px, amount 14px, labels 10px,
+inputs 13px, Save 34px. Deposit calculator page 2,451px → 1,733px. Two cards
+per row at 1920 and 1366, no sideways scroll, both themes.
+
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.
