@@ -7,6 +7,12 @@ export type Category = {
   is_approved: boolean
 }
 
+export type MediaItem = {
+  url: string
+  /** "image", "video" or "link" — a pasted link is not guessed from its ending. */
+  kind: 'image' | 'video' | 'link'
+}
+
 export type MenuItem = {
   id: number
   category_id: number
@@ -17,6 +23,8 @@ export type MenuItem = {
   image_url: string
   /** Empty when the dish has no video. */
   video_url: string
+  /** Everything attached to the dish, in the caterer's own order. */
+  media?: MediaItem[]
   is_available: boolean
   is_featured: boolean
   tags: string[]
@@ -367,6 +375,15 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
       body,
     })
+  },
+
+  /** Sends several files, one request each, and keeps the order. */
+  adminUploadMany: async (token: string, files: File[]) => {
+    const saved: { url: string; kind: 'image' | 'video' }[] = []
+    for (const file of files) {
+      saved.push(await api.adminUpload(token, file))
+    }
+    return saved
   },
 
   adminSaveOptions: (token: string, id: number, groups: OptionGroupIn[]) =>

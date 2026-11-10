@@ -7,6 +7,7 @@ import {
   type Category,
   type CateringPricing,
   type CateringRequest,
+  type MediaItem,
   type MenuItem,
   type OptionGroupIn,
   type OptionIn,
@@ -21,6 +22,33 @@ const TOKEN_KEY = 'feastfusion.admin.token'
 export function Admin() {
   const [token, setToken] = useState<string | null>(localStorage.getItem(TOKEN_KEY))
   const [tab, setTab] = useState<Tab>('orders')
+  /* The dashboard title is a signpost, not something to read twice. It shrinks
+     the moment the caterer starts working — scrolling or clicking anywhere —
+     and grows back when they return to the top of the page. */
+  const [compact, setCompact] = useState(false)
+
+  useEffect(() => {
+    let touched = false
+
+    const onScroll = () => {
+      if (window.scrollY <= 8) touched = false
+      setCompact(touched || window.scrollY > 8)
+    }
+    const onTouch = () => {
+      touched = true
+      setCompact(true)
+    }
+
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    document.addEventListener('pointerdown', onTouch, { passive: true })
+    document.addEventListener('keydown', onTouch)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      document.removeEventListener('pointerdown', onTouch)
+      document.removeEventListener('keydown', onTouch)
+    }
+  }, [])
 
   if (!token) {
     return <Login onDone={setToken} />
@@ -29,7 +57,7 @@ export function Admin() {
   return (
     <div className="admin">
       <div className="container">
-        <header className="admin__head">
+        <header className={`admin__head${compact ? ' is-compact' : ''}`}>
           <div>
             <span className="eyebrow">Staff area</span>
             <h1>Kitchen dashboard</h1>
@@ -467,7 +495,10 @@ function MenuPanel({ token }: { token: string }) {
               )}
 
               {rows.map((it) => (
-                <div key={it.id} className="cat-row">
+                <div
+                  key={it.id}
+                  className={`cat-row${openId === it.id || openIngId === it.id ? ' is-open' : ''}`}
+                >
                   <div className="cat-row__main">
                     <img src={it.image_url} alt="" />
                     <div className="cat-row__info">
@@ -1070,6 +1101,17 @@ function TagBox({
 }
 
 /**
+ * A pasted link is usually a picture or a clip, and the ending says which. When
+ * it does not, it is kept as a plain link so nothing is guessed wrongly.
+ */
+function guessKind(url: string): MediaItem['kind'] {
+  const path = url.split(/[?#]/)[0].toLowerCase()
+  if (/\.(jpe?g|png|webp|gif|svg|avif|bmp|heic)$/.test(path)) return 'image'
+  if (/\.(mp4|webm|mov|m4v|ogv|avi|mkv)$/.test(path)) return 'video'
+  return 'link'
+}
+
+/**
  * A live picture of the dish as the customer will meet it, drawn from the
  * half-filled form beside it. It is deliberately not the real MenuCard: that
  * one is a link with an Add button, and neither belongs in a preview.
@@ -1078,8 +1120,7 @@ function DishPreview({
   name,
   price,
   description,
-  imageUrl,
-  videoUrl,
+  media,
   tags,
   ingredients,
   groups,
@@ -1088,8 +1129,7 @@ function DishPreview({
   name: string
   price: string
   description: string
-  imageUrl: string
-  videoUrl: string
+  media: MediaItem[]
   tags: string[]
   ingredients: string[]
   groups: OptionGroupIn[]
@@ -1097,18 +1137,40 @@ function DishPreview({
 }) {
   const nairaValue = Number(price)
   const priceKobo = Number.isFinite(nairaValue) ? Math.round(nairaValue * 100) : 0
+  /* The first thing the caterer added is the cover — the one the menu card
+     shows. A clip plays in place of a still, exactly as on the dish page. A
+     plain link has nothing to draw, so the first picture or clip stands in. */
+  const cover = media.find((m) => m.kind !== 'link') ?? media[0]
+  const poster = media.find((m) => m.kind === 'image')?.url ?? ''
+  const rest = media.filter((m) => m !== cover)
 
   return (
     <div className="dish-preview">
       <div className="dish-preview__media">
-        {videoUrl ? (
-          <video src={videoUrl} poster={imageUrl} controls muted playsInline />
-        ) : imageUrl ? (
-          <img src={imageUrl} alt="" />
+        {cover?.kind === 'video' ? (
+          <video src={cover.url} poster={poster} controls muted playsInline />
+        ) : cover?.kind === 'image' ? (
+          <img src={cover.url} alt="" />
         ) : (
           <span className="dish-preview__empty">No picture yet</span>
         )}
       </div>
+
+      {rest.length > 0 && (
+        <div className="dish-preview__strip">
+          {rest.map((m, i) => (
+            <span className="dish-preview__thumb" key={`${m.url}-${i}`}>
+              {m.kind === 'video' ? (
+                <video src={m.url} muted playsInline />
+              ) : m.kind === 'image' ? (
+                <img src={m.url} alt="" />
+              ) : (
+                <span className="dish-preview__link">link</span>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="dish-preview__body">
         <div className="dish-preview__meta">
@@ -1196,10 +1258,12 @@ function NewItemForm({
     description: '',
     price: '',
     category_slug: categories[0]?.slug ?? '',
-    image_url: '',
-    video_url: '',
     ingredients: '',
   })
+  /* Everything attached to the dish, in the order the caterer added it. The
+     first one is the cover. */
+  const [media, setMedia] = useState<MediaItem[]>([])
+  const [linkDraft, setLinkDraft] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagList, setTagList] = useState<string[]>([])
   const [groups, setGroups] = useState<OptionGroupIn[]>([])
@@ -1210,7 +1274,7 @@ function NewItemForm({
   const [addingCategory, setAddingCategory] = useState(false)
   const [categoryBusy, setCategoryBusy] = useState(false)
 
-  const [uploading, setUploading] = useState<'image' | 'video' | null>(null)
+  const [uploading, setUploading] = useState(0)
 
   useEffect(() => {
     api
@@ -1251,18 +1315,37 @@ function NewItemForm({
     }
   }
 
-  async function upload(kind: 'image' | 'video', file: File | undefined) {
-    if (!file) return
-    setUploading(kind)
+  async function upload(files: FileList | null) {
+    if (!files || files.length === 0) return
+    const list = Array.from(files)
+    setUploading(list.length)
     setError(null)
     try {
-      const saved = await api.adminUpload(token, file)
-      set(kind === 'image' ? 'image_url' : 'video_url', saved.url)
+      const saved = await api.adminUploadMany(token, list)
+      setMedia((m) => [...m, ...saved.map((s) => ({ url: s.url, kind: s.kind }))])
     } catch (err) {
       setError((err as Error).message)
     } finally {
-      setUploading(null)
+      setUploading(0)
     }
+  }
+
+  function addLink() {
+    const url = linkDraft.trim()
+    if (!url) return
+    setMedia((m) => [...m, { url, kind: guessKind(url) }])
+    setLinkDraft('')
+  }
+
+  function removeMedia(at: number) {
+    setMedia((m) => m.filter((_, i) => i !== at))
+  }
+
+  function makeCover(at: number) {
+    setMedia((m) => {
+      const picked = m[at]
+      return [picked, ...m.filter((_, i) => i !== at)]
+    })
   }
 
   async function submit(e: React.FormEvent) {
@@ -1275,8 +1358,7 @@ function NewItemForm({
         description: form.description.trim(),
         price_kobo: Math.round(Number(form.price) * 100),
         category_slug: form.category_slug,
-        image_url: form.image_url.trim(),
-        video_url: form.video_url.trim(),
+        media,
         tags,
         is_available: true,
         is_featured: false,
@@ -1386,52 +1468,82 @@ function NewItemForm({
             <div className="field panel__full">
               <label>Media</label>
               <div className="media">
-                <div className="media__col">
-                  <span className="media__label">Picture</span>
-                  <div className="media__pick">
+                <div className="media__pick">
+                  <input
+                    value={linkDraft}
+                    onChange={(e) => setLinkDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addLink()
+                      }
+                    }}
+                    placeholder="Paste a link, or upload →"
+                  />
+                  <label className="media__btn">
+                    {uploading > 0
+                      ? `Uploading ${uploading}…`
+                      : media.length
+                        ? 'Add more'
+                        : 'Upload'}
                     <input
-                      value={form.image_url}
-                      onChange={(e) => set('image_url', e.target.value)}
-                      placeholder="Paste a link, or upload →"
+                      type="file"
+                      multiple
+                      accept="image/*,video/*"
+                      onChange={(e) => {
+                        upload(e.target.files)
+                        e.target.value = ''
+                      }}
                     />
-                    <label className="media__btn">
-                      {uploading === 'image' ? 'Uploading…' : 'Upload'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => upload('image', e.target.files?.[0])}
-                      />
-                    </label>
-                  </div>
+                  </label>
                 </div>
-                <div className="media__col">
-                  <span className="media__label">Video (optional)</span>
-                  <div className="media__pick">
-                    <input
-                      value={form.video_url}
-                      onChange={(e) => set('video_url', e.target.value)}
-                      placeholder="Paste a link, or upload →"
-                    />
-                    <label className="media__btn">
-                      {uploading === 'video' ? 'Uploading…' : 'Upload'}
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={(e) => upload('video', e.target.files?.[0])}
-                      />
-                    </label>
-                  </div>
-                </div>
-                {(form.image_url || form.video_url) && (
-                  <div className="media__previews">
-                    {form.image_url && (
-                      <img className="media__preview" src={form.image_url} alt="Dish preview" />
-                    )}
-                    {form.video_url && (
-                      <video className="media__preview" src={form.video_url} controls muted />
-                    )}
-                  </div>
+
+                {media.length > 0 && (
+                  <ul className="media__list">
+                    {media.map((m, i) => {
+                      const isCover = m.kind !== 'link' && media.findIndex((x) => x.kind !== 'link') === i
+                      return (
+                        <li
+                          className={`media__item${isCover ? ' is-cover' : ''}`}
+                          key={`${m.url}-${i}`}
+                        >
+                          {m.kind === 'video' ? (
+                            <video src={m.url} muted playsInline />
+                          ) : m.kind === 'image' ? (
+                            <img src={m.url} alt="" />
+                          ) : (
+                            <span className="media__link">{m.url}</span>
+                          )}
+                          {isCover && <span className="media__badge">Cover</span>}
+                          <div className="media__tools">
+                            {!isCover && m.kind !== 'link' && (
+                              <button
+                                type="button"
+                                onClick={() => makeCover(i)}
+                                title="Show this one on the menu card"
+                              >
+                                Make cover
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="media__remove"
+                              onClick={() => removeMedia(i)}
+                              title="Remove"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
                 )}
+
+                <span className="field__hint">
+                  Pictures, videos and links all go in one list. The first one is the
+                  cover the menu card shows.
+                </span>
               </div>
             </div>
 
@@ -1472,8 +1584,7 @@ function NewItemForm({
             name={form.name}
             price={form.price}
             description={form.description}
-            imageUrl={form.image_url}
-            videoUrl={form.video_url}
+            media={media}
             tags={tags}
             ingredients={ingredientLines}
             groups={groups}

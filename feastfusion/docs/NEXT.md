@@ -42,6 +42,14 @@ A short note so a fresh chat can pick up with no history.
     ready-made groups (Portion, Swallow, Extras, Toppings, …) shown as on/off
     chips, both in a dish's Options editor and in the Add dish form, so a new
     dish can be created with its questions already in place. See the note below.
+18. **One Media box takes pictures, videos and links together.** The old
+    separate Picture and Video boxes are gone. The caterer can paste links or
+    upload many files at once, and any tile can be made the cover. See the note
+    below.
+19. **The dashboard title shrinks when you scroll or click**, and grows back at
+    the top. See the note below.
+20. **The Catalogue shows two dishes per row**, so the page is about 4,000px
+    shorter. See the note below.
 
 ## The catering page, as it stands
 
@@ -681,6 +689,84 @@ and 1378px tall, with the preview underneath at 808px wide. Name, price and
 the switched-on groups all update as the form is filled, in both themes, with
 no horizontal overflow at any of the three widths.
 
+## One Media box: pictures, videos and links together
+
+The Add item form used to have two separate boxes, "Picture" and "Video", each
+taking one URL. Now there is **one box** that takes as many pictures, videos
+and pasted links as the caterer likes.
+
+**How it works for the caterer.** They can paste a link and press Enter, or
+press Upload and pick several files at once. Each one appears as a small tile
+in a strip. The first picture or video is the **cover** and wears a gold
+"Cover" badge. Hovering any other tile shows "Make cover" and "×", so the
+caterer can promote a different picture or remove one.
+
+**How it is stored.** A new column `media` on `menu_items` holds the whole
+list as JSON, in order. The two old columns `image_url` and `video_url` are
+still written, but only as "the first picture" and "the first clip". That is
+deliberate: `MenuCard`, `CartDrawer`, `Checkout` and the dish page's pairings
+rail all read `image_url`, and they keep working with no changes at all.
+
+`parse_media` in `models.rs` falls back to the two old columns when the JSON
+is empty, so all 289 existing dishes render exactly as before. `store_media`
+only fills `image_url` from an item whose kind is `image`, so a pasted link
+never becomes the card thumbnail.
+
+**A link is not a picture.** `MediaItem.kind` is `"image"`, `"video"` or
+`"link"`. The kind is guessed from the file extension (`.jpg`, `.png`,
+`.webp`, `.gif`, `.svg`, `.avif`, `.bmp`, `.heic` are pictures; `.mp4`,
+`.webm`, `.mov`, `.m4v`, `.ogv`, `.avi`, `.mkv` are videos; anything else is
+a link). Uploaded files get their kind from the server, which decides by
+extension too.
+
+**The preview follows.** `DishPreview` shows the cover, then a 42px strip of
+the remaining tiles underneath, so the caterer sees the whole gallery before
+saving.
+
+**Verified live:** two pasted links produced two 104×72 tiles; a `.mp4` link
+became a real `<video>` and took the Cover badge; the preview strip showed one
+thumb; no horizontal overflow. Through the API, a dish created with four
+media items came back with `image_url` set to the first picture and
+`video_url` to the first clip, in order. A PATCH that reordered the list moved
+the cover and cleared `video_url` when the clip was dropped. An old-style
+PATCH carrying only `image_url` patched the gallery's first picture in place
+and left the rest alone.
+
+## The dashboard title shrinks as soon as you move
+
+The "Kitchen dashboard" heading is 29px tall with a small gold eyebrow above
+it. As soon as the page scrolls past 8px — or the caterer clicks or types
+anywhere — the eyebrow hides, the title drops to 15px, and the gaps tighten,
+so the head goes from 66px to 34px. Scrolling back to the very top brings it
+back.
+
+It listens to three things: `scroll` on the window, `pointerdown` and
+`keydown` on the document. The click and key listeners are there because the
+caterer often starts working without scrolling, and the heading should get out
+of the way then too.
+
+**Verified live** with real wheel gestures: 29px → 15px → 29px, head 66px →
+34px → 66px.
+
+## The Catalogue shows two dishes per row
+
+`.cat-group` is a two-column grid capped at 1500px. Each card is 746px wide at
+1920 and 650px at 1366. The group heading and the "nothing here" message span
+both columns.
+
+To make a card fit in half the width, `.cat-row__main` changed from
+`48px 1fr auto` to `48px minmax(0,1fr)`, and the row's buttons moved to their
+own full-width line under a top border. When a card's Options or Ingredients
+editor is open it gets `grid-column: 1 / -1`, so the editor still has the
+whole width to work in.
+
+Below 900px the grid collapses to one column.
+
+**Verified live:** at 1920 the grid is `746px 746px` and two cards sit on the
+same row; at 1366 it is `650px 650px`. The Catalogue page dropped from
+25,432px to about 21,400px. No horizontal overflow at either width, in both
+themes.
+
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.
@@ -733,4 +819,13 @@ their own pricing rules in the Rust backend, instead of being folded into
 - **`.admin-new` overrides are scoped on purpose.** The compact input padding and 72px textarea live under `.admin-new`, not in `global.css`, because the global `.field` rules are shared with checkout, catering and the admin options editor.
 - **A new category is created approved.** `POST /api/admin/categories` sets `is_approved = 1`, so it shows on the customer menu immediately. Flip it off from the Catalogue tab if that is wrong.
 - **`Stop-Process` is blocked inside a `ForEach-Object` pipeline.** Use a `foreach` loop or a standalone call. The running exe locks `target\debug\feastfusion-api.exe`, so it must be stopped before `cargo build`.
+- **`window.scrollTo()` does not fire a scroll event in the CDP harness.** The
+  page really does move (`window.scrollY` changes) but no `scroll` listener
+  runs, so any scroll-driven UI looks broken when it is not. Test it with real
+  gestures instead: `Input.dispatchMouseEvent` with `type: 'mouseWheel'`,
+  `deltaY: 120`, `pointerType: 'mouse'`, repeated in a loop with ~120ms gaps.
+  See `shots/probe-wheel.js`.
+- **`Input.dispatchMouseEvent` clicks do not reach the page.** Use
+  `element.click()` from `Runtime.evaluate`. A click fired right after
+  `Page.navigate` is also lost, so poll for the element first.
 - **The backend takes longer than 40s to boot.** Poll `/api/menu` with retries; there is no `/api/health`.

@@ -26,11 +26,41 @@
   gap: var(--sp-4);
   flex-wrap: wrap;
   margin-bottom: var(--sp-5);
+  transition:
+    margin-bottom var(--dur-base) var(--ease-out),
+    gap var(--dur-base) var(--ease-out);
 }
 
 .admin__head h1 {
   font-size: var(--step-3);
   margin-top: var(--sp-2);
+  transition:
+    font-size var(--dur-base) var(--ease-out),
+    margin-top var(--dur-base) var(--ease-out);
+}
+
+/* Once the caterer starts working the title steps back: the eyebrow goes, the
+   heading drops to body size and the whole block tightens up, handing roughly
+   60px of height back to the list underneath. */
+.admin__head.is-compact {
+  align-items: center;
+  margin-bottom: var(--sp-3);
+  gap: var(--sp-2);
+}
+
+.admin__head.is-compact .eyebrow {
+  display: none;
+}
+
+.admin__head.is-compact h1 {
+  font-size: var(--step-0);
+  margin-top: 0;
+  letter-spacing: 0.01em;
+}
+
+/* The tab strip tucks in too, so the first dish starts higher up. */
+.admin__head.is-compact + .admin-tabs {
+  margin-bottom: var(--sp-3);
 }
 
 /* ---------- tabs ---------- */
@@ -42,6 +72,7 @@
   margin-bottom: var(--sp-5);
   overflow-x: auto;
   scrollbar-width: none;
+  transition: margin-bottom var(--dur-base) var(--ease-out);
 }
 
 .admin-tabs::-webkit-scrollbar {
@@ -444,6 +475,43 @@
   color: var(--text-muted);
 }
 
+/* The rest of the gallery, so the caterer sees everything they added without
+   leaving the form. */
+.dish-preview__strip {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.3rem var(--sp-3);
+  overflow-x: auto;
+  background: var(--ink-100);
+  flex: 0 0 auto;
+}
+
+.dish-preview__thumb {
+  flex: 0 0 auto;
+  width: 2.6rem;
+  height: 2rem;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--white);
+}
+
+.dish-preview__thumb img,
+.dish-preview__thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dish-preview__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 0.55rem;
+  color: var(--ink-600);
+}
+
 .dish-preview__body {
   display: flex;
   flex-direction: column;
@@ -729,27 +797,16 @@
   background: var(--gold-veil);
 }
 
+/* One box for everything: a link to paste, a button that takes many files at
+   once, and the collected list underneath. */
 .media {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-3);
-}
-
-.media__col {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--sp-2);
   min-width: 0;
 }
 
-.media__label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--ink-500);
-}
-
-/* The link box and the upload button share one line, so the media block is
-   two rows instead of four. */
+/* The link box and the upload button share one line. */
 .media__pick {
   display: flex;
   gap: 0.35rem;
@@ -791,24 +848,110 @@
   cursor: pointer;
 }
 
-.media__previews {
-  grid-column: 1 / -1;
+.media__list {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.media__preview {
-  max-width: 8rem;
-  max-height: 5.5rem;
+.media__item {
+  position: relative;
+  width: 6.5rem;
+  height: 4.5rem;
   border-radius: var(--r-sm);
   border: 1px solid var(--border);
+  background: var(--ink-100);
+  overflow: hidden;
+}
+
+.media__item.is-cover {
+  border-color: var(--gold-300);
+  box-shadow: 0 0 0 2px var(--gold-veil);
+}
+
+.media__item img,
+.media__item video {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  display: block;
+}
+
+/* A pasted link has nothing to show, so it shows its own address. */
+.media__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0.3rem;
+  font-size: 0.6rem;
+  line-height: 1.25;
+  color: var(--ink-600);
+  text-align: center;
+  overflow: hidden;
+  word-break: break-all;
+}
+
+.media__badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.1rem 0.3rem;
+  border-bottom-right-radius: var(--r-sm);
+  background: var(--gold-300);
+  color: var(--ink-900);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The tools only appear on hover, so the strip stays quiet. */
+.media__tools {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  background: linear-gradient(to top, rgba(20, 16, 12, 0.72), transparent);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.media__item:hover .media__tools,
+.media__item:focus-within .media__tools {
+  opacity: 1;
+}
+
+.media__tools button {
+  padding: 0.1rem 0.3rem;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(255, 253, 250, 0.92);
+  color: var(--ink-800);
+  font: inherit;
+  font-size: 0.58rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.media__tools button:hover {
+  background: var(--white);
+}
+
+.media__remove {
+  font-size: 0.75rem;
+  line-height: 1;
 }
 
 @media (max-width: 640px) {
-  .media {
-    grid-template-columns: 1fr;
+  .media__item {
+    width: 5.5rem;
+    height: 4rem;
   }
 }
 
@@ -851,6 +994,17 @@
 
 .cat-group {
   margin-bottom: var(--sp-5);
+  /* Two dishes per row, so a long category is half as tall to scroll. */
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  max-width: 1500px;
+}
+
+/* The heading and the "nothing here" note run the full width of the row. */
+.cat-group__head,
+.cat-group > .cat-empty {
+  grid-column: 1 / -1;
 }
 
 .cat-group__head {
@@ -860,7 +1014,7 @@
   justify-content: space-between;
   gap: var(--sp-2);
   padding-bottom: var(--sp-2);
-  margin-bottom: var(--sp-3);
+  margin-bottom: var(--sp-1);
   border-bottom: 1px solid var(--border);
 }
 
@@ -884,13 +1038,19 @@
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  margin-bottom: var(--sp-2);
+  min-width: 0;
+}
+
+/* An open dish needs the whole row for its options or ingredients editor,
+   otherwise the editor would be squeezed into half the width. */
+.cat-row.is-open {
+  grid-column: 1 / -1;
 }
 
 .cat-row__main {
   display: grid;
-  grid-template-columns: 48px 1fr auto;
-  gap: var(--sp-3);
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: var(--sp-2) var(--sp-3);
   align-items: center;
 }
 
@@ -938,11 +1098,15 @@
   color: #1f7a4a;
 }
 
+/* The buttons sit under the name so the card stays narrow enough to pair up. */
 .cat-row__actions {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
 }
 
 .cat-price {
@@ -1392,6 +1556,12 @@
   text-align: center;
   color: var(--ink-400);
   font-size: var(--step--1);
+}
+
+@media (max-width: 900px) {
+  .cat-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 720px) {

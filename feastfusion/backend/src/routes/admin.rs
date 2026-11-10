@@ -12,9 +12,9 @@ use crate::{
     auth::{issue_token, require_admin, verify_password},
     error::{AppError, AppResult},
     models::{
-        BulkAvailability, Catalogue, Category, CategoryApproval, CateringPricing, CateringRequest,
-        Login, MenuItem, NewCategory, NewMenuItem, OptionGroupIn, Order, PatchMenuItem, PatchOrder,
-        SaveIngredients, SaveOptions, SavePairings,
+        self, BulkAvailability, Catalogue, Category, CategoryApproval, CateringPricing,
+        CateringRequest, Login, MenuItem, NewCategory, NewMenuItem, OptionGroupIn, Order,
+        PatchMenuItem, PatchOrder, SaveIngredients, SaveOptions, SavePairings,
     },
     pricing,
     routes::{catering, menu, orders},
@@ -616,18 +616,29 @@ pub async fn create_menu_item(
         return Err(AppError::BadRequest("Pick a valid category.".into()));
     };
 
+    // The gallery wins when the form sends one. Otherwise the two older fields
+    // are turned into a one- or two-item gallery so every dish has the same
+    // shape going forward.
+    let (media_json, image_url, video_url) = if payload.media.is_empty() {
+        let list = models::parse_media("", &payload.image_url, &payload.video_url);
+        models::store_media(&list)
+    } else {
+        models::store_media(&payload.media)
+    };
+
     let inserted = sqlx::query(
         "INSERT INTO menu_items
-            (category_id, name, description, price_kobo, image_url, video_url, tags, ingredients,
-             is_available, is_featured)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (category_id, name, description, price_kobo, image_url, video_url, media, tags,
+             ingredients, is_available, is_featured)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(category_id)
     .bind(name)
     .bind(payload.description.trim())
     .bind(payload.price_kobo)
-    .bind(payload.image_url.trim())
-    .bind(payload.video_url.trim())
+    .bind(&image_url)
+    .bind(&video_url)
+    .bind(&media_json)
     .bind(payload.tags.join(", "))
     .bind(payload.ingredients.join("\n"))
     .bind(if payload.is_available { 1 } else { 0 })
@@ -660,8 +671,44 @@ pub async fn update_menu_item(
     let name = patch.name.unwrap_or(existing.name);
     let description = patch.description.unwrap_or(existing.description);
     let price_kobo = patch.price_kobo.unwrap_or(existing.price_kobo);
-    let image_url = patch.image_url.unwrap_or(existing.image_url);
-    let video_url = patch.video_url.unwrap_or(existing.video_url);
+
+    // Three ways in, in order of preference: a whole new gallery, a change to
+    // just the cover picture or just the clip, or nothing at all. Whichever it
+    // is, the gallery and the two old columns are written together so they can
+    // never drift apart.
+    let (media_json, image_url, video_url) = match patch.media {
+        Some(list) => models::store_media(&list),
+        None => {
+            let mut list = existing.media.clone();
+            if let Some(new_image) = patch.image_url.as_deref() {
+                let new_image = new_image.trim();
+                match list.iter_mut().find(|m| m.kind == "image") {
+                    Some(slot) => slot.url = new_image.to_string(),
+                    None if !new_image.is_empty() => list.insert(
+                        0,
+                        models::MediaItem {
+                            url: new_image.to_string(),
+                            kind: "image".to_string(),
+                        },
+                    ),
+                    None => {}
+                }
+            }
+            if let Some(new_video) = patch.video_url.as_deref() {
+                let new_video = new_video.trim();
+                match list.iter_mut().find(|m| m.kind == "video") {
+                    Some(slot) => slot.url = new_video.to_string(),
+                    None if !new_video.is_empty() => list.push(models::MediaItem {
+                        url: new_video.to_string(),
+                        kind: "video".to_string(),
+                    }),
+                    None => {}
+                }
+            }
+            models::store_media(&list)
+        }
+    };
+
     let tags = patch
         .tags
         .map(|t| t.join(", "))
@@ -699,15 +746,17 @@ pub async fn update_menu_item(
     sqlx::query(
         "UPDATE menu_items
          SET category_id = ?, name = ?, description = ?, price_kobo = ?, image_url = ?,
-             video_url = ?, tags = ?, ingredients = ?, is_available = ?, is_featured = ?
+             video_url = ?, media = ?, tags = ?, ingredients = ?, is_available = ?,
+             is_featured = ?
          WHERE id = ?",
     )
     .bind(category_id)
     .bind(name.trim())
     .bind(description.trim())
     .bind(price_kobo)
-    .bind(image_url.trim())
-    .bind(video_url.trim())
+    .bind(&image_url)
+    .bind(&video_url)
+    .bind(&media_json)
     .bind(tags)
     .bind(ingredients)
     .bind(if is_available { 1 } else { 0 })

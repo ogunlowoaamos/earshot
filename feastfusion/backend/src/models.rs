@@ -64,6 +64,9 @@ pub struct MenuRow {
     pub price_kobo: i64,
     pub image_url: String,
     pub video_url: String,
+    /// The whole gallery as JSON, in the order the caterer arranged it. Empty
+    /// for dishes that only ever had the one picture and one clip.
+    pub media: String,
     pub tags: String,
     pub ingredients: String,
     pub is_available: i64,
@@ -112,6 +115,10 @@ pub struct MenuItem {
     pub image_url: String,
     /// A short clip the caterer uploaded. Empty when the dish has only a photo.
     pub video_url: String,
+    /// Everything the caterer attached, in their own order. Always has at least
+    /// the cover picture when the dish has one, so the dish page can just walk
+    /// the list.
+    pub media: Vec<MediaItem>,
     pub tags: Vec<String>,
     pub ingredients: Vec<String>,
     pub is_available: bool,
@@ -128,8 +135,9 @@ impl From<MenuRow> for MenuItem {
             name: r.name,
             description: r.description,
             price_kobo: r.price_kobo,
-            image_url: r.image_url,
-            video_url: r.video_url,
+            image_url: r.image_url.clone(),
+            video_url: r.video_url.clone(),
+            media: parse_media(&r.media, &r.image_url, &r.video_url),
             tags: split_tags(&r.tags),
             ingredients: split_lines(&r.ingredients),
             is_available: r.is_available != 0,
@@ -164,6 +172,84 @@ pub fn split_lines(raw: &str) -> Vec<String> {
         .filter(|t| !t.is_empty())
         .map(str::to_string)
         .collect()
+}
+
+/// One thing the caterer attached to a dish: a photo, a clip, or a link.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MediaItem {
+    pub url: String,
+    /// "image", "video" or "link". The dashboard sends it, so a pasted link
+    /// does not have to be guessed from its ending.
+    #[serde(default = "default_media_kind")]
+    pub kind: String,
+}
+
+fn default_media_kind() -> String {
+    "image".to_string()
+}
+
+/// The gallery is stored as JSON. Dishes saved before the gallery existed have
+/// an empty column, so fall back to the single picture and single clip they
+/// already carry. That keeps every old dish looking exactly as it did.
+pub fn parse_media(raw: &str, image_url: &str, video_url: &str) -> Vec<MediaItem> {
+    let trimmed = raw.trim();
+    if !trimmed.is_empty() {
+        if let Ok(list) = serde_json::from_str::<Vec<MediaItem>>(trimmed) {
+            let cleaned: Vec<MediaItem> = list
+                .into_iter()
+                .filter(|m| !m.url.trim().is_empty())
+                .collect();
+            if !cleaned.is_empty() {
+                return cleaned;
+            }
+        }
+    }
+
+    let mut fallback = Vec::new();
+    if !image_url.trim().is_empty() {
+        fallback.push(MediaItem {
+            url: image_url.trim().to_string(),
+            kind: "image".to_string(),
+        });
+    }
+    if !video_url.trim().is_empty() {
+        fallback.push(MediaItem {
+            url: video_url.trim().to_string(),
+            kind: "video".to_string(),
+        });
+    }
+    fallback
+}
+
+/// Writes the gallery back out, and keeps the two old columns pointing at the
+/// first picture and the first clip so the menu card, the basket and the dish
+/// page carry on working without knowing the gallery exists.
+pub fn store_media(list: &[MediaItem]) -> (String, String, String) {
+    let cleaned: Vec<MediaItem> = list
+        .iter()
+        .filter(|m| !m.url.trim().is_empty())
+        .map(|m| MediaItem {
+            url: m.url.trim().to_string(),
+            kind: if m.kind.trim().is_empty() {
+                "image".to_string()
+            } else {
+                m.kind.trim().to_string()
+            },
+        })
+        .collect();
+
+    let first_image = cleaned
+        .iter()
+        .find(|m| m.kind == "image")
+        .map(|m| m.url.clone())
+        .unwrap_or_default();
+    let first_video = cleaned
+        .iter()
+        .find(|m| m.kind == "video")
+        .map(|m| m.url.clone())
+        .unwrap_or_default();
+    let json = serde_json::to_string(&cleaned).unwrap_or_default();
+    (json, first_image, first_video)
 }
 
 #[derive(Debug, Serialize)]
@@ -428,6 +514,11 @@ pub struct NewMenuItem {
     pub image_url: String,
     #[serde(default)]
     pub video_url: String,
+    /// The whole gallery. When it is sent, it wins: the first picture and the
+    /// first clip are copied into `image_url` / `video_url` for the older
+    /// screens. When it is left out, the two old fields are used as before.
+    #[serde(default)]
+    pub media: Vec<MediaItem>,
     #[serde(default)]
     pub tags: Vec<String>,
     #[serde(default)]
@@ -455,6 +546,7 @@ pub struct PatchMenuItem {
     pub category_slug: Option<String>,
     pub image_url: Option<String>,
     pub video_url: Option<String>,
+    pub media: Option<Vec<MediaItem>>,
     pub tags: Option<Vec<String>>,
     pub ingredients: Option<Vec<String>>,
     pub is_available: Option<bool>,
