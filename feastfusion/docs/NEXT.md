@@ -902,9 +902,28 @@ left alone — those are dividers, not frames, and thinning them makes the page
 look unfinished.
 
 **Verified live:** the idle chip, the search box and the toolbar rule all
-compute to `1px` at 55% strength, in both themes, at 1920 and 1366. The deposit
+compute to `1px` at 22% strength, in both themes, at 1920 and 1366. The deposit
 calculator is still 1,577px, the Orders tab still 1,651px, and no page scrolls
 sideways.
+
+The strength went 55% → 35% → 22% over three rounds, because the user kept
+saying it was still too heavy. 22% is the point where the outline is visible
+but no longer reads as a frame.
+
+## The page margins are thin
+
+The content column was capped at 1320px, which left 300px of empty space on
+each side of a 1920px screen. The cap is now 1800px and the side padding is
+12px instead of 24px, so the content runs nearly edge to edge:
+
+| Screen | Margin each side | Content width |
+| --- | --- | --- |
+| 1920 | 55px | 1800px |
+| 1366 | 12px | 1356px |
+
+The dish cards grew from 202px to 286px wide as a result, and the menu page
+went from 2,661px to 2,827px tall (the cards are wider, so the text wraps less
+but the pictures are taller).
 
 ## Not finished
 

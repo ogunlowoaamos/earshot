@@ -4,7 +4,7 @@
 }
 
 /* The dashboard is a work surface, not a reading column: let it use the
-   whole window instead of the centred 1320px container. */
+   whole window instead of the centred container. */
 .admin > .container {
   max-width: none;
 }
