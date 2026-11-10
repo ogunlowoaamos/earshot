@@ -944,9 +944,16 @@ Three changes:
    foot was the other way a card grew taller than its neighbours.
 
 The grid is now seven across instead of six. At 1920 the grid is 1776px, so
-each card is 243px wide (it was 286px). The breakpoints step down 7 → 6 at
-1400px → 5 at 1150px → 4 at 900px → 3 at 700px → 2 at 520px. The user's own
-screen is 1366px, which lands on six across at 212px per card.
+each card is 243px wide (it was 286px). The breakpoints step down 7 → 5 at
+1150px → 4 at 900px → 3 at 700px → 2 at 520px.
+
+**Correction.** The first attempt had a `@media (max-width: 1400px)` step back
+to six across. The user's own screen is 1366px, so it fell under that
+breakpoint and they still saw six — which is why they said "you didnt do
+anything i asked". That breakpoint is gone. Seven across now holds all the way
+down to 1150px, so 1366 gets seven at 190px per card. **Always check a layout
+change at 1366, not just at 1920.** The user's screenshots are crops of a
+1920-wide render, but their real screen is 1366.
 
 Two tags plus the Add button do not fit in 243px at full size, so the card is
 now a container query context (`container-type: inline-size`) and the tags
@@ -955,20 +962,71 @@ to wrap. At 243px both tags still show.
 
 | Screen | Across | Card width | Card height | Page height |
 | --- | --- | --- | --- | --- |
-| 1920 | 7 | 243px | 369px | 2,636px |
-| 1366 | 6 | 212px | 345px | 2,494px |
-| 900 | 4 | 207px | 363px | 3,761px |
-| 520 | 2 | 237px | 372px | — |
+| 1920 | 7 | 247px | 433px | 3,006px |
+| 1366 | 7 | 190px | 391px | 2,758px |
+| 900 | 4 | 207px | — | — |
+| 520 | 2 | 237px | — | — |
 
 Every card on the page is now one height, and the Add buttons line up per row.
+
+## The heading shrinks and the category bar sticks
+
+Three things the user asked for in one go, all on the menu page.
+
+**The heading shrinks on scroll.** `.menu-page__head` is 134px tall at rest
+(h1 at 36.8px). Once `window.scrollY` passes 40 it gets `.is-scrolled`, the
+head padding drops to `--sp-1`, the h1 drops to `--step-1` (17.6px) and the
+lede fades to `opacity: 0; max-height: 0`. The head becomes 54px. Both the
+padding and the font-size are transitioned, so it visibly shrinks rather than
+jumping.
+
+**Clicking a category chip also collapses it.** `setParam` ends with
+`if (key === 'category') setScrolled(true)`, so picking a chip gives the same
+collapsed state even if the page has not scrolled. The scroll listener will
+set it back to `false` on the next scroll event if the user is still at the
+top, which is the right behaviour.
+
+**The category bar pins under the site header.** `.menu-toolbar` is now
+`position: sticky; top: var(--header-h)` (52px) with `z-index: 20` and
+`background: var(--bg)`. The site header is `z-index: 60`, so the bar slides
+under it correctly. The background has to be set or the cards show through.
+When pinned it also tightens: `padding-block` `--sp-2` → `--sp-1`, gap
+`--sp-1`, and the count/search row gap `--sp-2`. That takes it from 105px to
+85px.
+
+Verified with real wheel events (not `scrollTo` — see the traps): the bar sits
+at exactly `top: 52` in both themes, and the toolbar background matches `--bg`
+(`rgb(250, 246, 240)` in light), so there is no visible band.
+
+**Known rough edge.** At 900px the pinned bar is 122px and at 520px it is
+140px, because the chips wrap onto several rows. It still works, it just eats
+more of the screen. The fix would be `overflow-x: auto; flex-wrap: nowrap` on
+`.chips` once pinned, but that is a visible behaviour change and the user has
+not asked for it.
+
+## The dish photo is square
+
+The user drew a red box around the photo **and** the title band of a card and
+asked for the picture to fill it. The photo was 4:3 (181×136 at 1366), so the
+box was asking for a square. `.menu-card__media` went from `aspect-ratio: 4 / 3`
+to `aspect-ratio: 1 / 1`.
+
+The card grew from 346px to 391px at 1366, and the menu page from 2,385px to
+2,758px. That is the cost of the change — the pictures are bigger, so the page
+is taller. Rectangular photos are now cropped harder than before, which is
+already on the "not finished" list.
 
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.
-2. Rectangular dish photos are still cropped. The plan is to stop cropping and show the whole photo.
+2. Rectangular dish photos are still cropped. The plan is to stop cropping and show the whole photo. The square frame made this worse.
 3. The admin ingredients editor has never been checked in the browser.
 4. The big "less scrolling on every page" pass is only partly done.
 5. The catering page has only been checked at 1440px wide. 980px and 520px are untested.
+6. The pinned category bar is 122px tall at 900px and 140px at 520px because the chips wrap. Not fixed, and the user has not been asked.
+7. The menu page header band (`.menu-page__head`, a gold gradient) was never confirmed. The user once said "this is the ending, let it behave like others we did before" about it and the request was never actioned. Ask before touching it.
+8. The customer dish page shows only the first picture. Should it show a strip of the rest?
+9. There is no limit on how many pictures or videos a dish can have. Should there be one?
 
 ## Page heights at 1440 x 900 (the scroll budget)
 
@@ -988,11 +1046,18 @@ pass).
 
 So `/menu` and `/checkout` are the two pages left to squeeze.
 
+**The menu page got taller, not shorter.** The square photo and the seven-across
+grid moved it to 2,758px at 1366 and 3,006px at 1920. The sticky category bar
+is what makes that bearable — the user can jump between categories without
+scrolling back up. If the page still feels long, the next lever is the card
+body padding, not the picture.
+
 ## Next job
 
-The user is still sending small UI edits for the catering page, one at a time.
-Wait for the next one. When the page is signed off, check it at 980px and 520px
-wide, then move on to the phone-width basket drawer.
+The user is still sending small UI edits, one at a time, usually as an
+annotated screenshot. Wait for the next one. When the menu page is signed off,
+check it at 980px and 520px wide, then move on to the phone-width basket
+drawer.
 
 Open question the user has not answered: should the two "Something else"
 services (chef-at-home, meal delivery) become their own `job_kind` values with
@@ -1027,3 +1092,26 @@ their own pricing rules in the Rust backend, instead of being folded into
   `element.click()` from `Runtime.evaluate`. A click fired right after
   `Page.navigate` is also lost, so poll for the element first.
 - **The backend takes longer than 40s to boot.** Poll `/api/menu` with retries; there is no `/api/health`.
+- **The user's real screen is 1366 x 768.** Their screenshots are crops of a
+  1920-wide render, so a layout can look right in the screenshot and wrong on
+  their machine. Check both. This is exactly how the seven-across grid shipped
+  broken once.
+- **The site header is 52px and sticky at `z-index: 60`.** Anything else that
+  sticks has to use `top: var(--header-h)` and a `z-index` below 60, and must
+  set its own `background` or the content scrolls through it.
+- **`--r-md`, `--r-lg` and `--r-xl` are all 16px.** Swapping between them does
+  nothing. Use `--r-sm` (8px) to actually tighten a corner.
+- **The red-pixel filter for reading annotations must exclude the site's gold.**
+  Gold is `(225,174,54)`, which passes a loose red test. Use
+  `r>150 and g<110 and b<110` for the annotation red `(198,62,37)`. If that
+  finds almost nothing the annotation is thin and anti-aliased — fall back to
+  `(r>90) and (r-g>45) and (r-b>45)`.
+- **A row-brightness profile is the fastest way to find where a photo ends.**
+  `a[y, 20:180].mean()` per row shows the photo/body boundary in one pass.
+- **The scroll-reveal animation corrupts every measurement.** Each card is
+  wrapped in `<Reveal>`, which starts at `opacity: 0; transform: translateY(18px)`.
+  Inject `*{transition:none!important;animation:none!important}.reveal{opacity:1!important;transform:none!important}`
+  before measuring, and poll for the expected element count first.
+- **`Emulation.setDeviceMetricsOverride` triggers a re-render.** The card list
+  can briefly drop to 3 items. Poll `document.querySelectorAll('.menu-card').length`
+  until it reaches 30+ before measuring.

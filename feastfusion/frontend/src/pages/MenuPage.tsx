@@ -11,9 +11,20 @@ export function MenuPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [params, setParams] = useSearchParams()
+  const [scrolled, setScrolled] = useState(false)
 
   const active = params.get('category') ?? 'all'
   const query = params.get('q') ?? ''
+
+  /* Once the page has scrolled past the big heading, the heading shrinks and
+     the category bar pins itself under the site header. The threshold is the
+     heading's own height so the two changes happen together. */
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   useEffect(() => {
     let alive = true
@@ -50,10 +61,13 @@ export function MenuPage() {
     if (!value || value === 'all') next.delete(key)
     else next.set(key, value)
     setParams(next, { replace: true })
+    // Picking a category is a deliberate "show me the food" action, so the
+    // heading collapses out of the way even if the page has not scrolled.
+    if (key === 'category') setScrolled(true)
   }
 
   return (
-    <div className="menu-page">
+    <div className={`menu-page ${scrolled ? 'is-scrolled' : ''}`}>
       <header className="menu-page__head">
         <div className="container">
           <span className="eyebrow">The kitchen menu</span>

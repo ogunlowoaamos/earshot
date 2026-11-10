@@ -312,6 +312,45 @@ genuinely the one being used.
 
 ---
 
+## 4b. The menu page, after the UI pass
+
+The user spent a long session sending small UI edits, one at a time, usually as an
+annotated screenshot. This is where the menu page ended up.
+
+**Seven dishes to a row, all the same size.** `.menu-grid` is
+`repeat(7, minmax(0, 1fr))` with `grid-auto-rows: 1fr` and an 8px gap. Every card on
+the page is one height and the Add buttons line up per row. The first attempt had a
+`@media (max-width: 1400px)` step back to six, which meant the user's own 1366px
+screen still showed six — they said "you didnt do anything i asked", and they were
+right. That breakpoint is gone. Seven holds down to 1150px.
+
+**The heading shrinks on scroll.** Past 40px of scroll the head padding drops, the
+h1 goes from 36.8px to 17.6px, and the intro paragraph fades out. The head goes from
+134px to 54px. Clicking a category chip does the same thing, so the grid comes up
+immediately.
+
+**The category bar pins under the site header.** `.menu-toolbar` is
+`position: sticky; top: var(--header-h)` (52px) at `z-index: 20`, with
+`background: var(--bg)` so the cards do not show through. It tightens from 105px to
+85px when pinned. Verified in both themes with real wheel events.
+
+**The dish photo is square.** `.menu-card__media` is `aspect-ratio: 1 / 1`. The user
+drew a box around the photo and the title band and asked for the picture to fill it.
+The card went from 346px to 391px at 1366 and the page from 2,385px to 2,758px. That
+is the trade: bigger pictures, longer page.
+
+**Everything else got thinner.** Outlines are hairlines (`--border-hair`, 22% of the
+border colour), page margins are thin, and the card corners are `--r-sm` (8px) rather
+than 16px. Note that `--r-md`, `--r-lg` and `--r-xl` are all 16px, so swapping between
+them does nothing.
+
+**Known rough edge.** At 900px the pinned bar is 122px and at 520px it is 140px,
+because the chips wrap onto several rows. It works, it just eats more of the screen.
+The fix would be `overflow-x: auto; flex-wrap: nowrap` on `.chips` once pinned, but
+that is a visible behaviour change and the user has not asked for it.
+
+---
+
 ## 5. The catalogue: what was built
 
 Read this section before touching anything catalogue related.
@@ -673,6 +712,18 @@ Steps 1 to 7 are done. What remains is the customer side.
 4. **Menu card shows "from" the cheapest price**, not a single flat price.
 5. **Checkout sends the chosen options and the note.**
 6. **Verify** with `cargo check` and `npm run build`, then on the real phone.
+7. **The pinned category bar is 122px at 900px and 140px at 520px** because the chips
+   wrap. Not fixed, and the user has not been asked.
+8. **The menu page header band** (`.menu-page__head`, a gold gradient) was never
+   confirmed. The user once said "this is the ending, let it behave like others we did
+   before" about it and the request was never actioned. Ask before touching it.
+9. **Rectangular dish photos are cropped harder now** that the frame is square. The
+   plan is still to stop cropping and show the whole photo.
+10. **The customer dish page shows only the first picture.** Should it show a strip of
+    the rest? And is there a limit on how many pictures or videos a dish can have?
+11. **The basket drawer has never been checked at phone width.**
+12. **The admin ingredients editor has never been checked in the browser.**
+13. **The catering page has only been checked at 1440px.** 980px and 520px are untested.
 
 The order matters. Gating availability before the admin existed would have hidden the
 whole menu, because every new dish starts switched off. That is why the admin came first.
@@ -836,12 +887,31 @@ is the smaller variant used where a section already has its own inner spacing. I
 change this, re-measure the landing page height, because it moves every section at once.
 
 **Change how many dishes show per row.** `pages/MenuPage.css`, the `.menu-grid` rule.
-It is `repeat(6, minmax(0, 1fr))`, meaning six equal columns. The four `@media` blocks
-below it step the count down as the screen narrows: five at 1100px, four at 900px,
-three at 700px and two at 520px. If you go above six, the cards get narrower than about
-170px and the dish name starts to wrap, so also check `.menu-card__head` in
-`components/MenuCard.css`, which stacks the name above the price for exactly that
-reason.
+It is `repeat(7, minmax(0, 1fr))`, meaning seven equal columns, with
+`grid-auto-rows: 1fr` so every row is the same height. The four `@media` blocks
+below it step the count down as the screen narrows: five at 1150px, four at 900px,
+three at 700px and two at 520px. **There is deliberately no breakpoint between
+1150px and 1920px.** An earlier version stepped back to six at 1400px, which meant
+the user's own 1366px screen never got seven across. If you add a breakpoint, check
+1366 first. The card is a container query context, so the tags shrink below 260px
+and the second tag hides below 215px; that is what lets seven fit.
+
+**Change the shrinking heading or the sticky category bar.** `pages/MenuPage.tsx`
+holds a `scrolled` state set by a passive scroll listener at `window.scrollY > 40`,
+and `setParam` also sets it when a category chip is clicked. That state puts
+`is-scrolled` on the `.menu-page` root. `pages/MenuPage.css` then does the work:
+`.menu-page.is-scrolled .menu-page__head` drops the padding to `--sp-1`, the h1 to
+`--step-1`, and fades the lede to `opacity: 0; max-height: 0`. The head goes from
+134px to 54px. `.menu-toolbar` is `position: sticky; top: var(--header-h)` with
+`z-index: 20` and `background: var(--bg)` — the background is not optional, without
+it the cards scroll through the bar. The site header is `z-index: 60`, so the bar
+must stay below that. If you want the bar to stop eating the screen at narrow
+widths, the fix is `overflow-x: auto; flex-wrap: nowrap` on `.chips` once pinned.
+
+**Change the dish photo shape.** `components/MenuCard.css`, `.menu-card__media`.
+It is `aspect-ratio: 1 / 1` (square). It was `4 / 3`. The square makes the card
+about 45px taller at 1366 and crops rectangular photos harder, so if the caterer
+uploads wide photos and they look chopped, this is the line to change back.
 
 ---
 
@@ -871,3 +941,25 @@ reason.
 - **`requestAnimationFrame` never fires in a background tab.** Anything that waits for
   the next frame will silently do nothing. Use `setTimeout` in test scripts, and prefer
   doing the work immediately in app code.
+- **The user's real screen is 1366 x 768.** Their screenshots are crops of a 1920-wide
+  render, so a layout can look right in the screenshot and wrong on their machine. Check
+  both. This is exactly how the seven-across grid shipped broken once.
+- **`window.scrollTo()` does not fire a scroll event in the CDP harness.** The page
+  really does move but no `scroll` listener runs, so scroll-driven UI looks broken when
+  it is not. Use `Input.dispatchMouseEvent` with `type: 'mouseWheel'`, `deltaY: 200`,
+  `pointerType: 'mouse'`, repeated with ~150ms gaps. See `shots/probe-sticky2.js`.
+- **The scroll-reveal animation corrupts every measurement.** Each card is wrapped in
+  `<Reveal>`, which starts at `opacity: 0; transform: translateY(18px)`. Inject
+  `*{transition:none!important;animation:none!important}.reveal{opacity:1!important;transform:none!important}`
+  before measuring, and poll for the expected element count first.
+- **`Emulation.setDeviceMetricsOverride` triggers a re-render.** The card list can
+  briefly drop to 3 items. Poll `document.querySelectorAll('.menu-card').length` until
+  it reaches 30+ before measuring.
+- **The site header is 52px and sticky at `z-index: 60`.** Anything else that sticks
+  must use `top: var(--header-h)`, a `z-index` below 60, and its own `background`.
+- **The red-pixel filter for reading annotations must exclude the site's gold.** Gold is
+  `(225,174,54)`, which passes a loose red test. Use `r>150 and g<110 and b<110` for the
+  annotation red `(198,62,37)`. If that finds almost nothing the annotation is thin and
+  anti-aliased — fall back to `(r>90) and (r-g>45) and (r-b>45)`.
+- **A row-brightness profile is the fastest way to find where a photo ends.**
+  `a[y, 20:180].mean()` per row shows the photo/body boundary in one pass.

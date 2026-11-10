@@ -2,25 +2,71 @@
   padding-bottom: var(--sp-8);
 }
 
+/* The heading band collapses once the page scrolls, so the category bar can
+   take the top of the screen. Everything here is a transition on a property
+   that does not trigger layout thrash on the grid below. */
 .menu-page__head {
   padding-block: var(--sp-3) var(--sp-3);
   background: linear-gradient(180deg, var(--gold-veil), transparent);
+  transition: padding-block var(--dur-base) var(--ease-out);
 }
 
 .menu-page__head h1 {
   font-size: var(--step-4);
   margin-block: var(--sp-2) var(--sp-2);
+  transition: font-size var(--dur-base) var(--ease-out);
+}
+
+.menu-page__head .lede {
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    max-height var(--dur-base) var(--ease-out);
+  max-height: 4rem;
+  overflow: hidden;
+}
+
+.menu-page.is-scrolled .menu-page__head {
+  padding-block: var(--sp-1) var(--sp-1);
+}
+
+.menu-page.is-scrolled .menu-page__head h1 {
+  font-size: var(--step-1);
+  margin-block: 0;
+}
+
+.menu-page.is-scrolled .menu-page__head .lede {
+  opacity: 0;
+  max-height: 0;
+}
+
+/* The pinned bar keeps both rows — the search is too useful to hide — but
+   loses its padding so it costs as little screen as possible. */
+.menu-page.is-scrolled .menu-toolbar {
+  padding-block: var(--sp-1);
+  gap: var(--sp-1);
+}
+
+.menu-page.is-scrolled .menu-toolbar__row {
+  gap: var(--sp-2);
 }
 
 /* ---------- toolbar ---------- */
 
+/* Pins under the site header once the heading has collapsed, so the category
+   buttons stay reachable however far down the grid you are. The solid
+   background is what stops the cards showing through as they scroll past. */
 .menu-toolbar {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
   flex-wrap: wrap;
+  padding-block: var(--sp-2);
   padding-bottom: var(--sp-3);
+  background: var(--bg);
   border-bottom: 1px solid var(--border-hair);
   margin-bottom: var(--sp-4);
 }
@@ -107,13 +153,7 @@
   /* Every row takes the height of the tallest row, so all cards on the page
      are the same size, not just the ones sharing a row. */
   grid-auto-rows: 1fr;
-  gap: var(--sp-3);
-}
-
-@media (max-width: 1400px) {
-  .menu-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
+  gap: var(--sp-2);
 }
 
 @media (max-width: 1150px) {
