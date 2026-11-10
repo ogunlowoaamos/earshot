@@ -604,6 +604,27 @@ columns sit side by side (same `y`, 613px each), no horizontal overflow, and a
 real file upload through the new hidden input still fills the URL box and draws
 the preview. The test upload was deleted afterwards.
 
+## The dashboard uses the whole window
+
+The admin page sat inside the same centred 1320px column as the rest of the
+site, so on a wide screen the Add item form started 319px in from the left
+edge and looked pushed to the right. The dashboard is a work surface, not a
+reading column, so `.admin > .container` now has `max-width: none`.
+
+Two follow-on tweaks came with it:
+
+- **The short fields got their own row.** With the form spanning the window,
+  Name and Price stretched a metre wide. At 1200px and up `.admin-new
+  .panel__grid` is now four columns, so Name, Price, Category and Tags share
+  one row. The form went from 708px to 630px tall.
+- **The lists stayed in a column.** Orders, Catering, the menu list, the
+  catalogue groups and Pairings are capped at 1100px, because a dish name at
+  the far left and its price at the far right of a 1910px row is hard to read.
+
+**Verified live:** at 1920 the form starts at x:24 (was x:319) and is 630px
+tall; at 1366 it starts at x:24 and is 661px tall. All five admin tabs report
+no horizontal overflow in both themes.
+
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.

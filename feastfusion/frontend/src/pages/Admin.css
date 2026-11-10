@@ -3,6 +3,22 @@
   min-height: 70vh;
 }
 
+/* The dashboard is a work surface, not a reading column: let it use the
+   whole window instead of the centred 1320px container. */
+.admin > .container {
+  max-width: none;
+}
+
+/* Lists still read better in a column, so only the add-item form and the
+   toolbars take the full width. */
+.admin-orders,
+.admin-catering,
+.admin-menu__list,
+.cat-group,
+.pairings {
+  max-width: 1100px;
+}
+
 .admin__head {
   display: flex;
   align-items: flex-end;
@@ -318,6 +334,14 @@
 /* The add-item form is long, so it runs tighter than the rest of the site. */
 .admin-new .panel__grid {
   gap: var(--sp-3);
+}
+
+/* The form now spans the window, so give the short fields a row of their own
+   instead of letting two of them stretch a metre wide. */
+@media (min-width: 1200px) {
+  .admin-new .panel__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .admin-new .field {
