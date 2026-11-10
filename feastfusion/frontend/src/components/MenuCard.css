@@ -2,6 +2,13 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  /* The card sits inside a Reveal wrapper, which is the actual grid item.
+     Stretching to 100% makes every card in a row the same height even when
+     one of them has a longer name or an extra tag. */
+  height: 100%;
+  /* Lets the card react to its own width, not the window's. The tag row uses
+     this to drop the second tag on narrow cards instead of wrapping. */
+  container-type: inline-size;
   background: var(--bg-elevated);
   border: 1px solid var(--border-hair);
   border-radius: var(--r-sm);
@@ -120,20 +127,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   margin-top: auto;
   padding-top: var(--sp-2);
-  /* Tags can be wider than the card on a two-column phone grid. Without this
-     the row refuses to wrap and pushes the Add button out of the card, where
-     `overflow: hidden` on the card clips it. */
-  flex-wrap: wrap;
+  /* One line, always. A wrapped foot made one card taller than its neighbours
+     and pushed the Add button out of line with the rest of the row. */
+  flex-wrap: nowrap;
 }
 
 .menu-card__tags {
   display: flex;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
+  gap: var(--sp-1);
+  flex-wrap: nowrap;
   min-width: 0;
+  overflow: hidden;
 }
 
 /* The Add button is the point of the card, so it never shrinks or wraps.
@@ -154,6 +161,23 @@
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* Narrow cards cannot hold two full-size tags beside the Add button. Shrink
+   them first, and only drop the second tag when even that will not fit. */
+@container (max-width: 260px) {
+  .tag {
+    padding: 0.2rem 0.45rem;
+    font-size: 0.64rem;
+  }
+}
+
+@container (max-width: 215px) {
+  .menu-card__tags .tag:nth-child(2) {
+    display: none;
+  }
 }
 
 @media (max-width: 520px) {

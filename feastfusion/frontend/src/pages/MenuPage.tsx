@@ -110,7 +110,7 @@ export function MenuPage() {
 
         {loading ? (
           <div className="menu-grid">
-            {Array.from({ length: 6 }).map((_, i) => (
+            {Array.from({ length: 7 }).map((_, i) => (
               <div key={i} className="skeleton-card" style={{ height: 380 }} />
             ))}
           </div>

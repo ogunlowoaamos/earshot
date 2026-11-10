@@ -925,6 +925,43 @@ The dish cards grew from 202px to 286px wide as a result, and the menu page
 went from 2,661px to 2,827px tall (the cards are wider, so the text wraps less
 but the pictures are taller).
 
+## Every dish card is the same size, seven to a row
+
+Two problems, one cause. Each card is wrapped in a `Reveal` div, and that div
+is the real grid item. `.menu-card` was `display: flex; flex-direction: column`
+with no height, so it only grew to its own content. A card whose name wrapped
+to two lines, or whose two tags wrapped onto a second line, came out taller
+than its neighbours — the Add button sat at a different height and the card
+bottom ended higher. That is the short Akara & Pap card in the screenshot.
+
+Three changes:
+
+1. `height: 100%` on `.menu-card`, so it fills the `Reveal` wrapper.
+2. `grid-auto-rows: 1fr` on `.menu-grid`, so every row is the height of the
+   tallest row. Without this, cards were uniform within a row but rows still
+   differed (341px vs 363px at 900px wide).
+3. `flex-wrap: nowrap` on `.menu-card__foot` and `.menu-card__tags`. A wrapped
+   foot was the other way a card grew taller than its neighbours.
+
+The grid is now seven across instead of six. At 1920 the grid is 1776px, so
+each card is 243px wide (it was 286px). The breakpoints step down 7 → 6 at
+1400px → 5 at 1150px → 4 at 900px → 3 at 700px → 2 at 520px. The user's own
+screen is 1366px, which lands on six across at 212px per card.
+
+Two tags plus the Add button do not fit in 243px at full size, so the card is
+now a container query context (`container-type: inline-size`) and the tags
+shrink below 260px. Below 215px the second tag is hidden rather than allowed
+to wrap. At 243px both tags still show.
+
+| Screen | Across | Card width | Card height | Page height |
+| --- | --- | --- | --- | --- |
+| 1920 | 7 | 243px | 369px | 2,636px |
+| 1366 | 6 | 212px | 345px | 2,494px |
+| 900 | 4 | 207px | 363px | 3,761px |
+| 520 | 2 | 237px | 372px | — |
+
+Every card on the page is now one height, and the Add buttons line up per row.
+
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.

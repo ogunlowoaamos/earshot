@@ -99,15 +99,24 @@
   white-space: nowrap;
 }
 
-/* Six across on a desktop, stepping down as the screen narrows. Explicit
+/* Seven across on a desktop, stepping down as the screen narrows. Explicit
    column counts (not auto-fill) so the row count is predictable. */
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  /* Every row takes the height of the tallest row, so all cards on the page
+     are the same size, not just the ones sharing a row. */
+  grid-auto-rows: 1fr;
   gap: var(--sp-3);
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1400px) {
+  .menu-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1150px) {
   .menu-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
