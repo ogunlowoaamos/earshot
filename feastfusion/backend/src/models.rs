@@ -17,6 +17,14 @@ pub struct CategoryApproval {
     pub is_approved: bool,
 }
 
+/// A brand-new shelf, typed straight into the Add item form.
+#[derive(Debug, Deserialize)]
+pub struct NewCategory {
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+}
+
 /// The whole shelf for the dashboard: every category and every dish, including
 /// the ones switched off or still waiting for a price.
 #[derive(Debug, Serialize)]
@@ -55,6 +63,7 @@ pub struct MenuRow {
     pub description: String,
     pub price_kobo: i64,
     pub image_url: String,
+    pub video_url: String,
     pub tags: String,
     pub ingredients: String,
     pub is_available: i64,
@@ -101,6 +110,8 @@ pub struct MenuItem {
     pub description: String,
     pub price_kobo: i64,
     pub image_url: String,
+    /// A short clip the caterer uploaded. Empty when the dish has only a photo.
+    pub video_url: String,
     pub tags: Vec<String>,
     pub ingredients: Vec<String>,
     pub is_available: bool,
@@ -118,6 +129,7 @@ impl From<MenuRow> for MenuItem {
             description: r.description,
             price_kobo: r.price_kobo,
             image_url: r.image_url,
+            video_url: r.video_url,
             tags: split_tags(&r.tags),
             ingredients: split_lines(&r.ingredients),
             is_available: r.is_available != 0,
@@ -415,6 +427,8 @@ pub struct NewMenuItem {
     #[serde(default)]
     pub image_url: String,
     #[serde(default)]
+    pub video_url: String,
+    #[serde(default)]
     pub tags: Vec<String>,
     #[serde(default)]
     pub ingredients: Vec<String>,
@@ -440,6 +454,7 @@ pub struct PatchMenuItem {
     pub price_kobo: Option<i64>,
     pub category_slug: Option<String>,
     pub image_url: Option<String>,
+    pub video_url: Option<String>,
     pub tags: Option<Vec<String>>,
     pub ingredients: Option<Vec<String>>,
     pub is_available: Option<bool>,

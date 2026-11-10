@@ -12,7 +12,8 @@ use crate::{
 
 pub(crate) const MENU_SELECT: &str = "
     SELECT m.id, m.category_id, c.slug AS category_slug, m.name, m.description,
-           m.price_kobo, m.image_url, m.tags, m.ingredients, m.is_available, m.is_featured
+           m.price_kobo, m.image_url, m.video_url, m.tags, m.ingredients,
+           m.is_available, m.is_featured
     FROM menu_items m
     JOIN categories c ON c.id = m.category_id
 ";

@@ -1015,6 +1015,20 @@ const LIB_CHOPS: GroupSpec = counted_from(
     "small-chops",
 );
 
+const LIB_CENTILITRE: GroupSpec = one(
+    "Centilitre (CL)",
+    "How much is in the bottle, in centilitres",
+    true,
+    &["25cl", "33cl", "50cl", "75cl", "100cl"],
+);
+
+const LIB_LITRES: GroupSpec = one(
+    "Litres",
+    "How much is in the bottle, in litres",
+    true,
+    &["1 litre", "1.5 litres", "2 litres", "3 litres", "5 litres"],
+);
+
 /// key, group. The key is stable so the dashboard can remember a switch; the
 /// name is what the customer sees and what the switch matches on.
 pub const LIBRARY: &[(&str, &GroupSpec)] = &[
@@ -1035,6 +1049,8 @@ pub const LIBRARY: &[(&str, &GroupSpec)] = &[
     ("style", &LIB_STYLE),
     ("sausage-count", &LIB_SAUSAGE_COUNT),
     ("chops", &LIB_CHOPS),
+    ("centilitre", &LIB_CENTILITRE),
+    ("litres", &LIB_LITRES),
 ];
 
 /// Which template of choices a dish gets.
@@ -3342,7 +3358,7 @@ pub async fn seed_catalogue(pool: &SqlitePool) -> Result<(), sqlx::Error> {
 }
 
 /// A stable photo seed, so a dish keeps the same placeholder picture.
-fn slugify(name: &str) -> String {
+pub fn slugify(name: &str) -> String {
     let mut out = String::with_capacity(name.len());
     let mut last_dash = true;
 

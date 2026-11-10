@@ -380,6 +380,11 @@ function MenuPanel({ token }: { token: string }) {
           token={token}
           categories={categories}
           library={library}
+          onCategoryAdded={(category) =>
+            setData((d) =>
+              d ? { ...d, categories: [...d.categories, category] } : d,
+            )
+          }
           onCreated={(item) => {
             setData((d) =>
               d
@@ -978,16 +983,104 @@ function toDraft(item: CatalogueItem): OptionGroupIn[] {
   }))
 }
 
+/**
+ * The tag box. It suggests every tag already in use, but the caterer can still
+ * type a brand-new one and press Enter (or a comma) to keep it.
+ */
+function TagBox({
+  value,
+  onChange,
+  suggestions,
+}: {
+  value: string[]
+  onChange: (next: string[]) => void
+  suggestions: string[]
+}) {
+  const [draft, setDraft] = useState('')
+  const [open, setOpen] = useState(false)
+
+  const needle = draft.trim().toLowerCase()
+  const matches = suggestions
+    .filter((t) => !value.includes(t))
+    .filter((t) => !needle || t.includes(needle))
+    .slice(0, 8)
+
+  function add(raw: string) {
+    const clean = raw.trim().toLowerCase()
+    if (!clean) return
+    if (!value.includes(clean)) onChange([...value, clean])
+    setDraft('')
+    setOpen(false)
+  }
+
+  function remove(tag: string) {
+    onChange(value.filter((t) => t !== tag))
+  }
+
+  return (
+    <div className="tagbox">
+      <div className="tagbox__chips">
+        {value.map((t) => (
+          <span key={t} className="tagbox__chip">
+            {t}
+            <button type="button" onClick={() => remove(t)} aria-label={`Remove ${t}`}>
+              ×
+            </button>
+          </span>
+        ))}
+        <input
+          className="tagbox__input"
+          value={draft}
+          placeholder={value.length ? 'Add another…' : 'spicy, popular…'}
+          onChange={(e) => {
+            setDraft(e.target.value)
+            setOpen(true)
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+              e.preventDefault()
+              add(draft)
+            } else if (e.key === 'Backspace' && !draft && value.length > 0) {
+              remove(value[value.length - 1])
+            }
+          }}
+        />
+      </div>
+      {open && matches.length > 0 && (
+        <ul className="tagbox__menu">
+          {matches.map((t) => (
+            <li key={t}>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  add(t)
+                }}
+              >
+                {t}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function NewItemForm({
   token,
   categories,
   library,
   onCreated,
+  onCategoryAdded,
 }: {
   token: string
   categories: Category[]
   library: OptionGroupIn[]
   onCreated: (item: MenuItem) => void
+  onCategoryAdded: (category: Category) => void
 }) {
   const [form, setForm] = useState({
     name: '',
@@ -995,12 +1088,27 @@ function NewItemForm({
     price: '',
     category_slug: categories[0]?.slug ?? '',
     image_url: '',
-    tags: '',
+    video_url: '',
     ingredients: '',
   })
+  const [tags, setTags] = useState<string[]>([])
+  const [tagList, setTagList] = useState<string[]>([])
   const [groups, setGroups] = useState<OptionGroupIn[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [newCategory, setNewCategory] = useState('')
+  const [addingCategory, setAddingCategory] = useState(false)
+  const [categoryBusy, setCategoryBusy] = useState(false)
+
+  const [uploading, setUploading] = useState<'image' | 'video' | null>(null)
+
+  useEffect(() => {
+    api
+      .adminTags(token)
+      .then((r) => setTagList(r.tags))
+      .catch(() => setTagList([]))
+  }, [token])
 
   function set(k: keyof typeof form, v: string) {
     setForm((f) => ({ ...f, [k]: v }))
@@ -1016,6 +1124,38 @@ function NewItemForm({
     })
   }
 
+  async function addCategory() {
+    const name = newCategory.trim()
+    if (!name) return
+    setCategoryBusy(true)
+    setError(null)
+    try {
+      const created = await api.adminCreateCategory(token, name)
+      onCategoryAdded(created)
+      set('category_slug', created.slug)
+      setNewCategory('')
+      setAddingCategory(false)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setCategoryBusy(false)
+    }
+  }
+
+  async function upload(kind: 'image' | 'video', file: File | undefined) {
+    if (!file) return
+    setUploading(kind)
+    setError(null)
+    try {
+      const saved = await api.adminUpload(token, file)
+      set(kind === 'image' ? 'image_url' : 'video_url', saved.url)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setUploading(null)
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setBusy(true)
@@ -1027,14 +1167,13 @@ function NewItemForm({
         price_kobo: Math.round(Number(form.price) * 100),
         category_slug: form.category_slug,
         image_url: form.image_url.trim(),
-        tags: form.tags
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean),
+        video_url: form.video_url.trim(),
+        tags,
         is_available: true,
         is_featured: false,
+        // One per line or separated by commas — both work.
         ingredients: form.ingredients
-          .split('\n')
+          .split(/[\n,]/)
           .map((s) => s.trim())
           .filter(Boolean),
         groups,
@@ -1064,6 +1203,7 @@ function NewItemForm({
             onChange={(e) => set('price', e.target.value)}
           />
         </div>
+
         <div className="field">
           <label>Category</label>
           <select value={form.category_slug} onChange={(e) => set('category_slug', e.target.value)}>
@@ -1073,20 +1213,105 @@ function NewItemForm({
               </option>
             ))}
           </select>
+          {addingCategory ? (
+            <div className="cat-add">
+              <input
+                autoFocus
+                value={newCategory}
+                placeholder="New category name"
+                onChange={(e) => setNewCategory(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    addCategory()
+                  }
+                  if (e.key === 'Escape') setAddingCategory(false)
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn--sm btn--primary"
+                onClick={addCategory}
+                disabled={categoryBusy || !newCategory.trim()}
+              >
+                {categoryBusy ? 'Adding…' : 'Add'}
+              </button>
+              <button
+                type="button"
+                className="btn btn--sm"
+                onClick={() => {
+                  setAddingCategory(false)
+                  setNewCategory('')
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="cat-add__open"
+              onClick={() => setAddingCategory(true)}
+            >
+              + Add a new category
+            </button>
+          )}
         </div>
+
         <div className="field">
-          <label>Tags (comma separated)</label>
-          <input value={form.tags} onChange={(e) => set('tags', e.target.value)} placeholder="spicy, popular" />
+          <label>Tags</label>
+          <TagBox value={tags} onChange={setTags} suggestions={tagList} />
+          <span className="field__hint">
+            Pick from the list or type a new one and press Enter.
+          </span>
         </div>
+
         <div className="field panel__full">
-          <label>Image URL</label>
-          <input
-            required
-            value={form.image_url}
-            onChange={(e) => set('image_url', e.target.value)}
-            placeholder="https://…"
-          />
+          <label>Media</label>
+          <div className="media">
+            <div className="media__row">
+              <span className="media__label">Image URL</span>
+              <input
+                value={form.image_url}
+                onChange={(e) => set('image_url', e.target.value)}
+                placeholder="https://…"
+              />
+            </div>
+            <div className="media__row">
+              <span className="media__label">Or upload a picture</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => upload('image', e.target.files?.[0])}
+              />
+              {uploading === 'image' && <span className="media__note">Uploading…</span>}
+            </div>
+            <div className="media__row">
+              <span className="media__label">Video URL</span>
+              <input
+                value={form.video_url}
+                onChange={(e) => set('video_url', e.target.value)}
+                placeholder="https://… (optional)"
+              />
+            </div>
+            <div className="media__row">
+              <span className="media__label">Or upload a video</span>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(e) => upload('video', e.target.files?.[0])}
+              />
+              {uploading === 'video' && <span className="media__note">Uploading…</span>}
+            </div>
+            {form.image_url && (
+              <img className="media__preview" src={form.image_url} alt="Dish preview" />
+            )}
+            {form.video_url && (
+              <video className="media__preview" src={form.video_url} controls muted />
+            )}
+          </div>
         </div>
+
         <div className="field panel__full">
           <label>Description</label>
           <textarea
@@ -1095,16 +1320,17 @@ function NewItemForm({
             onChange={(e) => set('description', e.target.value)}
           />
         </div>
+
         <div className="field panel__full">
-          <label>Ingredients (one per line)</label>
+          <label>Ingredients</label>
           <textarea
             value={form.ingredients}
             onChange={(e) => set('ingredients', e.target.value)}
             placeholder={'Long grain rice\nTomato and pepper base\nChicken stock'}
           />
           <span className="field__hint">
-            Customers see this when they open the dish. Leave it blank if you would rather not list
-            them.
+            One per line, or separated by commas — either is fine. Customers see this when they open
+            the dish. Leave it blank if you would rather not list them.
           </span>
         </div>
       </div>

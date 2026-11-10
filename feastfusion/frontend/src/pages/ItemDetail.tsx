@@ -157,7 +157,11 @@ export function ItemDetail() {
           <div className="detail__main" onScroll={() => setPeek(null)}>
             <div className="detail__grid">
               <div className="detail__media">
-                <img src={item.image_url} alt={item.name} />
+                {item.video_url ? (
+                  <video src={item.video_url} poster={item.image_url} controls playsInline />
+                ) : (
+                  <img src={item.image_url} alt={item.name} />
+                )}
               </div>
 
               <div className="detail__info">

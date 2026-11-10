@@ -511,6 +511,62 @@ light and dark themes checked. The test dish was deleted afterwards.
 dishes clicks a lot. Should there also be a category-level default (for example
 "every soup gets Portion + Swallow + Extras") that new dishes inherit?
 
+## The Add item form, rebuilt to the caterer's own spec
+
+The user wrote the form out field by field: Name, Category (with the right to
+add a new one), Price, Tags (a dropdown of every tag ever used that also accepts
+typing), Media (image URL, image upload, video), Description, Ingredients (one
+per line *or* comma separated), and "What should this dish ask?" — the switch
+library, now with **Centilitre (CL)** and **Litres** added for drinks.
+
+**Two new library groups.** `LIB_CENTILITRE` (25cl / 33cl / 50cl / 75cl / 100cl)
+and `LIB_LITRES` (1 / 1.5 / 2 / 3 / 5 litres), both `allows_quantity = true` so
+they behave like the other counting groups. `LIBRARY` is now **19 entries**.
+
+**Video on a dish.** Migration `0011_menu_video.sql` adds
+`video_url TEXT NOT NULL DEFAULT ''` to `menu_items`; empty means no video.
+`video_url` is threaded through `MenuRow`, `MenuItem`, `NewMenuItem`,
+`PatchMenuItem`, `MENU_SELECT`, the create INSERT and the update UPDATE.
+`ItemDetail.tsx` renders `<video poster={image_url} controls>` when the field is
+set and falls back to the `<img>` when it is not, so every existing dish is
+untouched.
+
+**Three new admin endpoints.**
+
+| Route | What it does |
+| --- | --- |
+| `POST /api/admin/categories` | `{ name, description? }` → the new `Category`. Slugifies the name, walks `-2`, `-3` … until the slug is free, rejects a duplicate name, puts it last in `sort_order`, and sets `is_approved = 1` so it is usable straight away. |
+| `GET /api/admin/tags` | `{ tags: [...] }` — every tag across `menu_items`, split on commas, lowercased, de-duplicated, sorted. Grows by itself as the caterer types new ones. |
+| `POST /api/admin/upload` | Multipart field `file`. Images `jpg/jpeg/png/webp/gif/svg/avif` up to 8MB, video `mp4/webm/mov/m4v/ogv` up to 60MB. Stores a UUID filename in `state.uploads` and returns `{ url, kind }`. |
+
+`catalogue::slugify` was made `pub` so the category endpoint can reuse it
+instead of growing a second copy.
+
+**The form itself.** `NewItemForm` in `Admin.tsx` now holds `tags` as a
+`string[]` rather than a comma string, and `video_url` alongside `image_url`.
+A new `TagBox` component draws the chips, filters the suggestion list as the
+caterer types, commits on Enter or comma, and removes on Backspace or the ×.
+The Category field has a "+ Add a new category" link that swaps in an inline
+input; adding one calls the endpoint, appends it to `MenuPanel`'s list through
+the new `onCategoryAdded` prop, and selects it. The Media block has four rows —
+image URL, image upload, video URL, video upload — plus a live preview of
+whichever is set. Ingredients are split on `/[\n,]/`, so both styles work.
+
+**Verified live:** the library returns 19 groups ending in Centilitre (CL) and
+Litres; `/api/admin/tags` returns 57 tags; a category was created (and a
+duplicate name correctly rejected); a PNG uploaded as `kind: image` and the same
+bytes renamed `.mp4` as `kind: video`, while `.exe` was refused; a test dish
+created with two tags, an image, a video, three ingredients and Portion +
+Centilitre came back complete and appeared on `/menu/298` with a playing
+`<video>` and the image as its poster. The browser shows all seven field
+groups, 19 switch chips, the tag dropdown listing real tags, and no horizontal
+overflow in either theme. The test dish, category, uploads and screenshots were
+all removed afterwards.
+
+**Open questions for the user.** Should a new category start hidden instead of
+live? Should the tag list stay limited to tags already in use, or should the
+caterer be able to curate it? What video size cap is acceptable — 60MB today.
+
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.
@@ -558,5 +614,7 @@ their own pricing rules in the Rust backend, instead of being folded into
 - **`/api/menu` only returns the switched-on categories**, so a dish missing from it is hidden, not deleted. Use `/api/admin/catalogue` to see all 289.
 - **`POST /api/orders` requires `payment_method`** and `delivery_state` (not `state`). Active delivery zones are FCT Abuja, Nasarawa and Niger only.
 - **There is no `order_item_options` table.** Picks are one `options_text` string on `order_items`, joined with `" | "`. That is why a typed size is appended to the label rather than stored in its own column.
+- **`POST /api/admin/upload` takes the file in a field named `file`.** It returns `{ url, kind }`; the URL is already the `/uploads/…` path the frontend can store directly.
+- **A new category is created approved.** `POST /api/admin/categories` sets `is_approved = 1`, so it shows on the customer menu immediately. Flip it off from the Catalogue tab if that is wrong.
 - **`Stop-Process` is blocked inside a `ForEach-Object` pipeline.** Use a `foreach` loop or a standalone call. The running exe locks `target\debug\feastfusion-api.exe`, so it must be stopped before `cargo build`.
 - **The backend takes longer than 40s to boot.** Poll `/api/menu` with retries; there is no `/api/health`.

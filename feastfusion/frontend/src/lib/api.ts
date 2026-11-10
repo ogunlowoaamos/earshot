@@ -15,6 +15,8 @@ export type MenuItem = {
   description: string
   price_kobo: number
   image_url: string
+  /** Empty when the dish has no video. */
+  video_url: string
   is_available: boolean
   is_featured: boolean
   tags: string[]
@@ -341,6 +343,31 @@ export const api = {
     request<{ groups: OptionGroupIn[] }>('/admin/group-library', {
       headers: { Authorization: `Bearer ${token}` },
     }),
+
+  /** Every tag already in use, so the tag box can suggest them. */
+  adminTags: (token: string) =>
+    request<{ tags: string[] }>('/admin/tags', {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  /** Adds a shelf the caterer typed into the Add item form. */
+  adminCreateCategory: (token: string, name: string, description = '') =>
+    request<Category>('/admin/categories', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ name, description }),
+    }),
+
+  /** Sends a photo or video file and gets back the address to store. */
+  adminUpload: (token: string, file: File) => {
+    const body = new FormData()
+    body.append('file', file)
+    return request<{ url: string; kind: 'image' | 'video' }>('/admin/upload', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body,
+    })
+  },
 
   adminSaveOptions: (token: string, id: number, groups: OptionGroupIn[]) =>
     request<Catalogue>(`/admin/menu/${id}/options`, {

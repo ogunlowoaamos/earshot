@@ -1,17 +1,20 @@
+use std::path::Path as FsPath;
+
 use axum::{
-    extract::{Path, State},
+    extract::{Multipart, Path, State},
     http::{HeaderMap, StatusCode},
     Json,
 };
 use serde_json::{json, Value};
+use uuid::Uuid;
 
 use crate::{
     auth::{issue_token, require_admin, verify_password},
     error::{AppError, AppResult},
     models::{
-        BulkAvailability, Catalogue, CategoryApproval, CateringPricing, CateringRequest, Login,
-        MenuItem, NewMenuItem, OptionGroupIn, Order, PatchMenuItem, PatchOrder, SaveIngredients,
-        SaveOptions, SavePairings,
+        BulkAvailability, Catalogue, Category, CategoryApproval, CateringPricing, CateringRequest,
+        Login, MenuItem, NewCategory, NewMenuItem, OptionGroupIn, Order, PatchMenuItem, PatchOrder,
+        SaveIngredients, SaveOptions, SavePairings,
     },
     pricing,
     routes::{catering, menu, orders},
@@ -379,6 +382,179 @@ pub async fn set_category_approval(
     list_catalogue(headers, State(state)).await
 }
 
+/// Adds a shelf the caterer just typed into the Add item form. It goes live
+/// straight away, because they asked for it on purpose.
+pub async fn create_category(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    Json(payload): Json<NewCategory>,
+) -> AppResult<Json<Category>> {
+    require_admin(&headers)?;
+
+    let name = payload.name.trim();
+    if name.is_empty() {
+        return Err(AppError::BadRequest("Give the category a name.".into()));
+    }
+
+    let base = crate::catalogue::slugify(name);
+    if base.is_empty() {
+        return Err(AppError::BadRequest(
+            "Please use letters or numbers in the name.".into(),
+        ));
+    }
+
+    let taken: Option<(i64,)> = sqlx::query_as("SELECT id FROM categories WHERE name = ?")
+        .bind(name)
+        .fetch_optional(&state.pool)
+        .await?;
+    if taken.is_some() {
+        return Err(AppError::BadRequest(
+            "There is already a category with that name.".into(),
+        ));
+    }
+
+    // Two different names can slugify the same way, so walk until one is free.
+    let mut slug = base.clone();
+    let mut attempt = 2;
+    loop {
+        let clash: Option<(i64,)> = sqlx::query_as("SELECT id FROM categories WHERE slug = ?")
+            .bind(&slug)
+            .fetch_optional(&state.pool)
+            .await?;
+        if clash.is_none() {
+            break;
+        }
+        slug = format!("{base}-{attempt}");
+        attempt += 1;
+    }
+
+    let next_order: (i64,) =
+        sqlx::query_as("SELECT COALESCE(MAX(sort_order), 0) + 1 FROM categories")
+            .fetch_one(&state.pool)
+            .await?;
+
+    let description = payload.description.trim();
+    let description = if description.is_empty() {
+        None
+    } else {
+        Some(description.to_string())
+    };
+
+    let id: i64 = sqlx::query_scalar(
+        "INSERT INTO categories (name, slug, description, sort_order, is_approved)
+         VALUES (?, ?, ?, ?, 1)
+         RETURNING id",
+    )
+    .bind(name)
+    .bind(&slug)
+    .bind(&description)
+    .bind(next_order.0)
+    .fetch_one(&state.pool)
+    .await?;
+
+    Ok(Json(Category {
+        id,
+        name: name.to_string(),
+        slug,
+        description,
+        sort_order: next_order.0,
+        is_approved: true,
+    }))
+}
+
+/// Every tag already in use, so the tag box can suggest them. Grows by itself
+/// as the caterer types new ones.
+pub async fn list_tags(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+) -> AppResult<Json<Value>> {
+    require_admin(&headers)?;
+
+    let rows: Vec<(String,)> = sqlx::query_as("SELECT tags FROM menu_items")
+        .fetch_all(&state.pool)
+        .await?;
+
+    let mut seen: Vec<String> = Vec::new();
+    for (blob,) in rows {
+        for tag in blob.split(',') {
+            let tag = tag.trim().to_lowercase();
+            if !tag.is_empty() && !seen.contains(&tag) {
+                seen.push(tag);
+            }
+        }
+    }
+    seen.sort();
+
+    Ok(Json(json!({ "tags": seen })))
+}
+
+/// Stores a photo or a video the caterer picked from their computer and hands
+/// back the address to put in the dish.
+pub async fn upload_media(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    mut multipart: Multipart,
+) -> AppResult<Json<Value>> {
+    require_admin(&headers)?;
+
+    const IMAGE_TYPES: &[&str] = &["jpg", "jpeg", "png", "webp", "gif", "svg", "avif"];
+    const VIDEO_TYPES: &[&str] = &["mp4", "webm", "mov", "m4v", "ogv"];
+
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|e| AppError::BadRequest(format!("Upload failed: {e}")))?
+    {
+        let filename = field.file_name().unwrap_or("upload").to_string();
+        let extension = FsPath::new(&filename)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+
+        let is_image = IMAGE_TYPES.contains(&extension.as_str());
+        let is_video = VIDEO_TYPES.contains(&extension.as_str());
+
+        if !is_image && !is_video {
+            return Err(AppError::BadRequest(
+                "Please pick a JPG, PNG, WEBP, GIF, SVG, MP4, WEBM or MOV file.".into(),
+            ));
+        }
+
+        let bytes = field
+            .bytes()
+            .await
+            .map_err(|e| AppError::BadRequest(format!("Upload failed: {e}")))?;
+
+        if bytes.is_empty() {
+            return Err(AppError::BadRequest("That file looks empty.".into()));
+        }
+
+        let cap = if is_video {
+            60 * 1024 * 1024
+        } else {
+            8 * 1024 * 1024
+        };
+        if bytes.len() > cap {
+            return Err(AppError::BadRequest(if is_video {
+                "Please keep the video under 60MB.".into()
+            } else {
+                "Please keep the picture under 8MB.".into()
+            }));
+        }
+
+        let stored_name = format!("{}.{}", Uuid::new_v4().simple(), extension);
+        tokio::fs::write(state.uploads.join(&stored_name), &bytes).await?;
+
+        return Ok(Json(json!({
+            "url": format!("/uploads/{stored_name}"),
+            "kind": if is_video { "video" } else { "image" },
+        })));
+    }
+
+    Err(AppError::BadRequest("No file was attached.".into()))
+}
+
 /// Switches a whole category, or a shortlist of dishes, on or off at once.
 pub async fn set_availability(
     headers: HeaderMap,
@@ -442,15 +618,16 @@ pub async fn create_menu_item(
 
     let inserted = sqlx::query(
         "INSERT INTO menu_items
-            (category_id, name, description, price_kobo, image_url, tags, ingredients,
+            (category_id, name, description, price_kobo, image_url, video_url, tags, ingredients,
              is_available, is_featured)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(category_id)
     .bind(name)
     .bind(payload.description.trim())
     .bind(payload.price_kobo)
     .bind(payload.image_url.trim())
+    .bind(payload.video_url.trim())
     .bind(payload.tags.join(", "))
     .bind(payload.ingredients.join("\n"))
     .bind(if payload.is_available { 1 } else { 0 })
@@ -484,6 +661,7 @@ pub async fn update_menu_item(
     let description = patch.description.unwrap_or(existing.description);
     let price_kobo = patch.price_kobo.unwrap_or(existing.price_kobo);
     let image_url = patch.image_url.unwrap_or(existing.image_url);
+    let video_url = patch.video_url.unwrap_or(existing.video_url);
     let tags = patch
         .tags
         .map(|t| t.join(", "))
@@ -520,8 +698,8 @@ pub async fn update_menu_item(
 
     sqlx::query(
         "UPDATE menu_items
-         SET category_id = ?, name = ?, description = ?, price_kobo = ?, image_url = ?, tags = ?,
-             ingredients = ?, is_available = ?, is_featured = ?
+         SET category_id = ?, name = ?, description = ?, price_kobo = ?, image_url = ?,
+             video_url = ?, tags = ?, ingredients = ?, is_available = ?, is_featured = ?
          WHERE id = ?",
     )
     .bind(category_id)
@@ -529,6 +707,7 @@ pub async fn update_menu_item(
     .bind(description.trim())
     .bind(price_kobo)
     .bind(image_url.trim())
+    .bind(video_url.trim())
     .bind(tags)
     .bind(ingredients)
     .bind(if is_available { 1 } else { 0 })
