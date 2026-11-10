@@ -1,5 +1,5 @@
 .admin {
-  padding-block: var(--sp-4) var(--sp-7);
+  padding-block: var(--sp-2) var(--sp-6);
   min-height: 70vh;
 }
 
@@ -11,12 +11,18 @@
 
 /* Lists still read better in a column, so only the add-item form and the
    toolbars take the full width. */
+.admin-menu__list,
+.cat-group {
+  max-width: 1100px;
+}
+
+/* Orders, catering requests, the deposit calculator and pairings all sit two
+   or three to a row, so they get the wider column. */
 .admin-orders,
 .admin-catering,
-.admin-menu__list,
-.cat-group,
+.pricing-panel,
 .pairings {
-  max-width: 1100px;
+  max-width: 1500px;
 }
 
 .admin__head {
@@ -25,7 +31,7 @@
   justify-content: space-between;
   gap: var(--sp-4);
   flex-wrap: wrap;
-  margin-bottom: var(--sp-5);
+  margin-bottom: var(--sp-2);
   transition:
     margin-bottom var(--dur-base) var(--ease-out),
     gap var(--dur-base) var(--ease-out);
@@ -33,7 +39,7 @@
 
 .admin__head h1 {
   font-size: var(--step-3);
-  margin-top: var(--sp-2);
+  margin-top: 0;
   transition:
     font-size var(--dur-base) var(--ease-out),
     margin-top var(--dur-base) var(--ease-out);
@@ -44,7 +50,7 @@
    60px of height back to the list underneath. */
 .admin__head.is-compact {
   align-items: center;
-  margin-bottom: var(--sp-3);
+  margin-bottom: var(--sp-1);
   gap: var(--sp-2);
 }
 
@@ -60,7 +66,7 @@
 
 /* The tab strip tucks in too, so the first dish starts higher up. */
 .admin__head.is-compact + .admin-tabs {
-  margin-bottom: var(--sp-3);
+  margin-bottom: var(--sp-2);
 }
 
 /* ---------- tabs ---------- */
@@ -69,7 +75,7 @@
   display: flex;
   gap: var(--sp-1);
   border-bottom: 1px solid var(--border);
-  margin-bottom: var(--sp-5);
+  margin-bottom: var(--sp-3);
   overflow-x: auto;
   scrollbar-width: none;
   transition: margin-bottom var(--dur-base) var(--ease-out);
@@ -80,7 +86,7 @@
 }
 
 .admin-tab {
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
   font-size: var(--step--1);
   font-weight: 600;
   color: var(--ink-500);
@@ -122,7 +128,6 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
-  margin-bottom: var(--sp-4);
   font-size: var(--step--1);
   font-weight: 600;
   color: var(--ink-500);
@@ -130,21 +135,29 @@
 
 /* ---------- order card ---------- */
 
+/* Two cards per row, so a long day of orders is half as tall to scroll. */
 .admin-orders,
 .admin-catering {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+  align-items: start;
+}
+
+/* The count-and-refresh bar belongs to the whole list, not to one card. */
+.admin-orders__bar {
+  grid-column: 1 / -1;
 }
 
 .admin-order {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  padding: clamp(var(--sp-4), 2.5vw, var(--sp-5));
+  padding: var(--sp-4);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
+  min-width: 0;
 }
 
 .admin-order__top {
@@ -184,8 +197,8 @@
 
 .admin-order__grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--sp-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
 }
 
 .admin-order__grid p,
@@ -1049,7 +1062,7 @@
 
 .cat-row__main {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: 48px minmax(0, 1fr) auto;
   gap: var(--sp-2) var(--sp-3);
   align-items: center;
 }
@@ -1098,15 +1111,33 @@
   color: #1f7a4a;
 }
 
-/* The buttons sit under the name so the card stays narrow enough to pair up. */
+/* The buttons sit on the same line as the name, so a card is one row tall. */
 .cat-row__actions {
-  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-2);
-  padding-top: var(--sp-2);
-  border-top: 1px solid var(--border);
+  justify-content: flex-end;
+  gap: var(--sp-1);
+}
+
+/* Tighter than the shared .status-btn, so five controls fit beside the name. */
+.cat-row__actions .status-btn {
+  padding: 0.3rem 0.55rem;
+  font-size: 0.68rem;
+}
+
+.cat-row__actions .admin-menu__del {
+  padding: 0.3rem 0.4rem;
+  font-size: 0.68rem;
+}
+
+.cat-row__actions .cat-price {
+  padding: 0.2rem 0.4rem;
+}
+
+.cat-row__actions .cat-price input {
+  width: 3.6rem;
+  font-size: 0.7rem;
 }
 
 .cat-price {
@@ -1165,8 +1196,9 @@
 }
 
 .pairings__list {
-  display: flex;
-  flex-direction: column;
+  /* Three categories per row, so a long list is a third as tall to scroll. */
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sp-2);
   margin: 0;
   padding: 0;
@@ -1178,9 +1210,13 @@
   border-radius: var(--r-md);
   background: var(--bg-elevated);
   overflow: hidden;
+  min-width: 0;
 }
 
+/* An open category needs the whole row for its chips, otherwise they would be
+   squeezed into half the width. */
 .pairing.is-open {
+  grid-column: 1 / -1;
   border-color: var(--gold-400);
 }
 
@@ -1558,15 +1594,24 @@
   font-size: var(--step--1);
 }
 
+@media (max-width: 1100px) {
+  .admin-orders,
+  .admin-catering,
+  .pricing-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 900px) {
-  .cat-group {
+  .cat-group,
+  .pairings__list {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 720px) {
   .cat-row__main {
-    grid-template-columns: 40px 1fr;
+    grid-template-columns: 40px minmax(0, 1fr);
   }
 
   .cat-row__main img {
@@ -1574,8 +1619,12 @@
     height: 40px;
   }
 
+  /* Too narrow for one line, so the buttons drop under the name again. */
   .cat-row__actions {
     grid-column: 1 / -1;
+    justify-content: flex-start;
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--border);
   }
 
   .cat-opt-row {
@@ -1677,9 +1726,16 @@
 }
 
 .pricing-group {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-3);
+  align-items: start;
+}
+
+/* The heading and its explanation belong to the whole group, not to one rate. */
+.pricing-group h2,
+.pricing-group__hint {
+  grid-column: 1 / -1;
 }
 
 .pricing-group h2 {
@@ -1701,6 +1757,7 @@
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--bg-elevated);
+  min-width: 0;
 }
 
 .rate-row__head {

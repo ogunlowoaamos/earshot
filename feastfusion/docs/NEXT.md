@@ -767,6 +767,61 @@ same row; at 1366 it is `650px 650px`. The Catalogue page dropped from
 25,432px to about 21,400px. No horizontal overflow at either width, in both
 themes.
 
+## The Catalogue card's buttons sit on the dish name's line
+
+The price, On, Options, Ingredients and Delete controls used to take a second
+line under the name, which made every card two rows tall. They now sit on the
+same line, right-aligned, so a card is one row.
+
+To make five controls fit in half the width, each one was shrunk a little:
+`.cat-row__actions .status-btn` (0.3rem/0.55rem padding, 0.68rem text),
+`.admin-menu__del` (0.3rem/0.4rem, 0.68rem), `.cat-price` (0.2rem/0.4rem) and
+`.cat-price input` (3.6rem wide, 0.7rem). The price badge was also removed from
+the meta line, because the price is already in the editable box beside it.
+
+Below 720px the buttons drop back under the name, because five controls will
+not fit on one line on a phone.
+
+**Verified live:** a card went from 124px to 74px tall and the Catalogue page
+from 21,432px to 13,952px.
+
+## Orders, catering requests and the deposit calculator show two per row
+
+`.admin-orders` and `.admin-catering` are two-column grids capped at 1500px,
+and each `.pricing-group` inside the deposit calculator is too. The count-and-
+refresh bar and each group's heading span both columns, so they still read as
+one list.
+
+Each order card's inner grid went from four columns to two, because four
+columns of customer details will not fit in half the width. The card padding
+also dropped from a clamp to a flat `var(--sp-4)`.
+
+Below 1100px all three collapse to one column.
+
+**Verified live at 1920 and 1366:** two cards per row on all three tabs, no
+horizontal overflow, both themes. Orders page 3,105px → 2,113px.
+
+## Pairings shows three per row
+
+`.pairings__list` is a three-column grid capped at 1500px, so each category is
+about 495px wide at 1920 and 430px at 1366. An open category gets
+`grid-column: 1 / -1`, so its chips still have the whole width.
+
+Below 900px it collapses to one column.
+
+**Verified live:** 17 categories lay out three per row; opening one gives it
+1308px and 16 chips at 153px each.
+
+## The dashboard header is tighter
+
+The gap above the title, the gap under it and the gap under the tab strip were
+all reduced, and the tabs themselves are shorter. The title no longer carries a
+top margin. The whole header block is about 20px shorter before scrolling and
+about 10px shorter once it has shrunk.
+
+**Verified live:** head 58px → 34px, tabs 39px, first card starts at 177px
+instead of 197px.
+
 ## Not finished
 
 1. The basket drawer has not been checked on a phone width.

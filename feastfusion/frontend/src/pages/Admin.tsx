@@ -504,11 +504,7 @@ function MenuPanel({ token }: { token: string }) {
                     <div className="cat-row__info">
                       <strong>{it.name}</strong>
                       <div className="cat-row__meta">
-                        {it.price_kobo === 0 ? (
-                          <span className="cat-badge">Needs a price</span>
-                        ) : (
-                          <span className="cat-badge cat-badge--ok">{naira(it.price_kobo)}</span>
-                        )}
+                        {it.price_kobo === 0 && <span className="cat-badge">Needs a price</span>}
                         <span>
                           {it.option_groups.length} option
                           {it.option_groups.length === 1 ? '' : 's'}
